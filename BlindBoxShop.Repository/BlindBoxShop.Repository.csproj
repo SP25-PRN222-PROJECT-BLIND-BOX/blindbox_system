@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BlindBoxShop.Entities\BlindBoxShop.Entities.csproj" />
+    <ProjectReference Include="..\BlindBoxShop.Repository.Contract\BlindBoxShop.Repository.Contract.csproj" />
+  </ItemGroup>
+
+</Project>

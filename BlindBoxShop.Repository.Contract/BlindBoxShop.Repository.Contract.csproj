@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BlindBoxShop.Entities\BlindBoxShop.Entities.csproj" />
+    <ProjectReference Include="..\BlindBoxShop.Shared\BlindBoxShop.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

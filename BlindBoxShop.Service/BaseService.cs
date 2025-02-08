@@ -5,8 +5,8 @@ namespace BlindBoxShop.Service
 {
     public abstract class BaseService
     {
-        private readonly IRepositoryManager _repositoryManager;
-        private readonly IMapper _mapper;
+        protected readonly IRepositoryManager _repositoryManager;
+        protected readonly IMapper _mapper;
 
         protected BaseService(IRepositoryManager repositoryManager, IMapper mapper)
         {

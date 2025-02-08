@@ -10,6 +10,6 @@ namespace BlindBoxShop.Service
         {
         }
 
-        public string hehe() => "hehe";
+
     }
 }

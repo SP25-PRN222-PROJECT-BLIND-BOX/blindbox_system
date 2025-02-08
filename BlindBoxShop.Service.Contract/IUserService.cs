@@ -2,6 +2,5 @@
 {
     public interface IUserService
     {
-        string hehe();
     }
 }

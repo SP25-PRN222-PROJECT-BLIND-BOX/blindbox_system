@@ -1,4 +1,5 @@
 ﻿using BlindBoxShop.Entities.Models;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace BlindBoxShop.Repository.Configuration
@@ -13,6 +14,7 @@ namespace BlindBoxShop.Repository.Configuration
             entity.HasIndex(e => e.UserId);
 
             entity.HasIndex(e => e.BlindBoxId);
+
         }
     }
 }

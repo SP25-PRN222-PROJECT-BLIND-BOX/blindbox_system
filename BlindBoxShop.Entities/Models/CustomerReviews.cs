@@ -20,6 +20,8 @@ namespace BlindBoxShop.Entities.Models
         public virtual User? User { get; set; }
 
         public virtual BlindBox? BlindBox { get; set; }
+
+        public virtual ReplyReviews? ReplyReviews { get; set; }
     }
 
 }

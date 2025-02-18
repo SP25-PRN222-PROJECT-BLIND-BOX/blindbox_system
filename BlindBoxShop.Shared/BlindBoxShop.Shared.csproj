@@ -7,7 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="DataTransferObject\" />
+    <Compile Remove="ResponseModel\**" />
+    <EmbeddedResource Remove="ResponseModel\**" />
+    <None Remove="ResponseModel\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Constant\ErrorConstant\" />
   </ItemGroup>
 
 </Project>

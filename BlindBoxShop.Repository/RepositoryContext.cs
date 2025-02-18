@@ -31,6 +31,7 @@ namespace BlindBoxShop.Repository
             builder.ApplyConfiguration(new OrderConfiguration());
             builder.ApplyConfiguration(new OrderDetailConfiguration());
             builder.ApplyConfiguration(new PackageConfiguration());
+            builder.ApplyConfiguration(new ReplyReviewsConfiguration());
         }
 
         public virtual DbSet<BlindBox> BlindBoxes { get; set; }
@@ -42,6 +43,7 @@ namespace BlindBoxShop.Repository
         public virtual DbSet<OrderDetail> OrderDetails { get; set; }
         public virtual DbSet<Package> Packages { get; set; }
         public virtual DbSet<Voucher> Vouchers { get; set; }
+        public virtual DbSet<ReplyReviews> ReplyReviews { get; set; }
 
 
         public override int SaveChanges()

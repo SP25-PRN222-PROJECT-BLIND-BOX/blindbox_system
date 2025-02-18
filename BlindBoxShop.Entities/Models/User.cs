@@ -28,5 +28,7 @@ namespace BlindBoxShop.Entities.Models
 
         public virtual ICollection<CustomerReviews>? CustomerReviews { get; set; }
 
+        public virtual ICollection<ReplyReviews>? ReplyReviews { get; set; }
+
     }
 }

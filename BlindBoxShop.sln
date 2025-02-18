@@ -13,9 +13,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlindBoxShop.Entities", "Bl
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlindBoxShop.Shared", "BlindBoxShop.Shared\BlindBoxShop.Shared.csproj", "{0659403A-A0CC-457D-8A43-85B0BED50514}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlindBoxShop.Service", "BlindBoxShop.Service\BlindBoxShop.Service.csproj", "{E457DC67-DCE3-4DA7-B54C-2A1AFE5CDE2D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlindBoxShop.Service", "BlindBoxShop.Service\BlindBoxShop.Service.csproj", "{E457DC67-DCE3-4DA7-B54C-2A1AFE5CDE2D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlindBoxShop.Service.Contract", "BlindBoxShop.Service.Contract\BlindBoxShop.Service.Contract.csproj", "{9B4DC5DF-9F15-407F-9210-1263023B0EC7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlindBoxShop.Service.Contract", "BlindBoxShop.Service.Contract\BlindBoxShop.Service.Contract.csproj", "{9B4DC5DF-9F15-407F-9210-1263023B0EC7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlindBoxShop.Presentation", "BlindBoxShop.Presentation\BlindBoxShop.Presentation.csproj", "{0912C013-D81A-4859-989B-CEE76220715D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,11 +53,15 @@ Global
 		{9B4DC5DF-9F15-407F-9210-1263023B0EC7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9B4DC5DF-9F15-407F-9210-1263023B0EC7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9B4DC5DF-9F15-407F-9210-1263023B0EC7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0912C013-D81A-4859-989B-CEE76220715D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0912C013-D81A-4859-989B-CEE76220715D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0912C013-D81A-4859-989B-CEE76220715D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0912C013-D81A-4859-989B-CEE76220715D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {589B2EAE-D499-4610-8777-3B9056A6CC80}
+		SolutionGuid = {DA95F0E7-AC05-4A08-A57F-12802EEEDB0F}
 	EndGlobalSection
 EndGlobal

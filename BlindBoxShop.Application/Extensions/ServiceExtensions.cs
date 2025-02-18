@@ -1,13 +1,14 @@
-﻿using BlindBoxShop.Application.Security;
-using BlindBoxShop.Entities.Models;
-using BlindBoxShop.Repository;
+﻿using BlindBoxShop.Entities.Models;
 using BlindBoxShop.Repository.Contract;
+using BlindBoxShop.Repository;
 using BlindBoxShop.Service.Contract;
 using BlindBoxShop.Service;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using System.Data;
+using BlindBoxShop.Application.Security;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using System.Text.Json.Serialization;
 
 namespace BlindBoxShop.Application.Extensions
 {
@@ -71,5 +72,9 @@ namespace BlindBoxShop.Application.Extensions
 
         public static void ConfigureServiceManager(this IServiceCollection services) =>
             services.AddScoped<IServiceManager, ServiceManager>();
+
+        public static void ConfigureController(this IServiceCollection services) =>
+            services.AddControllers()
+            .AddApplicationPart(typeof(BlindBoxShop.Presentation.AssemblyReference).Assembly);
     }
 }

@@ -24,7 +24,13 @@ namespace BlindBoxShop.Shared.ResultModel
         public static Result Failure(List<ErrorResult> errors)
                    => new(errors);
 
+        public static Result Failure(ErrorResult errors)
+                   => new([errors]);
+
         public static implicit operator Result(List<ErrorResult> errors)
+            => Failure(errors);
+
+        public static implicit operator Result(ErrorResult errors)
             => Failure(errors);
     }
 
@@ -48,7 +54,19 @@ namespace BlindBoxShop.Shared.ResultModel
         public static new Result<T> Failure(List<ErrorResult> errors)
            => new Result<T>(errors);
 
+        public static new Result<T> Failure(ErrorResult errors)
+           => new Result<T>([errors]);
+
         public static implicit operator Result<T>(List<ErrorResult> errors)
             => Failure(errors);
+
+        public static implicit operator Result<T>(ErrorResult errors)
+            => Failure(errors);
+
+        public static implicit operator Result<T>(T value)
+            => Success(value);
+
+        public static implicit operator Result<T>((T value, MetaData metaData) param)
+            => Success(param.value, param.metaData);
     }
 }

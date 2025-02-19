@@ -6,8 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using System.Security.Claims;
 using System.Text.Json;
-using BlindBoxShop.Application.Components.Account.Pages;
-using BlindBoxShop.Application.Components.Account.Pages.Manage;
+using BlindBoxShop.Application.Pages.Account.Pages;
+using BlindBoxShop.Application.Pages.Account.Pages.Manage;
 using BlindBoxShop.Entities.Models;
 
 namespace Microsoft.AspNetCore.Routing

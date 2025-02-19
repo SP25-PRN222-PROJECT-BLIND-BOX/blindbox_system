@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 using System.Security.Claims;
 using BlindBoxShop.Entities.Models;
 
-namespace BlindBoxShop.Application.Components.Account
+namespace BlindBoxShop.Application.Pages.Account
 {
     // This is a server-side AuthenticationStateProvider that revalidates the security stamp for the connected user
     // every 30 minutes an interactive circuit is connected.

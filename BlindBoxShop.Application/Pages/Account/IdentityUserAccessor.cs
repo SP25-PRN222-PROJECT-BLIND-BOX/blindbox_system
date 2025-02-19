@@ -1,7 +1,7 @@
 using BlindBoxShop.Entities.Models;
 using Microsoft.AspNetCore.Identity;
 
-namespace BlindBoxShop.Application.Components.Account
+namespace BlindBoxShop.Application.Pages.Account
 {
     internal sealed class IdentityUserAccessor(UserManager<User> userManager, IdentityRedirectManager redirectManager)
     {

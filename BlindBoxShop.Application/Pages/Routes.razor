@@ -1,7 +1,7 @@
-﻿@using BlindBoxShop.Application.Components.Account.Shared
+﻿@using BlindBoxShop.Application.Pages.Account.Shared
 <Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
-        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(EmployeeLayout)">
             <NotAuthorized>
                 <RedirectToLogin />
             </NotAuthorized>

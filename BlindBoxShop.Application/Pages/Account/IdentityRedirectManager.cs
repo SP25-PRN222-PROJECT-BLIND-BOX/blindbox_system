@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using System.Diagnostics.CodeAnalysis;
 
-namespace BlindBoxShop.Application.Components.Account
+namespace BlindBoxShop.Application.Pages.Account
 {
     internal sealed class IdentityRedirectManager(NavigationManager navigationManager)
     {

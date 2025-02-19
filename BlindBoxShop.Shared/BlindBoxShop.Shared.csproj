@@ -7,7 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="DataTransferObject\" />
+    <Compile Remove="ResponseModel\**" />
+    <EmbeddedResource Remove="ResponseModel\**" />
+    <None Remove="ResponseModel\**" />
   </ItemGroup>
 
 </Project>

@@ -1,5 +1,5 @@
-using BlindBoxShop.Application.Components;
-using BlindBoxShop.Application.Components.Account;
+using BlindBoxShop.Application;
+using BlindBoxShop.Application.Pages.Account;
 using BlindBoxShop.Application.Extensions;
 using BlindBoxShop.Entities.Models;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -38,9 +38,15 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAntiforgery();
 
+
+
+
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+app.UseStatusCodePagesWithRedirects("/notfound");
 app.MapAdditionalIdentityEndpoints();
+
+
 
 app.Run();

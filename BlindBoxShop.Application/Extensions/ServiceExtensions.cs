@@ -6,8 +6,6 @@ using BlindBoxShop.Service.Contract;
 using BlindBoxShop.Service;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using System.Data;
 
 namespace BlindBoxShop.Application.Extensions
 {

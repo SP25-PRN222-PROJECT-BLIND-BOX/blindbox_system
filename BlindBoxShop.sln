@@ -13,9 +13,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlindBoxShop.Entities", "Bl
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlindBoxShop.Shared", "BlindBoxShop.Shared\BlindBoxShop.Shared.csproj", "{0659403A-A0CC-457D-8A43-85B0BED50514}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlindBoxShop.Service", "BlindBoxShop.Service\BlindBoxShop.Service.csproj", "{E457DC67-DCE3-4DA7-B54C-2A1AFE5CDE2D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlindBoxShop.Service", "BlindBoxShop.Service\BlindBoxShop.Service.csproj", "{E457DC67-DCE3-4DA7-B54C-2A1AFE5CDE2D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlindBoxShop.Service.Contract", "BlindBoxShop.Service.Contract\BlindBoxShop.Service.Contract.csproj", "{9B4DC5DF-9F15-407F-9210-1263023B0EC7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlindBoxShop.Service.Contract", "BlindBoxShop.Service.Contract\BlindBoxShop.Service.Contract.csproj", "{9B4DC5DF-9F15-407F-9210-1263023B0EC7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

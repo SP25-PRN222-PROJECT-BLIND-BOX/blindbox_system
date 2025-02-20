@@ -1,0 +1,28 @@
+﻿
+<Button OnClick="() => DragModal.Toggle()">Create blind box category</Button>
+<Modal @ref="DragModal">
+    <ModalDialog Title="Blind Box Category" IsDraggable="true" ShowMaximizeButton="true">
+        <BodyTemplate>
+            <EditForm Model="@_blindBoxCategoryForCreate" OnValidSubmit="Create" class="card card-body bg-light mt-5">
+                <DataAnnotationsValidator />
+                <div class="col-md-4">
+                    <div class="mb-3 row">
+                        <label for="Name" class="control-label">Name</label>
+                        <InputText id="Name" class="form-control" @bind-Value="_blindBoxCategoryForCreate.Name" />
+                        <ValidationMessage For="@(() => _blindBoxCategoryForCreate.Name)" />
+                    </div>
+                    <div class="mb-3 row">
+                        <label for="Description" class="control-label">Description</label>
+                        <InputText id="Description" class="form-control" @bind-Value="_blindBoxCategoryForCreate.Description" />
+                        <ValidationMessage For="@(() => _blindBoxCategoryForCreate.Description)" />
+                    </div>
+                    <div class="mb-3 row">
+                        <button type="submit" class="btn btn-primary float-end">Create</button>
+                    </div>
+                </div>
+                @* <ValidationSummary /> *@
+            </EditForm>
+        </BodyTemplate>
+    </ModalDialog>
+</Modal>
+

@@ -17,6 +17,9 @@ namespace BlindBoxShop.Service
         private readonly Lazy<IPackageService> _packageService;
         private readonly Lazy<IVoucherService> _voucherService;
 
+
+
+
         public ServiceManager(IRepositoryManager repositoryManager, IMapper mapper)
         {
             _userService = new Lazy<IUserService>(() => new UserService(repositoryManager, mapper));

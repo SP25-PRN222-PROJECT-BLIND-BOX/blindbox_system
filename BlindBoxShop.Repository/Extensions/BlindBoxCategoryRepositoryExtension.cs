@@ -6,6 +6,18 @@ namespace BlindBoxShop.Repository.Extensions
 {
     public static class BlindBoxCategoryRepositoryExtension
     {
+        public static IQueryable<BlindBoxCategory> SearchByName(this IQueryable<BlindBoxCategory> blindBoxCategories, string? name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return blindBoxCategories;
+            }
+
+            var lowerCaseName = name.Trim().ToLower();
+
+            return blindBoxCategories.Where(b => b.Name.ToLower().Contains(lowerCaseName));
+        }
+
         public static IQueryable<BlindBoxCategory> Sort(this IQueryable<BlindBoxCategory> blindBoxCategories, string? orderByQueryString)
         {
             if (string.IsNullOrWhiteSpace(orderByQueryString)) return blindBoxCategories.OrderBy(e => e.Name);

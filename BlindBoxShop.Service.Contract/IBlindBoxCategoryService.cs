@@ -1,4 +1,4 @@
-﻿using BlindBoxShop.Shared.DataTransferObject.User;
+﻿using BlindBoxShop.Shared.DataTransferObject.BlindBoxCategory;
 using BlindBoxShop.Shared.Features;
 using BlindBoxShop.Shared.ResultModel;
 

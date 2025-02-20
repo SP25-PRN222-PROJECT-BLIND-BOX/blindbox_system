@@ -1,12 +1,8 @@
-﻿@page "/emp/categories"
-@attribute [StreamRendering]
+﻿<h3>BlindBoxCategoriesTable</h3>
 
-<h3>BlindBoxCategories</h3>
 
-<p>
-    <a asp-page="Create">Create New</a>
-</p>
-@if (BlindBoxCategory == null)
+
+@if (BlindBoxCategories == null)
 {
     <p>Đang tải dữ liệu...</p>
 }
@@ -28,7 +24,7 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var item in BlindBoxCategory)
+            @foreach (var item in BlindBoxCategories)
             {
                 <tr>
                     <td>

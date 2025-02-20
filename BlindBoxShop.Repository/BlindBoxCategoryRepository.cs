@@ -25,14 +25,14 @@ namespace BlindBoxShop.Repository
         public async Task<PagedList<BlindBoxCategory>> GetBlindBoxCategoriesAsync(BlindBoxCategoryParameter blindBoxCategoryParameter, bool trackChanges)
         {
             var blindBoxCategories = await FindAll(trackChanges)
+                    .SearchByName(blindBoxCategoryParameter.SearchByName)
                     .Sort(blindBoxCategoryParameter.OrderBy)
                     .Skip((blindBoxCategoryParameter.PageNumber - 1) * blindBoxCategoryParameter.PageSize)
                     .Take(blindBoxCategoryParameter.PageSize)
                     .ToListAsync();
 
             var count = await FindAll(trackChanges)
-                 .Skip((blindBoxCategoryParameter.PageNumber - 1) * blindBoxCategoryParameter.PageSize)
-                 .Take(blindBoxCategoryParameter.PageSize)
+                .SearchByName(blindBoxCategoryParameter.SearchByName)
                 .CountAsync();
 
 

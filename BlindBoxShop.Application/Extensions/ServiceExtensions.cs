@@ -69,5 +69,8 @@ namespace BlindBoxShop.Application.Extensions
 
         public static void ConfigureServiceManager(this IServiceCollection services) =>
             services.AddScoped<IServiceManager, ServiceManager>();
+
+        public static void ConfigureBootstrapBlazor(this IServiceCollection services) =>
+            services.AddBootstrapBlazor();
     }
 }

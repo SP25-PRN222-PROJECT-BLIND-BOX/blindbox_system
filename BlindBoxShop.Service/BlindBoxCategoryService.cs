@@ -3,7 +3,7 @@ using BlindBoxShop.Entities.Models;
 using BlindBoxShop.Repository.Contract;
 using BlindBoxShop.Service.Contract;
 using BlindBoxShop.Shared.Constant.ErrorConstant;
-using BlindBoxShop.Shared.DataTransferObject.User;
+using BlindBoxShop.Shared.DataTransferObject.BlindBoxCategory;
 using BlindBoxShop.Shared.Extension;
 using BlindBoxShop.Shared.Features;
 using BlindBoxShop.Shared.ResultModel;

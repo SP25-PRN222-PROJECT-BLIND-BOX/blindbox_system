@@ -1,0 +1,7 @@
+﻿<section>
+    <input type="text" class="mb-3" placeholder="Search by name"
+           @bind-value="@SearchTerm"
+           @bind-value:event="oninput"
+           @onkeyup="SearchChanged" />
+</section>
+

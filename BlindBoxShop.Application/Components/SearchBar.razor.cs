@@ -6,7 +6,7 @@ namespace BlindBoxShop.Application.Components
     {
         public string? SearchTerm { get; set; }
 
-        private Timer _timer;
+        private Timer? _timer;
 
         [Parameter]
         public EventCallback<string> OnSearchChanged { get; set; }
@@ -28,7 +28,7 @@ namespace BlindBoxShop.Application.Components
                 await OnSearchChanged.InvokeAsync(SearchTerm);
             });
 
-            _timer.Dispose();
+            _timer!.Dispose();
 
         }
     }

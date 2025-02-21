@@ -1,28 +1,21 @@
-﻿
-<Button OnClick="() => DragModal.Toggle()">Create blind box category</Button>
-<Modal @ref="DragModal">
-    <ModalDialog Title="Blind Box Category" IsDraggable="true" ShowMaximizeButton="true">
-        <BodyTemplate>
-            <EditForm Model="@_blindBoxCategoryForCreate" OnValidSubmit="Create" class="card card-body bg-light mt-5">
-                <DataAnnotationsValidator />
-                <div class="col-md-4">
-                    <div class="mb-3 row">
-                        <label for="Name" class="control-label">Name</label>
-                        <InputText id="Name" class="form-control" @bind-Value="_blindBoxCategoryForCreate.Name" />
-                        <ValidationMessage For="@(() => _blindBoxCategoryForCreate.Name)" />
-                    </div>
-                    <div class="mb-3 row">
-                        <label for="Description" class="control-label">Description</label>
-                        <InputText id="Description" class="form-control" @bind-Value="_blindBoxCategoryForCreate.Description" />
-                        <ValidationMessage For="@(() => _blindBoxCategoryForCreate.Description)" />
-                    </div>
-                    <div class="mb-3 row">
-                        <button type="submit" class="btn btn-primary float-end">Create</button>
-                    </div>
-                </div>
-                @* <ValidationSummary /> *@
-            </EditForm>
-        </BodyTemplate>
-    </ModalDialog>
-</Modal>
+﻿@using System.ComponentModel.DataAnnotations
+@inject ISnackbar Snackbar
 
+<EditForm Model="@_blindBoxCategoryForCreate" OnValidSubmit="ValidSubmit" OnInvalidSubmit="InvalidSubmit">
+    <MudDialog OnKeyDown="(e) => OnKeyDownAsync(e, context)" Class="rounded-lg">
+        <DialogContent>
+            <DataAnnotationsValidator />
+            <MudCardContent>
+                <MudTextField Label="Name"
+                              @bind-Value="_blindBoxCategoryForCreate.Name" For="@(()=> _blindBoxCategoryForCreate.Name)" />
+                <MudTextField Label="Description" Class="mt-3"
+                              @bind-Value="_blindBoxCategoryForCreate.Description" For="@(() => _blindBoxCategoryForCreate.Description)" />
+            </MudCardContent>
+
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancel">Cancel</MudButton>
+            <MudButton Color="Color.Primary" ButtonType="ButtonType.Submit">Create</MudButton>
+        </DialogActions>
+    </MudDialog>
+</EditForm>

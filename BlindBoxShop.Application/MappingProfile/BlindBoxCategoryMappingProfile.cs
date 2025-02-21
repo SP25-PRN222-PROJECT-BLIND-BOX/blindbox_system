@@ -9,6 +9,7 @@ namespace BlindBoxShop.Application.MappingProfile
         public BlindBoxCategoryMappingProfile()
         {
             CreateMap<BlindBoxCategory, BlindBoxCategoryDto>();
+            CreateMap<BlindBoxCategoryDto, BlindBoxCategoryForUpdate>();
             CreateMap<BlindBoxCategoryForUpdate, BlindBoxCategory>();
             CreateMap<BlindBoxCategoryForCreate, BlindBoxCategory>();
         }

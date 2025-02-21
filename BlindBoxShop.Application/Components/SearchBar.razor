@@ -1,7 +1,10 @@
-﻿<section>
-    <input type="text" class="mb-3" placeholder="Search by name"
-           @bind-value="@SearchTerm"
-           @bind-value:event="oninput"
-           @onkeyup="SearchChanged" />
-</section>
-
+﻿<MudTextField T="string"
+              @bind-value="@SearchTerm"
+              Placeholder="Search"
+              DebounceInterval="500"
+              OnDebounceIntervalElapsed="SearchChanged"
+              Adornment="Adornment.Start"
+              AdornmentIcon="@Icons.Material.Filled.Search"
+              IconSize="Size.Medium"
+              Class="mt-0">
+</MudTextField>

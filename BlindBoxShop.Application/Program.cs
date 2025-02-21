@@ -45,6 +45,7 @@ app.UseAntiforgery();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+app.UseStatusCodePagesWithRedirects("/notfound");
 app.MapAdditionalIdentityEndpoints();
 
 

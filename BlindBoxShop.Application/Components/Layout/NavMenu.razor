@@ -3,12 +3,21 @@
 @inject NavigationManager NavigationManager
 
 
+<MudNavMenu Rounded="true" Margin="Margin.Normal" Class="mud-width-full pa-2">
+    <MudText Typo="Typo.h6" Class="px-4">BoxBox</MudText>
+    <MudText Typo="Typo.body2" Class="px-4 mud-text-secondary">
 
-<MudNavMenu>
-    <MudNavLink Href="/" Match="NavLinkMatch.All">Home</MudNavLink>
-    <MudNavLink Href="/counter" Match="NavLinkMatch.Prefix">Counter</MudNavLink>
-    <MudNavLink Href="/category" Match="NavLinkMatch.Prefix">Category</MudNavLink>
-    <MudNavLink Href="/weather" Match="NavLinkMatch.Prefix">Weather</MudNavLink>
+    </MudText>
+    <MudDivider Class="my-2" />
+    <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="fas fa-chart-line">
+        Dashboard
+    </MudNavLink>
+    <MudNavLink Href="/category" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Category">
+        Category
+    </MudNavLink>
+    <MudNavLink Href="/weather" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.People">
+        Staffs
+    </MudNavLink>
     <MudNavLink Href="/auth" Match="NavLinkMatch.Prefix">Auth Required</MudNavLink>
 
     <AuthorizeView>

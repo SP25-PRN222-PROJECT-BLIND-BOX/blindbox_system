@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BlindBoxShop.Application.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
-    [Migration("20250217085742_AddReplyReviews")]
-    partial class AddReplyReviews
+    [Migration("20250221085916_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -475,6 +475,9 @@ namespace BlindBoxShop.Application.Migrations
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("Value")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 

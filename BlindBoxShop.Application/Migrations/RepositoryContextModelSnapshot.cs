@@ -473,6 +473,9 @@ namespace BlindBoxShop.Application.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("Value")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.ToTable("Vouchers");

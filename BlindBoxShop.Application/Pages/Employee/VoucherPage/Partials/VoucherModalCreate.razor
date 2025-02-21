@@ -1,0 +1,42 @@
+﻿@using BlindBoxShop.Shared.Enum
+<Button OnClick="() => DragModal.Toggle()">Create Voucher</Button>
+<Modal @ref="DragModal">
+    <ModalDialog Title="Create Voucher" IsDraggable="true" ShowMaximizeButton="true">
+        <BodyTemplate>
+            <EditForm Model="@_voucherForCreate" OnValidSubmit="Create" class="card card-body bg-light mt-5">
+                <DataAnnotationsValidator />
+                <div class="col-md-4">
+                    <div class="mb-3 row">
+                        <label for="Value" class="control-label">Value</label>
+                        <InputNumber id="Value" class="form-control" @bind-Value="_voucherForCreate.Value" />
+                        <ValidationMessage For="@(() => _voucherForCreate.Value)" />
+                    </div>
+                    <div class="mb-3 row">
+                        <label for="StartDate" class="control-label">Start Date</label>
+                        <InputDate id="StartDate" class="form-control" @bind-Value="_voucherForCreate.StartDate" />
+                        <ValidationMessage For="@(() => _voucherForCreate.StartDate)" />
+                    </div>
+                    <div class="mb-3 row">
+                        <label for="EndDate" class="control-label">End Date</label>
+                        <InputDate id="EndDate" class="form-control" @bind-Value="_voucherForCreate.EndDate" />
+                        <ValidationMessage For="@(() => _voucherForCreate.EndDate)" />
+                    </div>
+                    <div class="mb-3 row">
+                        <label for="Type" class="control-label">Type</label>
+                        <InputSelect id="Type" class="form-control" @bind-Value="_voucherForCreate.Type">
+                            <option value="">-- Select Type --</option>
+                            @foreach (var type in Enum.GetValues<VoucherType>())
+                            {
+                                <option value="@type">@type</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => _voucherForCreate.Type)" />
+                    </div>
+                    <div class="mb-3 row">
+                        <button type="submit" class="btn btn-primary float-end">Create</button>
+                    </div>
+                </div>
+            </EditForm>
+        </BodyTemplate>
+    </ModalDialog>
+</Modal>

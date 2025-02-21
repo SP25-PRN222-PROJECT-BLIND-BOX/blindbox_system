@@ -1,0 +1,39 @@
+﻿<h3>Voucher Table</h3>
+
+@if (Vouchers == null || !Vouchers.Any())
+{
+    <p>Đang tải dữ liệu...</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Value</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Created At</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var voucher in Vouchers)
+            {
+                <tr>
+                    <td>@voucher.Value</td>
+                    <td>@voucher.StartDate.ToString("yyyy-MM-dd")</td>
+                    <td>@voucher.EndDate.ToString("yyyy-MM-dd")</td>
+                    <td>@voucher.Type</td>
+                    <td>@voucher.Status</td>
+                    <td>@voucher.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" @onclick="() => OpenEditModal(voucher.Id)">Edit</button>
+                        <a asp-page="./Delete" asp-route-id="@voucher.Id" class="btn btn-danger btn-sm">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

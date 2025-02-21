@@ -1,0 +1,29 @@
+﻿@page "/emp/vouchers"
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+@using BlindBoxShop.Application.Pages.Employee.VoucherPage.Partials
+
+<PageTitle>Vouchers</PageTitle>
+<div class="row">
+    <div class="col-md-5 mb-3">
+        <SearchBar OnSearchChanged="SearchChanged" />
+        <PageSizeDropDown SelectedPageSize="SetPageSize" />
+    </div>
+    <div class="col-md-5 mb-3">
+        <SortBar OnSortChanged="SortChanged" />
+    </div>
+    <div class="col-md-2 mb-3">
+        <VoucherModalCreate />
+    </div>
+</div>
+<div class="row">
+    <div class="col mb-3">
+        <VoucherTable Vouchers="@Vouchers">
+        </VoucherTable>
+    </div>
+</div>
+<div class="row">
+    <div class="col mb-3">
+        <Paginations MetaData="MetaData" Spread="1" SelectedPage="SelectedPage" />
+    </div>
+</div>

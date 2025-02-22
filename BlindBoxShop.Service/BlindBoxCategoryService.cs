@@ -3,7 +3,7 @@ using BlindBoxShop.Entities.Models;
 using BlindBoxShop.Repository.Contract;
 using BlindBoxShop.Service.Contract;
 using BlindBoxShop.Shared.Constant.ErrorConstant;
-using BlindBoxShop.Shared.DataTransferObject.User;
+using BlindBoxShop.Shared.DataTransferObject.BlindBoxCategory;
 using BlindBoxShop.Shared.Extension;
 using BlindBoxShop.Shared.Features;
 using BlindBoxShop.Shared.ResultModel;
@@ -13,13 +13,15 @@ namespace BlindBoxShop.Service
 {
     public class BlindBoxCategoryService : BaseService, IBlindBoxCategoryService
     {
+        private readonly IBlindBoxCategoryRepository _blindboxCategoryRepository;
         public BlindBoxCategoryService(IRepositoryManager repositoryManager, IMapper mapper) : base(repositoryManager, mapper)
         {
+            _blindboxCategoryRepository = repositoryManager.BlindBoxCategory;
         }
 
         private async Task<Result<BlindBoxCategory>> GetAndCheckIfBlindBoxCategoryExistByIdAsync(Guid id, bool trackChanges)
         {
-            var blindBoxCategory = await _repositoryManager.BlindBoxCategory.GetBlindBoxCategoryAsync(id, trackChanges);
+            var blindBoxCategory = await _blindboxCategoryRepository.FindById(id, trackChanges);
             if (blindBoxCategory is null)
                 return Result<BlindBoxCategory>.Failure(BlindBoxCategoryErrors.GetBlindBoxCategoryNotFoundError(id));
 
@@ -29,7 +31,7 @@ namespace BlindBoxShop.Service
         private async Task<Result> BlindBoxCategoryExistByNameAsync(string name)
         {
 
-            var checkExist = await _repositoryManager.BlindBoxCategory.FindByCondition(e => e.Name.ToLower().Equals(name.ToLower()), false).AnyAsync();
+            var checkExist = await _blindboxCategoryRepository.FindByCondition(e => e.Name.ToLower().Equals(name.ToLower()), false).AnyAsync();
             if (checkExist)
                 return Result<BlindBoxCategory>.Failure(BlindBoxCategoryErrors.GetBlindBoxCategoryExistError(name));
 
@@ -44,8 +46,9 @@ namespace BlindBoxShop.Service
 
             var blindBoxCategoryEntity = _mapper.Map<BlindBoxCategory>(blindBoxCategoryForCreate);
 
-            await _repositoryManager.BlindBoxCategory.CreateBlindBoxCategoryAsync(blindBoxCategoryEntity);
-            await _repositoryManager.SaveAsync();
+
+            await _blindboxCategoryRepository.CreateAsync(blindBoxCategoryEntity);
+            await _blindboxCategoryRepository.SaveAsync();
 
             var blindBoxCategoryDto = _mapper.Map<BlindBoxCategoryDto>(blindBoxCategoryEntity);
 
@@ -60,9 +63,9 @@ namespace BlindBoxShop.Service
 
             var blindBoxCategoryEntity = checkIfExistResult.GetValue<BlindBoxCategory>();
 
-            _repositoryManager.BlindBoxCategory.DeleteBlindBoxCategory(blindBoxCategoryEntity);
 
-            await _repositoryManager.SaveAsync();
+            _blindboxCategoryRepository.Delete(blindBoxCategoryEntity);
+            await _blindboxCategoryRepository.SaveAsync();
 
             return Result.Success();
         }
@@ -98,9 +101,15 @@ namespace BlindBoxShop.Service
 
             var blindBoxCategoryEntity = checkIfExistResult.GetValue<BlindBoxCategory>();
             _mapper.Map(blindBoxCategoryForUpdate, blindBoxCategoryEntity);
-            await _repositoryManager.SaveAsync();
+            await _blindboxCategoryRepository.SaveAsync();
 
             return Result.Success();
+        }
+
+        public void Dispose()
+        {
+            _blindboxCategoryRepository.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }

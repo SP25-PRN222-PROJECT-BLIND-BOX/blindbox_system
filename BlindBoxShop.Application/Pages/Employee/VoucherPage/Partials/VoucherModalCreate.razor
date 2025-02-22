@@ -1,0 +1,37 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using BlindBoxShop.Shared.Enum
+@inject ISnackbar Snackbar
+
+<EditForm Model="@_voucherForCreate" OnValidSubmit="ValidSubmit" OnInvalidSubmit="InvalidSubmit">
+    <MudDialog OnKeyDown="(e) => OnKeyDownAsync(e, context)" Class="rounded-lg">
+        <DialogContent>
+            <DataAnnotationsValidator />
+            <MudCardContent>
+                <MudTextField Label="Value"
+                              @bind-Value="_voucherForCreate!.Value" For="@(()=> _voucherForCreate!.Value)" />
+                <MudTextField Label="Total date" Class="mt-3"
+                              @bind-Value="TotalDate"
+                              For="@(() => TotalDate)" />
+                <MudSelect @bind-Value="_voucherForCreate.Type"
+                           Label="Type"
+                           Clearable="true">
+                    @foreach (VoucherType state in Enum.GetValues(typeof(VoucherType)))
+                    {
+                        <MudSelectItem Value="@state">@state</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudTextField Label="Start Date" Class="mt-3"
+                              @bind-Value="_voucherForCreate.StartDate"
+                              Disabled="true" />
+
+                <MudTextField Label="End Date" Class="mt-3"
+                              @bind-Value="_voucherForCreate.EndDate"
+                              Disabled="true" />
+            </MudCardContent>
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancel">Cancel</MudButton>
+            <MudButton Color="Color.Primary" ButtonType="ButtonType.Submit">Create</MudButton>
+        </DialogActions>
+    </MudDialog>
+</EditForm>

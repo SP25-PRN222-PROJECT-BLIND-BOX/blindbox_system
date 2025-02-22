@@ -1,0 +1,85 @@
+﻿@using BlindBoxShop.Shared.DataTransferObject.Voucher
+@inject ISnackbar Snackbar
+<MudTable ServerData="ServerReload" Dense="false" Hover="true" @ref="table" FixedHeader="true" FixedFooter="true" Height="500px"
+          @bind-SelectedItem="_voucherDto" T="VoucherDto"
+          OnRowClick="RowClickEvent"
+          CanCancelEdit="true"
+          SortLabel="Sort By"
+          RowEditPreview="BackupItem"
+          RowEditCancel="ResetItemToOriginalValues"
+          RowEditCommit="ItemHasBeenCommitted"
+          IsEditRowSwitchingBlocked="false"
+          AllowUnsorted="false"
+          ApplyButtonPosition="TableApplyButtonPosition.End" EditButtonPosition="TableEditButtonPosition.End" EditTrigger="TableEditTrigger.RowClick">
+    <ToolBarContent>
+        <MudFab StartIcon="@Icons.Material.Filled.Add" DropShadow="true" Size="Size.Small" Label="Add Voucher" @onclick="OpenCreateDialogAsync" Class="mr-3" />
+        <MudFab StartIcon="@Icons.Material.Filled.Remove" DropShadow="true" Size="Size.Small" Label="Remove Voucher" @onclick="OpenRemoveDialogAsync" Disabled="_disableRemoveBtn" />
+        <MudSpacer />
+        <MudTextField T="string"
+                      @bind-value="@searchString"
+                      Placeholder="Search"
+                      DebounceInterval="500"
+                      OnDebounceIntervalElapsed="SearchChanged"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      IconSize="Size.Medium"
+                      Class="mt-0">
+        </MudTextField>
+    </ToolBarContent>
+    <ColGroup>
+        <col style="width:50px;" />
+        <col style="width:50px;" />
+        <col style="width:50px;" />
+        <col style="width:50px;" />
+        <col style="width:50px;" />
+        <col style="width:50px;" />
+        <col style="width:50px;" />
+        <col style="width:50px;" />
+        <col style="width:50px;" />
+    </ColGroup>
+    <HeaderContent>
+        <MudTh><MudTableSortLabel SortLabel="CreatedAt" T="VoucherDto">Created At</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="Id" T="VoucherDto">Id</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="Value" T="VoucherDto">Value</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="StartDate" T="VoucherDto">Start Date</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="EndDate" T="VoucherDto">End Date</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="Type" T="VoucherDto">Type</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="Status" T="VoucherDto">Status</MudTableSortLabel></MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Created At" Format="yyyy/MM/dd">@context.CreatedAt</MudTd>
+            <MudTd DataLabel="Id">@context.Id</MudTd>
+            <MudTd DataLabel="Value">@context.Value</MudTd>
+            <MudTd DataLabel="Start Date">@context.StartDate</MudTd>
+            <MudTd DataLabel="End Date">@context.EndDate</MudTd>
+            <MudTd DataLabel="Type">@context.Type</MudTd>
+            <MudTd DataLabel="Status">@context.Status</MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudText>No matching records found</MudText>
+        </NoRecordsContent>
+        <LoadingContent>
+            <MudText>Loading...</MudText>
+        </LoadingContent>
+        <RowEditingTemplate>
+            <MudTd DataLabel="Created At" Format="yyyy/MM/dd">@context.CreatedAt</MudTd>
+            <MudTd DataLabel="Id">@context.Id</MudTd>
+            <MudTd DataLabel="Value">
+                <MudNumericField @bind-Value="context.Value" Min="0" Required />
+         </MudTd>
+         <MudTd DataLabel="Start Date">
+             <MudDatePicker PickerVariant="PickerVariant.Dialog" @bind-Date="context.StartDate" MinDate="@DateTime.Now" />
+         </MudTd>
+         <MudTd DataLabel="End Date">
+             <MudDatePicker PickerVariant="PickerVariant.Dialog" @bind-Date="context.EndDate" MinDate="@DateTime.Now" />
+         </MudTd>
+         <MudTd DataLabel="Type">@context.Type</MudTd>
+            <MudTd DataLabel="Status">@context.Status</MudTd>
+        </RowEditingTemplate>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="new int[] { 10, 25, 50}" />
+        </PagerContent>
+        <EditButtonContent Context="button">
+            <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" Class="pa-0" OnClick="@button.ButtonAction" Disabled="@button.ButtonDisabled" />
+        </EditButtonContent>
+    </MudTable>

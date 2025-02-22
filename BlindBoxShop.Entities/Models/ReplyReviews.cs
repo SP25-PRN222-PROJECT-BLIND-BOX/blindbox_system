@@ -1,7 +1,7 @@
 ﻿
 namespace BlindBoxShop.Entities.Models
 {
-    public class ReplyReviews : BaseEntity, IBaseEntity, IBaseEntityWithUpdatedAt
+    public class ReplyReviews : BaseEntity, IBaseEntityWithUpdatedAt
     {
         public Guid UserId { get; set; }
 
@@ -9,9 +9,7 @@ namespace BlindBoxShop.Entities.Models
 
         public string Reply { get; set; } = null!;
 
-        public DateTime CreatedAt { get; set ; }
-        
-        public DateTime? UpdatedAt { get ; set ; }
+        public DateTime? UpdatedAt { get; set; }
 
         public User? User { get; set; }
 

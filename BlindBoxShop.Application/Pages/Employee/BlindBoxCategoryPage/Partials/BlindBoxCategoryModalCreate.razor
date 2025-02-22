@@ -1,0 +1,21 @@
+﻿@using System.ComponentModel.DataAnnotations
+@inject ISnackbar Snackbar
+
+<EditForm Model="@_blindBoxCategoryForCreate" OnValidSubmit="ValidSubmit" OnInvalidSubmit="InvalidSubmit">
+    <MudDialog OnKeyDown="(e) => OnKeyDownAsync(e, context)" Class="rounded-lg">
+        <DialogContent>
+            <DataAnnotationsValidator />
+            <MudCardContent>
+                <MudTextField Label="Name"
+                              @bind-Value="_blindBoxCategoryForCreate.Name" For="@(()=> _blindBoxCategoryForCreate.Name)" />
+                <MudTextField Label="Description" Class="mt-3"
+                              @bind-Value="_blindBoxCategoryForCreate.Description" For="@(() => _blindBoxCategoryForCreate.Description)" />
+            </MudCardContent>
+
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancel">Cancel</MudButton>
+            <MudButton Color="Color.Primary" ButtonType="ButtonType.Submit">Create</MudButton>
+        </DialogActions>
+    </MudDialog>
+</EditForm>

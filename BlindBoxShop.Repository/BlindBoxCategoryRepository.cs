@@ -12,27 +12,18 @@ namespace BlindBoxShop.Repository
         {
         }
 
-        public async Task CreateBlindBoxCategoryAsync(BlindBoxCategory blindBoxCategory)
-        {
-            await base.CreateAsync(blindBoxCategory);
-        }
-
-        public void DeleteBlindBoxCategory(BlindBoxCategory blindBoxCategory)
-        {
-            base.Delete(blindBoxCategory);
-        }
 
         public async Task<PagedList<BlindBoxCategory>> GetBlindBoxCategoriesAsync(BlindBoxCategoryParameter blindBoxCategoryParameter, bool trackChanges)
         {
             var blindBoxCategories = await FindAll(trackChanges)
+                    .SearchByName(blindBoxCategoryParameter.SearchByName)
                     .Sort(blindBoxCategoryParameter.OrderBy)
                     .Skip((blindBoxCategoryParameter.PageNumber - 1) * blindBoxCategoryParameter.PageSize)
                     .Take(blindBoxCategoryParameter.PageSize)
                     .ToListAsync();
 
             var count = await FindAll(trackChanges)
-                 .Skip((blindBoxCategoryParameter.PageNumber - 1) * blindBoxCategoryParameter.PageSize)
-                 .Take(blindBoxCategoryParameter.PageSize)
+                .SearchByName(blindBoxCategoryParameter.SearchByName)
                 .CountAsync();
 
 
@@ -43,9 +34,5 @@ namespace BlindBoxShop.Repository
                 blindBoxCategoryParameter.PageSize);
         }
 
-        public async Task<BlindBoxCategory?> GetBlindBoxCategoryAsync(Guid id, bool trackChanges)
-        {
-            return await FindByCondition(e => e.Id.Equals(id), trackChanges).SingleOrDefaultAsync();
-        }
     }
 }

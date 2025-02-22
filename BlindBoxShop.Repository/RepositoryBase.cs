@@ -1,17 +1,21 @@
-﻿using BlindBoxShop.Repository.Contract;
+﻿using BlindBoxShop.Entities.Models;
+using BlindBoxShop.Repository.Contract;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
 namespace BlindBoxShop.Repository
 {
-    public abstract class RepositoryBase<T> : IRepositoryBase<T> where T : class
+    public abstract class RepositoryBase<T> : IRepositoryBase<T> where T : class, IBaseEntity
     {
         protected RepositoryContext RepositoryContext;
-
+        private bool _disposed = false;
         public RepositoryBase(RepositoryContext repositoryContext)
         {
             RepositoryContext = repositoryContext;
         }
+
+        public async Task<T?> FindById(Guid id, bool trackChanges)
+        => await FindByCondition(e => e.Id.Equals(id), trackChanges).SingleOrDefaultAsync();
 
         public IQueryable<T> FindAll(bool trackChanges) =>
             !trackChanges ?
@@ -41,12 +45,12 @@ namespace BlindBoxShop.Repository
             .Set<T>()
             .AddAsync(entity);
 
-        public virtual void Creates(T[] entity) =>
+        public virtual void Create(T[] entity) =>
             RepositoryContext
             .Set<T>()
             .AddRange(entity);
 
-        public virtual async Task CreatesAsync(T[] entity) =>
+        public virtual async Task CreateAsync(T[] entity) =>
             await RepositoryContext
             .Set<T>()
             .AddRangeAsync(entity);
@@ -56,7 +60,7 @@ namespace BlindBoxShop.Repository
             .Set<T>()
             .Update(entity);
 
-        public virtual void Updates(T[] entity) =>
+        public virtual void Update(T[] entity) =>
             RepositoryContext
             .Set<T>()
             .UpdateRange(entity);
@@ -66,9 +70,29 @@ namespace BlindBoxShop.Repository
             .Set<T>()
             .Remove(entity);
 
-        public virtual void Deletes(T[] entity) =>
+        public virtual void Delete(T[] entity) =>
             RepositoryContext
             .Set<T>()
             .RemoveRange(entity);
+
+        public async Task SaveAsync() => await RepositoryContext.SaveChangesAsync();
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    RepositoryContext?.Dispose();
+                }
+                _disposed = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
     }
 }

@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BlindBoxShop.Entities.Models
 {
-    public class BlindBox : BaseEntity, IBaseEntity, IBaseEntityWithUpdatedAt
+    public class BlindBox : BaseEntity, IBaseEntityWithUpdatedAt
     {
         public Guid? BlindBoxCategoryId { get; set; }
 
@@ -24,8 +24,6 @@ namespace BlindBoxShop.Entities.Models
 
         [Range(0, float.MaxValue, ErrorMessage = "Probability must be greater than or equal to 0.")]
         public float Probability { get; set; }
-
-        public DateTime CreatedAt { get; set; }
 
         public DateTime? UpdatedAt { get; set; }
 

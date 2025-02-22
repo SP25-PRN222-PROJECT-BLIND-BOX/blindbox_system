@@ -1,0 +1,22 @@
+﻿@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.DeleteForever" Class="mr-3 mb-n1" />
+            Delete Category?
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField Value="@BlindBoxCategoryDto.Id.ToString()" Label="Category Id" ReadOnly="true" />
+        <MudTextField Value="@BlindBoxCategoryDto.Name" Label="Category Name" ReadOnly="true" />
+        <MudTextField Value="@BlindBoxCategoryDto.Description" Label="Category Description" ReadOnly="true" />
+        <MudTextField Value="@BlindBoxCategoryDto.CreatedAt" Label="Category Created At" ReadOnly="true" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Error" OnClick="DeleteCategory">Delete Category</MudButton>
+    </DialogActions>
+</MudDialog>
+
+

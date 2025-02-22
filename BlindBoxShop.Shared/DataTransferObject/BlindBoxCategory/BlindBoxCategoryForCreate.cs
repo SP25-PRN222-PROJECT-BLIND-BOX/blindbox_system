@@ -1,4 +1,4 @@
-﻿namespace BlindBoxShop.Shared.DataTransferObject.User
+﻿namespace BlindBoxShop.Shared.DataTransferObject.BlindBoxCategory
 {
     public record BlindBoxCategoryForCreate : BlindBoxCategoryForManipulation
     {

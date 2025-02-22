@@ -1,0 +1,13 @@
+﻿@page "/voucher"
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+@using BlindBoxShop.Application.Pages.Employee.VoucherPage.Partials
+
+<PageTitle>Voucher</PageTitle>
+<MudContainer Class="mt-16 px-8 min-vh-100" MaxWidth="MaxWidth.ExtraExtraLarge">
+    <MudStack>
+        <MudPaper Class="pa-3">
+            <VoucherTable />
+        </MudPaper>
+    </MudStack>
+</MudContainer>

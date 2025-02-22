@@ -1,6 +1,6 @@
 ﻿namespace BlindBoxShop.Service.Contract
 {
-    public interface IPackageService
+    public interface IPackageService : IDisposable
     {
 
     }

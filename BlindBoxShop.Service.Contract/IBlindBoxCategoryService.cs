@@ -1,10 +1,10 @@
-﻿using BlindBoxShop.Shared.DataTransferObject.User;
+﻿using BlindBoxShop.Shared.DataTransferObject.BlindBoxCategory;
 using BlindBoxShop.Shared.Features;
 using BlindBoxShop.Shared.ResultModel;
 
 namespace BlindBoxShop.Service.Contract
 {
-    public interface IBlindBoxCategoryService
+    public interface IBlindBoxCategoryService : IDisposable
     {
         Task<Result<IEnumerable<BlindBoxCategoryDto>>> GetBlindBoxCategoriesAsync(BlindBoxCategoryParameter blindBoxCategoryParameter, bool trackChanges);
 

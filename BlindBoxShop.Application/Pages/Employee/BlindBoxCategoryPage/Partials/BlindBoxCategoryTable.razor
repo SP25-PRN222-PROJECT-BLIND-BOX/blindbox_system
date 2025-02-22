@@ -1,0 +1,69 @@
+﻿@using BlindBoxShop.Shared.DataTransferObject.BlindBoxCategory
+@inject ISnackbar Snackbar
+
+<MudTable ServerData="ServerReload" Dense="false" Hover="true" @ref="table" FixedHeader="true" FixedFooter="true" Height="500px" MultiSelection="true"
+          @bind-SelectedItem="_blindBoxCategoryDto" T="BlindBoxCategoryDto"
+          OnRowClick="RowClickEvent"
+          CanCancelEdit="true"
+          SortLabel="Sort By"
+          RowEditPreview="BackupItem"
+          RowEditCancel="ResetItemToOriginalValues"
+          RowEditCommit="ItemHasBeenCommitted"
+          IsEditRowSwitchingBlocked="false"
+          AllowUnsorted="false"
+          ApplyButtonPosition="TableApplyButtonPosition.End" EditButtonPosition="TableEditButtonPosition.End" EditTrigger="TableEditTrigger.RowClick">
+    <ToolBarContent>
+        <MudFab StartIcon="@Icons.Material.Filled.Add" DropShadow="true" Size="Size.Small" Label="Add Category" @onclick="OpenCreateDialogAsync" Class="mr-3" />
+        <MudFab StartIcon="@Icons.Material.Filled.Remove" DropShadow="true" Size="Size.Small" Label="Remove Category" @onclick="OpenRemoveDialogAsync" Disabled="_disableRemoveBtn" />
+        <MudSpacer />
+        <MudTextField T="string"
+                      @bind-value="@searchString"
+                      Placeholder="Search"
+                      DebounceInterval="500"
+                      OnDebounceIntervalElapsed="SearchChanged"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      IconSize="Size.Medium"
+                      Class="mt-0">
+        </MudTextField>
+    </ToolBarContent>
+    <ColGroup>
+        <col style="width:50px;" />
+        <col style="width:80px;" />
+        <col style="width:50%;" />
+        <col style="width:50px;" />
+    </ColGroup>
+    <HeaderContent>
+        <MudTh><MudTableSortLabel SortLabel="CreatedAt" T="BlindBoxCategoryDto">Created At</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="Name" T="BlindBoxCategoryDto">Name</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="Description" T="BlindBoxCategoryDto">Description</MudTableSortLabel></MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Created At">@context.CreatedAt</MudTd>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="Description">@context.Description</MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudText>No matching records found</MudText>
+        </NoRecordsContent>
+        <LoadingContent>
+            <MudText>Loading...</MudText>
+        </LoadingContent>
+        <RowEditingTemplate>
+            <MudTd DataLabel="Created At">@context.CreatedAt</MudTd>
+            <MudTd DataLabel="Name">
+                <MudTextField T="string" @bind-Value="context.Name" Required />
+         </MudTd>
+         <MudTd DataLabel="Description">
+             <MudTextField T="string" @bind-Value="context.Description" Required />
+         </MudTd>
+     </RowEditingTemplate>
+     <PagerContent>
+         <MudTablePager PageSizeOptions="new int[] { 10, 25, 50}" />
+     </PagerContent>
+     <EditButtonContent Context="button">
+         <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" Class="pa-0" OnClick="@button.ButtonAction" Disabled="@button.ButtonDisabled" />
+     </EditButtonContent>
+ </MudTable>
+
+

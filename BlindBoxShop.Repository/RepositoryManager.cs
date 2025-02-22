@@ -1,69 +1,138 @@
 ﻿using BlindBoxShop.Repository.Contract;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace BlindBoxShop.Repository
 {
     public sealed class RepositoryManager : IRepositoryManager
     {
-        private readonly RepositoryContext _repositoryContext;
-        private readonly Lazy<IBlindBoxCategoryRepository> _blindBoxCategoryRepository;
-        private readonly Lazy<IBlindBoxImageRepository> _blindBoxImageRepository;
-        private readonly Lazy<IBlindBoxPriceHistoryRepository> _blindBoxPriceHistoryRepository;
-        private readonly Lazy<IBlindBoxRepository> _blindBoxRepository;
-        private readonly Lazy<ICustomerReviewsRepository> _customerReviewsRepository;
-        private readonly Lazy<IOrderDetailRepository> _orderDetailRepository;
-        private readonly Lazy<IOrderRepository> _orderRepository;
-        private readonly Lazy<IPackageRepository> _packageRepository;
-        private readonly Lazy<IVoucherRepository> _voucherRepository;
-        private readonly Lazy<IUserRepository> _userRepository;
+        private readonly IDbContextFactory<RepositoryContext> _dbContextFactory;
 
-        public RepositoryManager(RepositoryContext repositoryContext)
+
+        public RepositoryManager(IDbContextFactory<RepositoryContext> dbContextFactory)
         {
-            _repositoryContext = repositoryContext;
-
-            _blindBoxCategoryRepository = new Lazy<IBlindBoxCategoryRepository>(() => new BlindBoxCategoryRepository(repositoryContext));
-            _blindBoxImageRepository = new Lazy<IBlindBoxImageRepository>(() => new BlindBoxImageRepository(repositoryContext));
-            _blindBoxPriceHistoryRepository = new Lazy<IBlindBoxPriceHistoryRepository>(() => new BlindBoxPriceHistoryRepository(repositoryContext));
-            _blindBoxRepository = new Lazy<IBlindBoxRepository>(() => new BlindBoxRepository(repositoryContext));
-            _customerReviewsRepository = new Lazy<ICustomerReviewsRepository>(() => new CustomerReviewsRepository(repositoryContext));
-            _orderDetailRepository = new Lazy<IOrderDetailRepository>(() => new OrderDetailRepository(repositoryContext));
-            _orderRepository = new Lazy<IOrderRepository>(() => new OrderRepository(repositoryContext));
-            _packageRepository = new Lazy<IPackageRepository>(() => new PackageRepository(repositoryContext));
-            _voucherRepository = new Lazy<IVoucherRepository>(() => new VoucherRepository(repositoryContext));
-            _userRepository = new Lazy<IUserRepository>(() => new UserRepository(repositoryContext));
+            _dbContextFactory = dbContextFactory;
         }
 
-        public IUserRepository User => _userRepository.Value;
-
-        public IBlindBoxCategoryRepository BlindBoxCategory => _blindBoxCategoryRepository.Value;
-
-        public IBlindBoxImageRepository BlindBoxImage => _blindBoxImageRepository.Value;
-
-        public IBlindBoxPriceHistoryRepository BlindBoxPriceHistory => _blindBoxPriceHistoryRepository.Value;
-
-        public IBlindBoxRepository BlindBox => _blindBoxRepository.Value;
-
-        public ICustomerReviewsRepository CustomerReviews => _customerReviewsRepository.Value;
-
-        public IOrderDetailRepository OrderDetail => _orderDetailRepository.Value;
-
-        public IOrderRepository Order => _orderRepository.Value;
-
-        public IPackageRepository Package => _packageRepository.Value;
-
-        public IVoucherRepository Voucher => _voucherRepository.Value;
-
-        public async Task<IDbContextTransaction> BeginTransactionAsync()
+        public IUserRepository User
         {
-            return await _repositoryContext.Database.BeginTransactionAsync();
+            get
+            {
+                var context = _dbContextFactory.CreateDbContext();
+                return new UserRepository(context);
+            }
         }
 
-        public IExecutionStrategy CreateExecutionStrategy()
+        public IBlindBoxCategoryRepository BlindBoxCategory
         {
-            return _repositoryContext.Database.CreateExecutionStrategy();
+            get
+            {
+                var context = _dbContextFactory.CreateDbContext();
+                return new BlindBoxCategoryRepository(context);
+            }
         }
 
-        public async Task SaveAsync() => await _repositoryContext.SaveChangesAsync();
-        public void Save() => _repositoryContext.SaveChanges();
+        public IBlindBoxImageRepository BlindBoxImage
+        {
+            get
+            {
+                var context = _dbContextFactory.CreateDbContext();
+                return new BlindBoxImageRepository(context);
+            }
+        }
+
+        public IBlindBoxPriceHistoryRepository BlindBoxPriceHistory
+        {
+            get
+            {
+                var context = _dbContextFactory.CreateDbContext();
+                return new BlindBoxPriceHistoryRepository(context);
+            }
+        }
+
+        public IBlindBoxRepository BlindBox
+        {
+            get
+            {
+                var context = _dbContextFactory.CreateDbContext();
+                return new BlindBoxRepository(context);
+            }
+        }
+
+        public ICustomerReviewsRepository CustomerReviews
+        {
+            get
+            {
+                var context = _dbContextFactory.CreateDbContext();
+                return new CustomerReviewsRepository(context);
+            }
+        }
+
+        public IOrderDetailRepository OrderDetail
+        {
+            get
+            {
+                var context = _dbContextFactory.CreateDbContext();
+                return new OrderDetailRepository(context);
+            }
+        }
+
+        public IOrderRepository Order
+        {
+            get
+            {
+                var context = _dbContextFactory.CreateDbContext();
+                return new OrderRepository(context);
+            }
+        }
+        public IPackageRepository Package
+        {
+            get
+            {
+                var context = _dbContextFactory.CreateDbContext();
+                return new PackageRepository(context);
+            }
+        }
+
+        public IVoucherRepository Voucher
+        {
+            get
+            {
+                var context = _dbContextFactory.CreateDbContext();
+                return new VoucherRepository(context);
+            }
+        }
+
+        public IReplyReviewsRepository ReplyReviews
+        {
+            get
+            {
+                var context = _dbContextFactory.CreateDbContext();
+                return new ReplyReviewsRepository(context);
+            }
+        }
+
+        public async Task ExecuteInTransactionAsync(Func<RepositoryContext, Task> operation)
+        {
+            // Tạo một instance DbContext từ factory
+            using var context = _dbContextFactory.CreateDbContext();
+            // Bắt đầu giao dịch
+            using var transaction = await context.Database.BeginTransactionAsync();
+            try
+            {
+                // Thực hiện các thao tác với cùng một DbContext
+                await operation(context);
+                // Lưu các thay đổi
+                await context.SaveChangesAsync();
+                // Commit giao dịch nếu thành công
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                // Rollback nếu có lỗi
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
     }
 }

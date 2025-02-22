@@ -1,0 +1,67 @@
+﻿@implements IDisposable
+
+@inject NavigationManager NavigationManager
+
+
+<MudNavMenu Rounded="true" Margin="Margin.Normal" Class="mud-width-full pa-2">
+    <MudText Typo="Typo.h6" Class="px-4">BoxBox</MudText>
+    <MudText Typo="Typo.body2" Class="px-4 mud-text-secondary">
+
+    </MudText>
+    <MudDivider Class="my-2" />
+    <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="fas fa-chart-line">
+        Dashboard
+    </MudNavLink>
+    <MudNavLink Href="/category" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Category">
+        Category
+    </MudNavLink>
+    <MudNavLink Href="/voucher" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Discount">
+        Voucher
+    </MudNavLink>
+    <MudNavLink Href="/weather" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.People">
+        Staffs
+    </MudNavLink>
+    <MudNavLink Href="/auth" Match="NavLinkMatch.Prefix">Auth Required</MudNavLink>
+
+    <AuthorizeView>
+        <Authorized>
+            <div class="nav-item px-3">
+                <MudNavLink Href="/Account/Manage" Match="NavLinkMatch.Prefix"> @context.User.Identity?.Name</MudNavLink>
+                </div>
+
+                <div class="nav-item px-3">
+                    <form action="Account/Logout" method="post">
+                        <AntiforgeryToken />
+                        <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+                        <button type="submit" class="nav-link">
+                            <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
+                        </button>
+                    </form>
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <MudNavLink Href="/Account/Register" Match="NavLinkMatch.Prefix"> Register</MudNavLink>
+                <MudNavLink Href="/Account/Login" Match="NavLinkMatch.Prefix"> Login</MudNavLink>
+            </NotAuthorized>
+        </AuthorizeView>
+    </MudNavMenu>
+    @code {
+    private string? currentUrl;
+
+    protected override void OnInitialized()
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}

@@ -1,6 +1,6 @@
 ﻿namespace BlindBoxShop.Service.Contract
 {
-    public interface IBlindBoxPriceHistoryService
+    public interface IBlindBoxPriceHistoryService : IDisposable
     {
 
     }

@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BlindBoxShop.Entities.Models
 {
-    public class Package : BaseEntity, IBaseEntity, IBaseEntityWithUpdatedAt
+    public class Package : BaseEntity, IBaseEntityWithUpdatedAt
     {
         public PackageType Type { get; set; }
 
@@ -16,8 +16,6 @@ namespace BlindBoxShop.Entities.Models
 
         [Range(0, int.MaxValue, ErrorMessage = "CurrentTotalBlindBox must be greater than or equal to 0.")]
         public int CurrentTotalBlindBox { get; set; }
-
-        public DateTime CreatedAt { get; set; }
 
         public DateTime? UpdatedAt { get; set; }
 

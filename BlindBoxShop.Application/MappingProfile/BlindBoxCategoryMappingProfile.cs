@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using BlindBoxShop.Entities.Models;
-using BlindBoxShop.Shared.DataTransferObject.User;
+using BlindBoxShop.Shared.DataTransferObject.BlindBoxCategory;
 
 namespace BlindBoxShop.Application.MappingProfile
 {
@@ -9,6 +9,8 @@ namespace BlindBoxShop.Application.MappingProfile
         public BlindBoxCategoryMappingProfile()
         {
             CreateMap<BlindBoxCategory, BlindBoxCategoryDto>();
+            CreateMap<BlindBoxCategoryDto, BlindBoxCategoryDto>();
+            CreateMap<BlindBoxCategoryDto, BlindBoxCategoryForUpdate>();
             CreateMap<BlindBoxCategoryForUpdate, BlindBoxCategory>();
             CreateMap<BlindBoxCategoryForCreate, BlindBoxCategory>();
         }

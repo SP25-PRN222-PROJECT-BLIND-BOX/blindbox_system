@@ -4,13 +4,6 @@ namespace BlindBoxShop.Repository.Contract
 {
     public interface IRepositoryManager
     {
-        Task<IDbContextTransaction> BeginTransactionAsync();
-
-        IExecutionStrategy CreateExecutionStrategy();
-
-        Task SaveAsync();
-
-        void Save();
 
         IUserRepository User { get; }
 
@@ -31,5 +24,6 @@ namespace BlindBoxShop.Repository.Contract
         IPackageRepository Package { get; }
 
         IVoucherRepository Voucher { get; }
+        IReplyReviewsRepository ReplyReviews { get; }
     }
 }

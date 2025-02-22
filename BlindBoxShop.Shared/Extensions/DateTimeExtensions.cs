@@ -5,7 +5,8 @@
         public static DateTime GetCurrentTimeInTimeZone(this DateTime datetime, string timeZoneId)
         {
             TimeZoneInfo timeZone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
-            return TimeZoneInfo.ConvertTimeFromUtc(datetime, timeZone);
+            DateTime utcTime = datetime.Kind == DateTimeKind.Utc ? datetime : datetime.ToUniversalTime();
+            return TimeZoneInfo.ConvertTimeFromUtc(utcTime, timeZone);
         }
 
         public static DateTime SEAsiaStandardTime(this DateTime datetime)

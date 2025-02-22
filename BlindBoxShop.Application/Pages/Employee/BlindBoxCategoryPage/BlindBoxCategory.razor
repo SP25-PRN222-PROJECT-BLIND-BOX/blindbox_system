@@ -1,16 +1,15 @@
 ﻿@page "/category"
 @attribute [StreamRendering]
 @rendermode InteractiveServer
-@inject IDialogService Dialog
+
 @using BlindBoxShop.Application.Pages.Employee.BlindBoxCategoryPage.Partials
 
 <PageTitle>Category</PageTitle>
 <MudContainer Class="mt-16 px-8 min-vh-100" MaxWidth="MaxWidth.ExtraExtraLarge">
     <MudStack>
         <MudPaper Class="pa-3">
-            <BlindBoxCategoryTable>
-
-            </BlindBoxCategoryTable>
+            <BlindBoxCategoryTable />
         </MudPaper>
     </MudStack>
 </MudContainer>
+

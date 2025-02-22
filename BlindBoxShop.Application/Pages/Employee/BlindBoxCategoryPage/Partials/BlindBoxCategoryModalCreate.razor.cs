@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
-using System.Linq;
 
 namespace BlindBoxShop.Application.Pages.Employee.BlindBoxCategoryPage.Partials
 {
@@ -14,29 +13,29 @@ namespace BlindBoxShop.Application.Pages.Employee.BlindBoxCategoryPage.Partials
         private BlindBoxCategoryForCreate? _blindBoxCategoryForCreate = new BlindBoxCategoryForCreate();
 
         [Inject]
-        public IServiceManager ServiceManager { get; set; }
+        public IServiceManager? ServiceManager { get; set; }
 
         [CascadingParameter]
-        private IMudDialogInstance MudDialog { get; set; }
+        private IMudDialogInstance? MudDialog { get; set; }
 
         [Inject]
-        private IDialogService DialogService { get; set; }
+        private IDialogService? DialogService { get; set; }
 
 
 
         private async Task ValidSubmit(EditContext context)
         {
-            var result = await ServiceManager.BlindBoxCategoryService.CreateBlindBoxCategoryAsync(_blindBoxCategoryForCreate!);
+            var result = await ServiceManager!.BlindBoxCategoryService.CreateBlindBoxCategoryAsync(_blindBoxCategoryForCreate!);
 
             if (result.IsSuccess)
             {
                 _blindBoxCategoryForCreate = new();
-                MudDialog.Close(DialogResult.Ok(result.GetValue<BlindBoxCategoryDto>()));
+                MudDialog!.Close(DialogResult.Ok(result.GetValue<BlindBoxCategoryDto>()));
                 ShowVariant("Create category successfully.", Severity.Info);
             }
             else
             {
-                var errorsMessage = result.Errors.Select(e => e.Description).ToList();
+                var errorsMessage = result.Errors!.Select(e => e.Description).ToList();
                 var errorMeesage = string.Join(", ", errorsMessage).Trim();
                 ShowVariant(errorMeesage, Severity.Warning);
             }
@@ -44,7 +43,7 @@ namespace BlindBoxShop.Application.Pages.Employee.BlindBoxCategoryPage.Partials
 
         private async Task InvalidSubmit(EditContext context)
         {
-            await DialogService.ShowMessageBox(
+            await DialogService!.ShowMessageBox(
                             "Sorry",
                             @"You must fill all the field!",
                             yesText: "Got it",
@@ -54,7 +53,7 @@ namespace BlindBoxShop.Application.Pages.Employee.BlindBoxCategoryPage.Partials
 
 
 
-        private void Cancel() => MudDialog.Cancel();
+        private void Cancel() => MudDialog!.Cancel();
 
         private async Task OnKeyDownAsync(KeyboardEventArgs args, EditContext context)
         {

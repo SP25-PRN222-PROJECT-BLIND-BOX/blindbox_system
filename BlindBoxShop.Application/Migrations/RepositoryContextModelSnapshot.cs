@@ -237,6 +237,9 @@ namespace BlindBoxShop.Application.Migrations
                     b.Property<Guid>("BlindBoxPriceHistoryId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<Guid>("OrderId")
                         .HasColumnType("uniqueidentifier");
 

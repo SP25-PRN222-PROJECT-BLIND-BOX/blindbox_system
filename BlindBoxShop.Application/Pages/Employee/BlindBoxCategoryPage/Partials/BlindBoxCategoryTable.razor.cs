@@ -5,7 +5,6 @@ using BlindBoxShop.Shared.Extension;
 using BlindBoxShop.Shared.Features;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
-using static MudBlazor.CategoryTypes;
 
 namespace BlindBoxShop.Application.Pages.Employee.BlindBoxCategoryPage.Partials
 {
@@ -21,12 +20,10 @@ namespace BlindBoxShop.Application.Pages.Employee.BlindBoxCategoryPage.Partials
 
         private BlindBoxCategoryDto? _blindBoxCategoryDtoBeforeEdit;
 
-        private int selectedRowNumber = -1;
-
         private Timer? _timer;
 
         [Inject]
-        public IDialogService DialogService { get; set; }
+        public IDialogService? DialogService { get; set; }
 
         [Inject]
         public IServiceManager? ServiceManager { get; set; }
@@ -103,18 +100,12 @@ namespace BlindBoxShop.Application.Pages.Employee.BlindBoxCategoryPage.Partials
         private async Task OnSearch(string? text)
         {
             searchString = text;
-            await table.ReloadServerData();
+            await table!.ReloadServerData();
         }
 
         private void BackupItem(object element)
         {
-            _blindBoxCategoryDtoBeforeEdit = new()
-            {
-                Id = ((BlindBoxCategoryDto)element).Id,
-                Name = ((BlindBoxCategoryDto)element).Name,
-                Description = ((BlindBoxCategoryDto)element).Description,
-                CreatedAt = ((BlindBoxCategoryDto)element).CreatedAt,
-            };
+            _blindBoxCategoryDtoBeforeEdit = Mapper!.Map<BlindBoxCategoryDto>(element);
         }
 
         private void RowClickEvent(TableRowClickEventArgs<BlindBoxCategoryDto> tableRowClickEventArgs)
@@ -161,18 +152,14 @@ namespace BlindBoxShop.Application.Pages.Employee.BlindBoxCategoryPage.Partials
 
         private void ResetItemToOriginalValues(object element)
         {
-
-            var item = (BlindBoxCategoryDto)element;
             if (_blindBoxCategoryDtoBeforeEdit != null)
             {
-                item.Name = _blindBoxCategoryDtoBeforeEdit.Name;
-                item.Description = _blindBoxCategoryDtoBeforeEdit.Description;
-                item.CreatedAt = _blindBoxCategoryDtoBeforeEdit.CreatedAt;
+                Mapper!.Map(_blindBoxCategoryDtoBeforeEdit, element);
             }
-            if (_blindBoxCategoryDtoBeforeEdit.Equals(table.SelectedItem))
+            if (_blindBoxCategoryDtoBeforeEdit!.Equals(table!.SelectedItem))
             {
                 _disableRemoveBtn = true;
-                table.SelectedItem = null;
+                table.SetSelectedItem(null);
             }
         }
 
@@ -187,8 +174,8 @@ namespace BlindBoxShop.Application.Pages.Employee.BlindBoxCategoryPage.Partials
         {
             var options = new DialogOptions { CloseOnEscapeKey = true };
 
-            var dialogResult = await (await DialogService.ShowAsync<BlindBoxCategoryModalCreate>("Create Category", options)).Result;
-            if (!dialogResult.Canceled)
+            var dialogResult = await (await DialogService!.ShowAsync<BlindBoxCategoryModalCreate>("Create Category", options)).Result;
+            if (!dialogResult!.Canceled)
             {
                 await ReloadDataAsync();
             }
@@ -196,13 +183,13 @@ namespace BlindBoxShop.Application.Pages.Employee.BlindBoxCategoryPage.Partials
 
         private async Task OpenRemoveDialogAsync()
         {
-            var item = table.SelectedItem;
+            var item = table!.SelectedItem;
             var options = new DialogOptions { CloseOnEscapeKey = true };
             var parameters = new DialogParameters<BlindBoxCategoryModalRemove> { { x => x.BlindBoxCategoryDto, item } };
 
-            var dialog = await DialogService.ShowAsync<BlindBoxCategoryModalRemove>("Delete category", parameters, options);
+            var dialog = await DialogService!.ShowAsync<BlindBoxCategoryModalRemove>("Delete category", parameters, options);
             var dialogResult = await dialog.Result;
-            if (!dialogResult.Canceled)
+            if (!dialogResult!.Canceled)
             {
                 await ReloadDataAsync();
             }

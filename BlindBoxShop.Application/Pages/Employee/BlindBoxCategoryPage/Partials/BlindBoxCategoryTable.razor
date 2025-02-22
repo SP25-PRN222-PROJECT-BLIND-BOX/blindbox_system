@@ -1,7 +1,7 @@
 ﻿@using BlindBoxShop.Shared.DataTransferObject.BlindBoxCategory
 @inject ISnackbar Snackbar
 
-<MudTable ServerData="ServerReload" Dense="false" Hover="true" @ref="table" FixedHeader="true" FixedFooter="true" Height="500px"
+<MudTable ServerData="ServerReload" Dense="false" Hover="true" @ref="table" FixedHeader="true" FixedFooter="true" Height="500px" MultiSelection="true"
           @bind-SelectedItem="_blindBoxCategoryDto" T="BlindBoxCategoryDto"
           OnRowClick="RowClickEvent"
           CanCancelEdit="true"
@@ -12,7 +12,6 @@
           IsEditRowSwitchingBlocked="false"
           AllowUnsorted="false"
           ApplyButtonPosition="TableApplyButtonPosition.End" EditButtonPosition="TableEditButtonPosition.End" EditTrigger="TableEditTrigger.RowClick">
-
     <ToolBarContent>
         <MudFab StartIcon="@Icons.Material.Filled.Add" DropShadow="true" Size="Size.Small" Label="Add Category" @onclick="OpenCreateDialogAsync" Class="mr-3" />
         <MudFab StartIcon="@Icons.Material.Filled.Remove" DropShadow="true" Size="Size.Small" Label="Remove Category" @onclick="OpenRemoveDialogAsync" Disabled="_disableRemoveBtn" />
@@ -29,7 +28,6 @@
         </MudTextField>
     </ToolBarContent>
     <ColGroup>
-
         <col style="width:50px;" />
         <col style="width:80px;" />
         <col style="width:50%;" />
@@ -52,7 +50,6 @@
             <MudText>Loading...</MudText>
         </LoadingContent>
         <RowEditingTemplate>
-
             <MudTd DataLabel="Created At">@context.CreatedAt</MudTd>
             <MudTd DataLabel="Name">
                 <MudTextField T="string" @bind-Value="context.Name" Required />
@@ -62,11 +59,10 @@
          </MudTd>
      </RowEditingTemplate>
      <PagerContent>
-         <MudTablePager PageSizeOptions="new int[] { 25, 50}" />
+         <MudTablePager PageSizeOptions="new int[] { 10, 25, 50}" />
      </PagerContent>
      <EditButtonContent Context="button">
          <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" Class="pa-0" OnClick="@button.ButtonAction" Disabled="@button.ButtonDisabled" />
-
      </EditButtonContent>
  </MudTable>
 

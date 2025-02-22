@@ -14,13 +14,17 @@ namespace BlindBoxShop.Service
 {
     public class VoucherService : BaseService, IVoucherService
     {
+        private readonly IVoucherRepository _voucherRepository;
+        private readonly IMapper _mapper;
         public VoucherService(IRepositoryManager repositoryManager, IMapper mapper) : base(repositoryManager, mapper)
         {
+            _voucherRepository = repositoryManager.Voucher;
+            _mapper = mapper;
         }
 
         private async Task<Result<Voucher>> GetAndCheckIfVoucherExistByIdAsync(Guid id, bool trackChanges)
         {
-            var voucher = await _repositoryManager.Voucher.GetVoucherAsync(id, trackChanges);
+            var voucher = await _repositoryManager.Voucher.FindById(id, trackChanges);
             if (voucher is null)
                 return Result<Voucher>.Failure(VoucherErrors.GetVoucherNotFoundError(id));
 
@@ -31,8 +35,8 @@ namespace BlindBoxShop.Service
         {
             var voucherEntity = _mapper.Map<Voucher>(voucherForCreateDto);
             voucherEntity.Status = VoucherStatus.Active;
-            await _repositoryManager.Voucher.CreateVoucherAsync(voucherEntity);
-            await _repositoryManager.SaveAsync();
+            await _voucherRepository.CreateAsync(voucherEntity);
+            await _voucherRepository.SaveAsync();
 
             var voucherDto = _mapper.Map<VoucherDto>(voucherEntity);
 
@@ -47,15 +51,15 @@ namespace BlindBoxShop.Service
 
             var voucherEntity = checkIfExistResult.GetValue<Voucher>();
 
-            _repositoryManager.Voucher.DeleteVoucher(voucherEntity);
-            await _repositoryManager.SaveAsync();
+            _voucherRepository.Delete(voucherEntity);
+            await _voucherRepository.SaveAsync();
 
             return Result.Success();
         }
 
         public async Task<Result<IEnumerable<VoucherDto>>> GetVouchersAsync(VoucherParameter voucherParameter, bool trackChanges)
         {
-            var vouchers = await _repositoryManager.Voucher.GetVouchersAsync(voucherParameter, trackChanges);
+            var vouchers = await _voucherRepository.GetVouchersAsync(voucherParameter, trackChanges);
 
             var vouchersDto = _mapper.Map<IEnumerable<VoucherDto>>(vouchers);
 
@@ -83,7 +87,7 @@ namespace BlindBoxShop.Service
 
             var voucherEntity = checkIfExistResult.GetValue<Voucher>();
             _mapper.Map(voucherForUpdateDto, voucherEntity);
-            await _repositoryManager.SaveAsync();
+            await _voucherRepository.SaveAsync();
 
             return Result.Success();
         }

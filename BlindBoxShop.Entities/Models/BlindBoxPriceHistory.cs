@@ -2,15 +2,13 @@
 
 namespace BlindBoxShop.Entities.Models
 {
-    public class BlindBoxPriceHistory : BaseEntity, IBaseEntity
+    public class BlindBoxPriceHistory : BaseEntity
     {
         public Guid? BlindBoxId { get; set; }
 
         public decimal DefaultPrice { get; set; }
 
         public decimal Price { get; set; }
-
-        public DateTime CreatedAt { get; set; }
 
         public virtual BlindBox? BlindBox { get; set; }
 

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BlindBoxShop.Application.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
-    [Migration("20250221085916_InitialMigration")]
-    partial class InitialMigration
+    [Migration("20250222052251_AddColumnValueToVoucer")]
+    partial class AddColumnValueToVoucer
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -239,6 +239,9 @@ namespace BlindBoxShop.Application.Migrations
 
                     b.Property<Guid>("BlindBoxPriceHistoryId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<Guid>("OrderId")
                         .HasColumnType("uniqueidentifier");

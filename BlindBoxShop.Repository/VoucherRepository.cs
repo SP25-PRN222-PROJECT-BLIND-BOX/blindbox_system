@@ -13,24 +13,6 @@ namespace BlindBoxShop.Repository
         {
         }
 
-        // Create a voucher
-        public async Task CreateVoucherAsync(Voucher voucher)
-        {
-            await CreateAsync(voucher);
-        }
-
-        // Delete a voucher
-        public void DeleteVoucher(Voucher voucher)
-        {
-            Delete(voucher);
-        }
-
-        // Get a single voucher by ID
-        public async Task<Voucher?> GetVoucherAsync(Guid id, bool trackChanges)
-        {
-            return await FindByCondition(v => v.Id == id, trackChanges).SingleOrDefaultAsync();
-        }
-
         public async Task<PagedList<Voucher>> GetVouchersAsync(VoucherParameter voucherParameter, bool trackChanges)
         {
             var vouchers = await FindAll(trackChanges)

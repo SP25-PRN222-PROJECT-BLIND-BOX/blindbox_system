@@ -12,7 +12,7 @@ namespace BlindBoxShop.Application.Extensions
     public static class ServiceExtensions
     {
         public static void ConfigureSqlContext(this IServiceCollection services, IConfiguration configuration) =>
-           services.AddDbContext<RepositoryContext>(opts => opts.UseSqlServer(configuration.GetConnectionString("sqlConnection"), opts =>
+           services.AddDbContextFactory<RepositoryContext>(opts => opts.UseSqlServer(configuration.GetConnectionString("sqlConnection"), opts =>
            {
                opts.EnableRetryOnFailure();
            }));
@@ -70,7 +70,5 @@ namespace BlindBoxShop.Application.Extensions
         public static void ConfigureServiceManager(this IServiceCollection services) =>
             services.AddScoped<IServiceManager, ServiceManager>();
 
-        public static void ConfigureBootstrapBlazor(this IServiceCollection services) =>
-            services.AddBootstrapBlazor();
     }
 }

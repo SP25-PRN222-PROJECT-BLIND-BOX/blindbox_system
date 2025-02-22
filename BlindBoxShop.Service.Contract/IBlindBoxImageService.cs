@@ -1,6 +1,6 @@
 ﻿namespace BlindBoxShop.Service.Contract
 {
-    public interface IBlindBoxImageService
+    public interface IBlindBoxImageService : IDisposable
     {
 
     }

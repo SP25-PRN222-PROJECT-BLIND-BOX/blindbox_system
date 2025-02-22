@@ -57,7 +57,8 @@ namespace BlindBoxShop.Application.Pages.Employee.BlindBoxCategoryPage.Partials
                 _blindBoxCategoryParameters.OrderBy = string.Join(" ", state.SortLabel, sortDirection).Trim();
 
             }
-            var result = await ServiceManager!.BlindBoxCategoryService.GetBlindBoxCategoriesAsync(_blindBoxCategoryParameters, false);
+            using var blindBoxCategoryService = ServiceManager!.BlindBoxCategoryService;
+            var result = await blindBoxCategoryService.GetBlindBoxCategoriesAsync(_blindBoxCategoryParameters, false);
 
             if (result.IsSuccess)
             {
@@ -136,7 +137,8 @@ namespace BlindBoxShop.Application.Pages.Employee.BlindBoxCategoryPage.Partials
                 ShowVariant($"Edit category has name {((BlindBoxCategoryDto)element).Name} failed.", Severity.Warning);
                 return;
             }
-            var result = await ServiceManager!.BlindBoxCategoryService.UpdateBlindBoxCategoryAsync(((BlindBoxCategoryDto)element).Id, blindBoxCategoryForUpdate);
+            using var blindBoxCategoryService = ServiceManager!.BlindBoxCategoryService;
+            var result = await blindBoxCategoryService.UpdateBlindBoxCategoryAsync(((BlindBoxCategoryDto)element).Id, blindBoxCategoryForUpdate);
             if (result.IsSuccess)
             {
                 ShowVariant($"Edit category has name {blindBoxCategoryForUpdate.Name} successfully.", Severity.Success);

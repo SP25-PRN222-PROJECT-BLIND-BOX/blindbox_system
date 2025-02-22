@@ -2,7 +2,7 @@
 
 namespace BlindBoxShop.Repository.Contract
 {
-    public interface IRepositoryBase<T>
+    public interface IRepositoryBase<T> : IDisposable
     {
         IQueryable<T> FindAll(bool trackChanges);
 

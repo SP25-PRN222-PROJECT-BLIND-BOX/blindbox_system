@@ -3,7 +3,6 @@ using BlindBoxShop.Entities.Models;
 using BlindBoxShop.Repository.Contract;
 using BlindBoxShop.Service.Contract;
 using BlindBoxShop.Shared.Constant.ErrorConstant;
-using BlindBoxShop.Shared.DataTransferObject.BlindBoxCategory;
 using BlindBoxShop.Shared.DataTransferObject.Voucher;
 using BlindBoxShop.Shared.Enum;
 using BlindBoxShop.Shared.Extension;
@@ -15,16 +14,14 @@ namespace BlindBoxShop.Service
     public class VoucherService : BaseService, IVoucherService
     {
         private readonly IVoucherRepository _voucherRepository;
-        private readonly IMapper _mapper;
         public VoucherService(IRepositoryManager repositoryManager, IMapper mapper) : base(repositoryManager, mapper)
         {
             _voucherRepository = repositoryManager.Voucher;
-            _mapper = mapper;
         }
 
         private async Task<Result<Voucher>> GetAndCheckIfVoucherExistByIdAsync(Guid id, bool trackChanges)
         {
-            var voucher = await _repositoryManager.Voucher.FindById(id, trackChanges);
+            var voucher = await _voucherRepository.FindById(id, trackChanges);
             if (voucher is null)
                 return Result<Voucher>.Failure(VoucherErrors.GetVoucherNotFoundError(id));
 
@@ -90,6 +87,12 @@ namespace BlindBoxShop.Service
             await _voucherRepository.SaveAsync();
 
             return Result.Success();
+        }
+
+        public void Dispose()
+        {
+            _voucherRepository.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }

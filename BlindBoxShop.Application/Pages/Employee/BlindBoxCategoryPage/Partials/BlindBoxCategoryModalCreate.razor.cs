@@ -1,4 +1,5 @@
-﻿using BlindBoxShop.Service.Contract;
+﻿using BlindBoxShop.Service;
+using BlindBoxShop.Service.Contract;
 using BlindBoxShop.Shared.DataTransferObject.BlindBoxCategory;
 using BlindBoxShop.Shared.Extension;
 using Microsoft.AspNetCore.Components;
@@ -25,7 +26,8 @@ namespace BlindBoxShop.Application.Pages.Employee.BlindBoxCategoryPage.Partials
 
         private async Task ValidSubmit(EditContext context)
         {
-            var result = await ServiceManager!.BlindBoxCategoryService.CreateBlindBoxCategoryAsync(_blindBoxCategoryForCreate!);
+            using var blindBoxCategoryService = ServiceManager!.BlindBoxCategoryService;
+            var result = await blindBoxCategoryService.CreateBlindBoxCategoryAsync(_blindBoxCategoryForCreate!);
 
             if (result.IsSuccess)
             {

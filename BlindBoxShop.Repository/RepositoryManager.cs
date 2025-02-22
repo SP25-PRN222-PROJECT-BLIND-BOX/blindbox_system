@@ -103,6 +103,15 @@ namespace BlindBoxShop.Repository
             }
         }
 
+        public IReplyReviewsRepository ReplyReviews
+        {
+            get
+            {
+                var context = _dbContextFactory.CreateDbContext();
+                return new ReplyReviewsRepository(context);
+            }
+        }
+
         public async Task ExecuteInTransactionAsync(Func<RepositoryContext, Task> operation)
         {
             // Tạo một instance DbContext từ factory

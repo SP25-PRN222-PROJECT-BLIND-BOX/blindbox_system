@@ -51,14 +51,13 @@ namespace BlindBoxShop.Application.Pages.Employee.VoucherPage.Partials
                 _voucherParameters.OrderBy = string.Join(" ", state.SortLabel, sortDirection).Trim();
 
             }
-            var result = await ServiceManager!.VoucherService.GetVouchersAsync(_voucherParameters, false);
-
+            using var voucherService = ServiceManager!.VoucherService;
+            var result = await voucherService.GetVouchersAsync(_voucherParameters, false);
             if (result.IsSuccess)
             {
                 pagedData = result.GetValue<IEnumerable<VoucherDto>>();
                 _metaData = result.Paging;
             }
-
 
             return new TableData<VoucherDto>() { TotalItems = _metaData!.TotalCount, Items = pagedData };
         }
@@ -130,11 +129,14 @@ namespace BlindBoxShop.Application.Pages.Employee.VoucherPage.Partials
                 ShowVariant($"Edit category has Id {((VoucherDto)element).Id} failed.", Severity.Warning);
                 return;
             }
-            var result = await ServiceManager!.VoucherService.UpdateVoucherAsync(((VoucherDto)element).Id, voucherForUpdate);
+
+            using var voucherService = ServiceManager!.VoucherService;
+            var result = await voucherService.UpdateVoucherAsync(((VoucherDto)element).Id, voucherForUpdate);
             if (result.IsSuccess)
             {
                 ShowVariant($"Edit category has Id {((VoucherDto)element).Id} successfully.", Severity.Success);
             }
+
         }
 
         private bool HasChanges(VoucherDto currentItem)

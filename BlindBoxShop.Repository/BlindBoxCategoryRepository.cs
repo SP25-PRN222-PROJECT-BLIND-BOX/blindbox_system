@@ -13,7 +13,6 @@ namespace BlindBoxShop.Repository
         }
 
 
-
         public async Task<PagedList<BlindBoxCategory>> GetBlindBoxCategoriesAsync(BlindBoxCategoryParameter blindBoxCategoryParameter, bool trackChanges)
         {
             var blindBoxCategories = await FindAll(trackChanges)

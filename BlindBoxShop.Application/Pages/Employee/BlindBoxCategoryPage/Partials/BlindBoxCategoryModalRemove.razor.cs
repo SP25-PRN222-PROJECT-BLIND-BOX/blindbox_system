@@ -29,8 +29,8 @@ namespace BlindBoxShop.Application.Pages.Employee.BlindBoxCategoryPage.Partials
                 await ErrorsMessageBox();
                 Cancel();
             }
-
-            var result = await ServiceManager!.BlindBoxCategoryService.DeleteBlindBoxCategoryAsync(BlindBoxCategoryDto!.Id);
+            using var blindBoxCategoryService = ServiceManager!.BlindBoxCategoryService;
+            var result = await blindBoxCategoryService.DeleteBlindBoxCategoryAsync(BlindBoxCategoryDto!.Id);
             if (result.IsSuccess)
             {
                 Snackbar.Add($"Category name {BlindBoxCategoryDto.Name} Deleted successfully.", Severity.Success);

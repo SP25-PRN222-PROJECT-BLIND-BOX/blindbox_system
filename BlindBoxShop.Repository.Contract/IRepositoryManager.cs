@@ -24,5 +24,6 @@ namespace BlindBoxShop.Repository.Contract
         IPackageRepository Package { get; }
 
         IVoucherRepository Voucher { get; }
+        IReplyReviewsRepository ReplyReviews { get; }
     }
 }

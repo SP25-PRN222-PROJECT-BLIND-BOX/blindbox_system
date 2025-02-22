@@ -8,7 +8,7 @@ namespace BlindBoxShop.Repository
     public abstract class RepositoryBase<T> : IRepositoryBase<T> where T : class, IBaseEntity
     {
         protected RepositoryContext RepositoryContext;
-
+        private bool _disposed = false;
         public RepositoryBase(RepositoryContext repositoryContext)
         {
             RepositoryContext = repositoryContext;
@@ -76,5 +76,23 @@ namespace BlindBoxShop.Repository
             .RemoveRange(entity);
 
         public async Task SaveAsync() => await RepositoryContext.SaveChangesAsync();
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    RepositoryContext?.Dispose();
+                }
+                _disposed = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
     }
 }

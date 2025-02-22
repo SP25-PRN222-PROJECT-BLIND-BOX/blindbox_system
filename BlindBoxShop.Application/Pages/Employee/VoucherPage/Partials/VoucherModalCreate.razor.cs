@@ -43,7 +43,8 @@ namespace BlindBoxShop.Application.Pages.Employee.VoucherPage.Partials
 
         private async Task ValidSubmit(EditContext context)
         {
-            var result = await ServiceManager!.VoucherService.CreateVoucherAsync(_voucherForCreate!);
+            using var voucherService = ServiceManager!.VoucherService;
+            var result = await voucherService.CreateVoucherAsync(_voucherForCreate!);
 
             if (result.IsSuccess)
             {

@@ -105,5 +105,11 @@ namespace BlindBoxShop.Service
 
             return Result.Success();
         }
+
+        public void Dispose()
+        {
+            _blindboxCategoryRepository.Dispose();
+            GC.SuppressFinalize(this);
+        }
     }
 }

@@ -111,6 +111,7 @@ namespace BlindBoxShop.Application.Pages.Employee.VoucherPage.Partials
             }
             else
                 _disableRemoveBtn = true;
+            StateHasChanged();
         }
 
         private async void ItemHasBeenCommitted(object element)
@@ -135,6 +136,8 @@ namespace BlindBoxShop.Application.Pages.Employee.VoucherPage.Partials
             if (result.IsSuccess)
             {
                 ShowVariant($"Edit category has Id {((VoucherDto)element).Id} successfully.", Severity.Success);
+                _disableRemoveBtn = true;
+                StateHasChanged();
             }
 
         }
@@ -155,11 +158,11 @@ namespace BlindBoxShop.Application.Pages.Employee.VoucherPage.Partials
             {
                 Mapper!.Map(_voucherDtoBeforeEdit, element);
             }
-            if (_voucherDtoBeforeEdit!.Equals(table!.SelectedItem))
-            {
-                _disableRemoveBtn = true;
-                table.SetSelectedItem(null);
-            }
+
+            _disableRemoveBtn = true; 
+            _voucherDto = null;
+            table!.SetSelectedItem(null);
+            StateHasChanged();
         }
 
         private void ShowVariant(string message, Severity severity)

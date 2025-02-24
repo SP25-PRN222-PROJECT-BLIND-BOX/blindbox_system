@@ -73,15 +73,15 @@
             <MudTd DataLabel="Id">@context.Id</MudTd>
             <MudTd DataLabel="Value">
                 <MudNumericField @bind-Value="context.Value" Min="0" Required />
-         </MudTd>
+            </MudTd>
          <MudTd DataLabel="Start Date">
              <MudDatePicker PickerVariant="PickerVariant.Dialog" @bind-Date="context.StartDate" MinDate="@DateTime.Now" />
          </MudTd>
          <MudTd DataLabel="End Date">
              <MudDatePicker PickerVariant="PickerVariant.Dialog" @bind-Date="context.EndDate" MinDate="@DateTime.Now" />
          </MudTd>
-         <MudTd DataLabel="Type">@context.Type</MudTd>
-            <MudTd DataLabel="Status">@context.Status</MudTd>
+        <MudTd DataLabel="Type">@context.Type</MudTd>
+        <MudTd DataLabel="Status">@context.Status</MudTd>
         </RowEditingTemplate>
         <PagerContent>
             <MudTablePager PageSizeOptions="new int[] { 10, 25, 50}" />

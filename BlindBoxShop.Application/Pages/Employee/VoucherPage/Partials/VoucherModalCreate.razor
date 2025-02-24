@@ -9,9 +9,6 @@
             <MudCardContent>
                 <MudTextField Label="Value"
                               @bind-Value="_voucherForCreate!.Value" For="@(()=> _voucherForCreate!.Value)" />
-                <MudTextField Label="Total date" Class="mt-3"
-                              @bind-Value="TotalDate"
-                              For="@(() => TotalDate)" />
                 <MudSelect @bind-Value="_voucherForCreate.Type"
                            Label="Type"
                            Clearable="true">
@@ -20,13 +17,12 @@
                         <MudSelectItem Value="@state">@state</MudSelectItem>
                     }
                 </MudSelect>
-                <MudTextField Label="Start Date" Class="mt-3"
-                              @bind-Value="_voucherForCreate.StartDate"
-                              Disabled="true" />
-
-                <MudTextField Label="End Date" Class="mt-3"
-                              @bind-Value="_voucherForCreate.EndDate"
-                              Disabled="true" />
+                <MudDatePicker Label="Start Date" PickerVariant="PickerVariant.Dialog" @bind-Date="_voucherForCreate.StartDate" MinDate="@DateTime.Now" />
+                <MudDatePicker Label="End Date"
+                               PickerVariant="PickerVariant.Dialog"
+                               @bind-Date="_voucherForCreate.EndDate"
+                               MinDate="@_voucherForCreate.StartDate.Value.AddDays(1)" />
+                <ValidationMessage For="() => _voucherForCreate.EndDate" />
             </MudCardContent>
         </DialogContent>
         <DialogActions>

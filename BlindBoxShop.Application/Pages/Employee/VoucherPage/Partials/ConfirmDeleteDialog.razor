@@ -1,0 +1,30 @@
+﻿<MudDialog>
+    <TitleContent>
+        Confirmation
+    </TitleContent>
+    <DialogContent>
+        Are you sure to delete this item with ID: <strong>@Id</strong>?
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Error" OnClick="Submit">Ok</MudButton>
+    </DialogActions>
+</MudDialog>
+@code {
+    [Inject]
+    public IServiceManager? ServiceManager { get; set; }
+
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public Guid Id { get; set; }
+
+    private async void Submit()
+    {
+        using var voucherService = ServiceManager!.VoucherService;
+        await voucherService.DeleteVoucherAsync(Id);
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}   

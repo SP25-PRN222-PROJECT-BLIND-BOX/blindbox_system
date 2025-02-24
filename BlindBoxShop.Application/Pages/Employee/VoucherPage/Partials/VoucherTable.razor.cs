@@ -180,19 +180,17 @@ namespace BlindBoxShop.Application.Pages.Employee.VoucherPage.Partials
             }
         }
 
-        private Task OpenRemoveDialogAsync()
+        private async Task OpenRemoveDialogAsync(Guid Id)
         {
-            //var item = table.SelectedItem;
-            //var options = new DialogOptions { CloseOnEscapeKey = true };
-            //var parameters = new DialogParameters<BlindBoxCategoryModalRemove> { { x => x.BlindBoxCategoryDto, item } };
+            var parameter = new DialogParameters();
+            parameter.Add("Id", Id);
+            var dialog = await _dialogService.ShowAsync<ConfirmDeleteDialog>("Delete Confiamtion", parameter);
 
-            //var dialog = await DialogService.ShowAsync<BlindBoxCategoryModalRemove>("Delete category", parameters, options);
-            //var dialogResult = await dialog.Result;
-            //if (!dialogResult.Canceled)
-            //{
-            //    await ReloadDataAsync();
-            //}
-            return null!;
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                await ReloadDataAsync();
+            }
         }
     }
 }

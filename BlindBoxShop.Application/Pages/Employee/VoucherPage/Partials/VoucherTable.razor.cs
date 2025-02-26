@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using BlindBoxShop.Service.Contract;
 using BlindBoxShop.Shared.DataTransferObject.Voucher;
 using BlindBoxShop.Shared.Extension;
@@ -103,14 +103,13 @@ namespace BlindBoxShop.Application.Pages.Employee.VoucherPage.Partials
 
         private void RowClickEvent(TableRowClickEventArgs<VoucherDto> tableRowClickEventArgs)
         {
-            if (_voucherDto != null && _voucherDto.Equals(tableRowClickEventArgs.Item))
-            {
+            // Cập nhật giá trị mới của _voucherDto
+            _voucherDto = tableRowClickEventArgs.Item;
 
-                _disableRemoveBtn = false;
+            // Kích hoạt nút xóa nếu _voucherDto hợp lệ
+            _disableRemoveBtn = _voucherDto == null || _voucherDto.Id == Guid.Empty;
 
-            }
-            else
-                _disableRemoveBtn = true;
+            // Gọi StateHasChanged để làm mới giao diện
             StateHasChanged();
         }
 

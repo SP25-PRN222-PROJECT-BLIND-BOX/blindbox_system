@@ -1,20 +1,19 @@
 ﻿using BlindBoxShop.Service.Contract;
-using BlindBoxShop.Shared.DataTransferObject.CustomerReview;
-using BlindBoxShop.Shared.Extension;
-using Microsoft.AspNetCore.Components;
+using BlindBoxShop.Shared.DataTransferObject.Reply;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using BlindBoxShop.Shared.Extension;
 
-namespace BlindBoxShop.Application.Pages.Employee.ReviewPage.Partials
+namespace BlindBoxShop.Application.Pages.Employee.ReplyPage.Partials
 {
-    public partial class ReviewModalCreate
+    public partial class ReplyModalCreate
     {
-        private ReviewForCreationDto _reviewForCreate = new ReviewForCreationDto
+        private ReplyForCreationDto _replyForCreate = new ReplyForCreationDto
         {
-            BlindBoxId = Guid.Parse("15d17b33-4081-4ea2-b90b-6b6fde7a9ec5"),
-            UserId = Guid.Parse("66c29a04-70ed-49df-8f85-6568aa80cc10"),
-            RatingStar = 0,
+            CustomerReviewsId = Guid.Parse("86a131dc-9bc7-4d5f-882f-de46ee292d84"),
+            UserId = Guid.Parse("4b58c3fa-e57e-49a0-8f2b-e436e70d6e17"),
         };
 
         [Inject]
@@ -28,25 +27,24 @@ namespace BlindBoxShop.Application.Pages.Employee.ReviewPage.Partials
 
         private async Task ValidSubmit(EditContext context)
         {
-            if (_reviewForCreate.RatingStar < 1 || _reviewForCreate.RatingStar > 5)
+            if (string.IsNullOrWhiteSpace(_replyForCreate.Reply))
             {
-                Snackbar.Add("Rating must be between 1 and 5.", Severity.Error);
+                Snackbar.Add("Reply content is required.", Severity.Error);
                 return;
             }
 
-            using var reviewService = ServiceManager!.CustomerReviewsService;
-            var result = await reviewService.CreateReviewAsync(_reviewForCreate);
+            using var replyService = ServiceManager!.ReplyService;
+            var result = await replyService.CreateReplyAsync(_replyForCreate);
 
             if (result.IsSuccess)
             {
-                _reviewForCreate = new ReviewForCreationDto();
+                _replyForCreate = new ReplyForCreationDto();
 
-                MudDialog!.Close(DialogResult.Ok(result.GetValue<ReviewDto>()));
-                ShowSnackbar("Review created successfully.", Severity.Success);
+                MudDialog!.Close(DialogResult.Ok(result.GetValue<ReplyDto>()));
+                ShowSnackbar("Reply created successfully.", Severity.Success);
             }
             else
             {
-                // Display errors if any
                 var errorsMessage = string.Join(", ", result.Errors!.Select(e => e.Description));
                 ShowSnackbar(errorsMessage, Severity.Error);
             }
@@ -54,7 +52,6 @@ namespace BlindBoxShop.Application.Pages.Employee.ReviewPage.Partials
 
         private async Task InvalidSubmit(EditContext context)
         {
-            // Display a message box for invalid form submission
             await DialogService!.ShowMessageBox(
                 "Validation Error",
                 "Please fill in all required fields correctly.",

@@ -4,9 +4,9 @@ using System.Linq.Dynamic.Core;
 
 namespace BlindBoxShop.Repository.Extensions
 {
-    public static class CustomerReviewRepositoryExtension
+    public static class ReplyRepositoryExtension
     {
-        public static IQueryable<CustomerReviews> SearchById(this IQueryable<CustomerReviews> reviews, string? searchTerm)
+        public static IQueryable<ReplyReviews> SearchById(this IQueryable<ReplyReviews> reviews, string? searchTerm)
         {
             if (string.IsNullOrWhiteSpace(searchTerm))
             {
@@ -19,7 +19,7 @@ namespace BlindBoxShop.Repository.Extensions
                 r.Id.Equals(lowerCaseSearchTerm));
         }
 
-        public static IQueryable<CustomerReviews> SearchByContent(this IQueryable<CustomerReviews> reviews, string? searchTerm)
+        public static IQueryable<ReplyReviews> SearchByContent(this IQueryable<ReplyReviews> reviews, string? searchTerm)
         {
             if (string.IsNullOrWhiteSpace(searchTerm))
             {
@@ -29,10 +29,10 @@ namespace BlindBoxShop.Repository.Extensions
             var lowerCaseSearchTerm = searchTerm.Trim().ToLower();
 
             return reviews.Where(r =>
-                r.FeedBack != null && r.FeedBack.ToLower().Contains(lowerCaseSearchTerm));
+                r.Reply != null && r.Reply.ToLower().Contains(lowerCaseSearchTerm));
         }
 
-        public static IQueryable<CustomerReviews> SearchByUsername(this IQueryable<CustomerReviews> reviews, string? searchTerm)
+        public static IQueryable<ReplyReviews> SearchByUsername(this IQueryable<ReplyReviews> reviews, string? searchTerm)
         {
             if (string.IsNullOrWhiteSpace(searchTerm))
             {
@@ -42,10 +42,10 @@ namespace BlindBoxShop.Repository.Extensions
             var lowerCaseSearchTerm = searchTerm.Trim().ToLower();
 
             return reviews.Where(r =>
-                r.FeedBack != null && r.FeedBack.ToLower().Contains(lowerCaseSearchTerm));
+                r.Reply != null && r.Reply.ToLower().Contains(lowerCaseSearchTerm));
         }
 
-        public static IQueryable<CustomerReviews> Sort(this IQueryable<CustomerReviews> reviews, string? orderByQueryString)
+        public static IQueryable<ReplyReviews> Sort(this IQueryable<ReplyReviews> reviews, string? orderByQueryString)
         {
             if (string.IsNullOrWhiteSpace(orderByQueryString))
                 return reviews.OrderBy(r => r.CreatedAt);

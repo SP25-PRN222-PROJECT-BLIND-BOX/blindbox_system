@@ -3,13 +3,22 @@ using BlindBoxShop.Repository.Contract;
 using BlindBoxShop.Repository.Extensions;
 using BlindBoxShop.Shared.Features;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace BlindBoxShop.Repository
 {
-    public class CustomerReviewRepository : RepositoryBase<CustomerReviews>, ICustomerReviewsRepository
+    public class CustomerReviewRepository : RepositoryBase<CustomerReviews>, ICustomerReviewRepository
     {
         public CustomerReviewRepository(RepositoryContext repositoryContext) : base(repositoryContext)
         {
+        }
+
+        public async Task<CustomerReviews?> FindAsync(Expression<Func<CustomerReviews, bool>> predicate)
+        {
+            return await FindByCondition(predicate, trackChanges: false)
+                .Include(r => r.User)
+                .Include(r => r.BlindBox)
+                .FirstOrDefaultAsync();
         }
 
         public async Task<PagedList<CustomerReviews>> GetReviewsAsync(CustomerReviewParameter reviewParameter, bool trackChanges)
@@ -19,6 +28,7 @@ namespace BlindBoxShop.Repository
                 .Include(r => r.BlindBox)
                 .SearchById(reviewParameter.SearchById)
                 .SearchByContent(reviewParameter.SearchByContent)
+                .SearchByUsername(reviewParameter.SearchByUsername)
                 .Sort(reviewParameter.OrderBy)
                 .Skip((reviewParameter.PageNumber - 1) * reviewParameter.PageSize)
                 .Take(reviewParameter.PageSize)
@@ -41,6 +51,7 @@ namespace BlindBoxShop.Repository
             var query = FindByCondition(r => r.UserId == userId, trackChanges)
                 .Include(r => r.User)
                 .Include(r => r.BlindBox)
+                .SearchByUsername(customerReviewParameter.SearchByUsername)
                 .SearchByContent(customerReviewParameter.SearchByContent)
                 .Sort(customerReviewParameter.OrderBy);
 
@@ -63,6 +74,7 @@ namespace BlindBoxShop.Repository
             var query = FindByCondition(r => r.BlindBoxId == blindBoxId, trackChanges)
                 .Include(r => r.User)
                 .Include(r => r.BlindBox)
+                .SearchByUsername(customerReviewParameter.SearchByUsername)
                 .SearchByContent(customerReviewParameter.SearchByContent)
                 .Sort(customerReviewParameter.OrderBy);
 

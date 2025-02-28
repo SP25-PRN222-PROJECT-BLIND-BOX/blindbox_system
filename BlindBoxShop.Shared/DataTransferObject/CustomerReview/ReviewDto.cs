@@ -11,7 +11,7 @@ namespace BlindBoxShop.Shared.DataTransferObject.CustomerReview
         public string BlindBoxName { get; set; } = string.Empty;
         public string? FeedBack { get; set; }
 
-        [Range(0, float.MaxValue, ErrorMessage = "RatingStar must be greater than or equal to 0.")]
+        [Range(1, float.MaxValue, ErrorMessage = "RatingStar must be greater than 0.")]
         public float RatingStar { get; set; }
         public DateTime CreatedAt {  get; set; }
         public DateTime? UpdatedAt { get; set; }

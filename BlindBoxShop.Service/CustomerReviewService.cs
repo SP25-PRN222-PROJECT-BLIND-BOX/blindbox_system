@@ -4,16 +4,19 @@ using BlindBoxShop.Repository.Contract;
 using BlindBoxShop.Service.Contract;
 using BlindBoxShop.Shared.Constant.ErrorConstant;
 using BlindBoxShop.Shared.DataTransferObject.CustomerReview;
+using BlindBoxShop.Shared.DataTransferObject.Reply;
 using BlindBoxShop.Shared.Extension;
 using BlindBoxShop.Shared.Features;
 using BlindBoxShop.Shared.ResultModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace BlindBoxShop.Service
 {
-    public class CustomerReviewsService : BaseService, ICustomerReviewsService
+    public class CustomerReviewService : BaseService, ICustomerReviewsService
     {
-        private readonly ICustomerReviewsRepository _customerReviewsRepository;
-        public CustomerReviewsService(IRepositoryManager repositoryManager, IMapper mapper) : base(repositoryManager, mapper)
+        private readonly ICustomerReviewRepository _customerReviewsRepository;
+        private readonly IBlindBoxService _blindBoxService;
+        public CustomerReviewService(IRepositoryManager repositoryManager, IMapper mapper) : base(repositoryManager, mapper)
         {
             _customerReviewsRepository = repositoryManager.CustomerReviews;
         }
@@ -29,13 +32,55 @@ namespace BlindBoxShop.Service
 
         public async Task<Result<ReviewDto>> CreateReviewAsync(ReviewForCreationDto reviewForCreateDto)
         {
-            var reviewEntity = _mapper.Map<CustomerReviews>(reviewForCreateDto);
-            await _customerReviewsRepository.CreateAsync(reviewEntity);
-            await _customerReviewsRepository.SaveAsync();
+            try
+            {
+                var validationResult = await ValidateReviewCreationAsync(reviewForCreateDto);
+                if (!validationResult.IsSuccess)
+                    return Result<ReviewDto>.Failure(validationResult.Errors);
+                var reviewEntity = _mapper.Map<CustomerReviews>(reviewForCreateDto);
+                await _customerReviewsRepository.CreateAsync(reviewEntity);
+                await _customerReviewsRepository.SaveAsync();
 
-            var reviewDto = _mapper.Map<ReviewDto>(reviewEntity);
+                var reviewDto = _mapper.Map<ReviewDto>(reviewEntity);
+                return Result<ReviewDto>.Success(reviewDto);
+            }
+            catch (Exception ex)
+            {
+                // Log lỗi để debug
+                Console.WriteLine($"Error in CreateReviewAsync: {ex.Message}");
+                return Result<ReviewDto>.Failure(new ErrorResult
+                {
+                    Code = "InternalError",
+                    Description = "An unexpected error occurred."
+                });
+            }
+        }
 
-            return Result<ReviewDto>.Success(reviewDto);
+        private async Task<Result> ValidateReviewCreationAsync(ReviewForCreationDto reviewForCreateDto)
+        {
+            /*var blindBox = await _blindBoxService.getBlindBoxAsynce(reviewForCreateDto.BlindBoxId);
+            if (blindBox == null)
+            {
+                return Result.Failure(new ErrorResult
+                {
+                    Code = "BlindBoxNotFound",
+                    Description = "The specified BlindBox does not exist."
+                });
+            }*/
+
+            var existingReview = await _customerReviewsRepository.FindAsync(r =>
+                r.BlindBoxId == reviewForCreateDto.BlindBoxId && r.UserId == reviewForCreateDto.UserId);
+
+            if (existingReview != null)
+            {
+                return Result.Failure(new ErrorResult
+                {
+                    Code = "DuplicateReview",
+                    Description = "You have already reviewed this BlindBox."
+                });
+            }
+
+            return Result.Success();
         }
 
         public async Task<Result> DeleteReviewAsync(Guid id)
@@ -88,14 +133,12 @@ namespace BlindBoxShop.Service
 
         public async Task<Result> UpdateReviewAsync(Guid id, ReviewForUpdateDto reviewForUpdateDto)
         {
-            // Kiểm tra xem review có tồn tại không
             var checkIfExistResult = await GetAndCheckIfReviewExistByIdAsync(id, true);
             if (!checkIfExistResult.IsSuccess)
                 return checkIfExistResult.Errors!;
 
             var reviewEntity = checkIfExistResult.GetValue<CustomerReviews>();
 
-            // Kiểm tra điều kiện không cho phép cập nhật
             if (reviewEntity.CreatedAt.AddDays(30) < DateTime.UtcNow)
             {
                 return Result.Failure(ReviewErrors.GetReviewUpdateNotAllowedAfter30DaysError());
@@ -106,10 +149,8 @@ namespace BlindBoxShop.Service
                 return Result.Failure(ReviewErrors.GetReviewUpdateNotAllowedAfterUpdatedError());
             }
 
-            // Ánh xạ dữ liệu từ DTO sang entity
             _mapper.Map(reviewForUpdateDto, reviewEntity);
 
-            // Lưu thay đổi
             await _customerReviewsRepository.SaveAsync();
 
             return Result.Success();

@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using BlindBoxShop.Entities.Models;
+using BlindBoxShop.Shared.DataTransferObject.CustomerReview;
 using BlindBoxShop.Shared.DataTransferObject.Voucher;
 
 namespace BlindBoxShop.Application.MappingProfile
@@ -9,10 +10,9 @@ namespace BlindBoxShop.Application.MappingProfile
         public VoucherMappingProfile()
         {
             CreateMap<Voucher, VoucherDto>();
-            CreateMap<VoucherDto, VoucherDto>();
-            CreateMap<VoucherDto, VoucherForUpdate>();
             CreateMap<VoucherForUpdate, Voucher>();
             CreateMap<VoucherForCreate, Voucher>();
+            CreateMap<VoucherDto, VoucherForUpdate>();
         }
     }
 }

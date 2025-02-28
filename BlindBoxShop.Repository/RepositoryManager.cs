@@ -64,7 +64,7 @@ namespace BlindBoxShop.Repository
             get
             {
                 var context = _dbContextFactory.CreateDbContext();
-                return new CustomerReviewsRepository(context);
+                return new CustomerReviewRepository(context);
             }
         }
 

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using BlindBoxShop.Application.Pages.Account.Shared;
 using BlindBoxShop.Service.Contract;
 using BlindBoxShop.Shared.DataTransferObject.Voucher;
 using BlindBoxShop.Shared.Extension;
@@ -96,11 +97,6 @@ namespace BlindBoxShop.Application.Pages.Employee.VoucherPage.Partials
             await table!.ReloadServerData();
         }
 
-        private void BackupItem(object element)
-        {
-            _voucherDtoBeforeEdit = Mapper!.Map<VoucherDto>(element);
-        }
-
         private void RowClickEvent(TableRowClickEventArgs<VoucherDto> tableRowClickEventArgs)
         {
             // Cập nhật giá trị mới của _voucherDto
@@ -143,12 +139,19 @@ namespace BlindBoxShop.Application.Pages.Employee.VoucherPage.Partials
 
         private bool HasChanges(VoucherDto currentItem)
         {
-            return _voucherDtoBeforeEdit != null &&
-                   (currentItem.EndDate!.Value.CompareTo(_voucherDtoBeforeEdit.EndDate) != 0 ||
-                    currentItem.StartDate!.Value.CompareTo(_voucherDtoBeforeEdit.StartDate) != 0 ||
-                    !currentItem.Type.Equals(_voucherDtoBeforeEdit.Type) ||
-                    !currentItem.Value.Equals(_voucherDtoBeforeEdit.Value) ||
-                    !currentItem.Status.Equals(_voucherDtoBeforeEdit.Status));
+            return _voucherDtoBeforeEdit != null && !_voucherDtoBeforeEdit.Equals(currentItem);
+        }
+        private void BackupItem(object element)
+        {
+            _voucherDtoBeforeEdit = new VoucherDto
+            {
+                Id = ((VoucherDto)element).Id,
+                Type = ((VoucherDto)element).Type,
+                Value = ((VoucherDto)element).Value,
+                Status = ((VoucherDto)element).Status,
+                StartDate = ((VoucherDto)element).StartDate,
+                EndDate = ((VoucherDto)element).EndDate
+            };
         }
 
         private void ResetItemToOriginalValues(object element)

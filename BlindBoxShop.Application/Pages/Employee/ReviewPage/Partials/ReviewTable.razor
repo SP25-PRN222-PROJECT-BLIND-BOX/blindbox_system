@@ -1,0 +1,77 @@
+﻿@using BlindBoxShop.Shared.DataTransferObject.CustomerReview
+@inject ISnackbar Snackbar
+@inject IDialogService _dialogService
+<MudTable ServerData="ServerReload" Dense="false" Hover="true" @ref="table" FixedHeader="true" FixedFooter="true" Height="500px"
+          @bind-SelectedItem="_reviewDto" T="ReviewDto"
+          OnRowClick="RowClickEvent"
+          CanCancelEdit="true"
+          SortLabel="Sort By"
+          RowEditPreview="BackupItem"
+          RowEditCancel="ResetItemToOriginalValues"
+          RowEditCommit="ItemHasBeenCommitted"
+          IsEditRowSwitchingBlocked="false"
+          AllowUnsorted="false"
+          ApplyButtonPosition="TableApplyButtonPosition.End" EditButtonPosition="TableEditButtonPosition.End" EditTrigger="TableEditTrigger.RowClick">
+    <ToolBarContent>
+        <MudFab StartIcon="@Icons.Material.Filled.Add" DropShadow="true" Size="Size.Small" Label="Add Review" @onclick="OpenCreateDialogAsync" Class="mr-3" />
+        <MudFab StartIcon="@Icons.Material.Filled.Remove"
+                DropShadow="true"
+                Size="Size.Small"
+                Color="Color.Error"
+                Label="Remove Review"
+                @onclick="@(() => OpenRemoveDialogAsync(_reviewDto?.Id ?? Guid.Empty))"
+                Disabled="_disableRemoveBtn" />
+        <MudSpacer />
+        <MudTextField T="string"
+                      @bind-value="@searchString"
+                      Placeholder="Search reviews"
+                      DebounceInterval="500"
+                      OnDebounceIntervalElapsed="SearchChanged"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      Class="mt-0">
+        </MudTextField>
+    </ToolBarContent>
+    <ColGroup>
+        <col style="width:20%;" />
+        <col style="width:15%;" />
+        <col style="width:10%;" />
+        <col style="width:10%;" />
+        <col style="width:45%;" />
+    </ColGroup>
+    <HeaderContent>
+        <MudTh><MudTableSortLabel SortLabel="Username" T="ReviewDto">Username</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="BlindBoxName" T="ReviewDto">Blind Box</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="CreatedAt" T="ReviewDto">Created At</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="RatingStar" T="ReviewDto">Rating</MudTableSortLabel></MudTh>
+        <MudTh>Feedback</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Username">@context.Username</MudTd>
+        <MudTd DataLabel="Blind Box">@context.BlindBoxName</MudTd>
+        <MudTd DataLabel="Created At">@context.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
+        <MudTd DataLabel="Rating">@context.RatingStar</MudTd>
+        <MudTd DataLabel="Feedback">@context.FeedBack</MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>No reviews found</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudProgressCircular Color="Color.Primary" Indeterminate />
+    </LoadingContent>
+    <RowEditingTemplate>
+        <MudTd DataLabel="Username">@context.Username</MudTd>
+        <MudTd DataLabel="Blind Box">@context.BlindBoxName</MudTd>
+        <MudTd DataLabel="Created At">@context.CreatedAt.ToString("yyyy-MM-dd")</MudTd>
+        <MudTd DataLabel="Rating">
+            <MudNumericField T="float" @bind-Value="context.RatingStar" Min="0" Max="5" Step="1" Immediate="true" />
+        </MudTd>
+        <MudTd DataLabel="Feedback">
+            <MudTextField T="string" @bind-Value="context.FeedBack" Immediate="true" />
+        </MudTd>
+    </RowEditingTemplate>
+    <PagerContent>
+        <MudTablePager PageSizeOptions="new int[] { 5, 10, 20 }" />
+    </PagerContent>
+</MudTable>
+

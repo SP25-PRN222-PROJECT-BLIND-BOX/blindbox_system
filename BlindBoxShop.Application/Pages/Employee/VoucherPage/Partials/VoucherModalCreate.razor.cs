@@ -12,23 +12,11 @@ namespace BlindBoxShop.Application.Pages.Employee.VoucherPage.Partials
 {
     public partial class VoucherModalCreate
     {
-        private VoucherForCreate? _voucherForCreate = new VoucherForCreate();
-
-
-        private int _totalDate;
-        [Range(7, int.MaxValue)]
-        public int TotalDate
+        private VoucherForCreate? _voucherForCreate = new VoucherForCreate()
         {
-            get => _totalDate;
-            set
-            {
-                if (_totalDate != value)
-                {
-                    _totalDate = value;
-                    UpdateDates();
-                }
-            }
-        }
+            StartDate = DateTime.Today, // Ngày hiện tại, 0h
+            EndDate = DateTime.Today.AddDays(1)
+        };
 
         [Inject]
         public IServiceManager? ServiceManager { get; set; }
@@ -43,6 +31,12 @@ namespace BlindBoxShop.Application.Pages.Employee.VoucherPage.Partials
 
         private async Task ValidSubmit(EditContext context)
         {
+            if (_voucherForCreate.EndDate < _voucherForCreate.StartDate)
+            {
+                Snackbar.Add("End date cannot be earlier than start date.", Severity.Error);
+                return;
+            }
+
             using var voucherService = ServiceManager!.VoucherService;
             var result = await voucherService.CreateVoucherAsync(_voucherForCreate!);
 
@@ -68,17 +62,6 @@ namespace BlindBoxShop.Application.Pages.Employee.VoucherPage.Partials
                             yesText: "Got it",
                             options: new DialogOptions() { CloseOnEscapeKey = true });
             return;
-        }
-
-        private void UpdateDates()
-        {
-            _voucherForCreate!.StartDate = DateTime.Now.SEAsiaStandardTime();
-            _voucherForCreate.EndDate = GetDateTimeAfterDays(_totalDate);
-        }
-
-        private DateTime GetDateTimeAfterDays(int daysToAdd)
-        {
-            return DateTime.Now.SEAsiaStandardTime().AddDays(daysToAdd);
         }
 
         private void Cancel() => MudDialog!.Cancel();

@@ -6,5 +6,13 @@
 
         public required string Description { get; set; }
 
+        public ErrorResult() { }
+
+        public ErrorResult(string code, string description)
+        {
+            Code = code;
+            Description = description;
+        }
+
     }
 }

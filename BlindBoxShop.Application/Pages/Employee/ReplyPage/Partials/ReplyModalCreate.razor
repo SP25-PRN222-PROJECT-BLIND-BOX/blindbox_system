@@ -1,0 +1,24 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using BlindBoxShop.Shared.DataTransferObject.Reply
+@inject ISnackbar Snackbar
+
+<EditForm Model="@_replyForCreate" OnValidSubmit="ValidSubmit" OnInvalidSubmit="InvalidSubmit">
+    <MudDialog OnKeyDown="(e) => OnKeyDownAsync(e, context)" Class="rounded-lg">
+        <DialogContent>
+            <DataAnnotationsValidator />
+            <MudCardContent>
+                <MudTextField Label="Reply Content"
+                              @bind-Value="_replyForCreate.Reply"
+                              For="@(() => _replyForCreate.Reply)"
+                              HelperText="Enter your reply content."
+                              Required="true" />
+
+                <ValidationMessage For="@(() => _replyForCreate.Reply)" />
+            </MudCardContent>
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancel">Cancel</MudButton>
+            <MudButton Color="Color.Primary" ButtonType="ButtonType.Submit">Submit</MudButton>
+        </DialogActions>
+    </MudDialog>
+</EditForm>

@@ -12,18 +12,18 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BlindBoxShop.Service
 {
-    public class CustomerReviewService : BaseService, ICustomerReviewsService
+    public class ReviewService : BaseService, IReviewsService
     {
-        private readonly ICustomerReviewRepository _customerReviewsRepository;
+        private readonly IReviewRepository _reviewsRepository;
         private readonly IBlindBoxService _blindBoxService;
-        public CustomerReviewService(IRepositoryManager repositoryManager, IMapper mapper) : base(repositoryManager, mapper)
+        public ReviewService(IRepositoryManager repositoryManager, IMapper mapper) : base(repositoryManager, mapper)
         {
-            _customerReviewsRepository = repositoryManager.CustomerReviews;
+            _reviewsRepository = repositoryManager.Review;
         }
 
         private async Task<Result<CustomerReviews>> GetAndCheckIfReviewExistByIdAsync(Guid id, bool trackChanges)
         {
-            var review = await _customerReviewsRepository.FindById(id, trackChanges);
+            var review = await _reviewsRepository.FindById(id, trackChanges);
             if (review is null)
                 return Result<CustomerReviews>.Failure(ReviewErrors.GetReviewNotFoundError(id));
 
@@ -38,8 +38,8 @@ namespace BlindBoxShop.Service
                 if (!validationResult.IsSuccess)
                     return Result<ReviewDto>.Failure(validationResult.Errors);
                 var reviewEntity = _mapper.Map<CustomerReviews>(reviewForCreateDto);
-                await _customerReviewsRepository.CreateAsync(reviewEntity);
-                await _customerReviewsRepository.SaveAsync();
+                await _reviewsRepository.CreateAsync(reviewEntity);
+                await _reviewsRepository.SaveAsync();
 
                 var reviewDto = _mapper.Map<ReviewDto>(reviewEntity);
                 return Result<ReviewDto>.Success(reviewDto);
@@ -68,7 +68,7 @@ namespace BlindBoxShop.Service
                 });
             }*/
 
-            var existingReview = await _customerReviewsRepository.FindAsync(r =>
+            var existingReview = await _reviewsRepository.FindAsync(r =>
                 r.BlindBoxId == reviewForCreateDto.BlindBoxId && r.UserId == reviewForCreateDto.UserId);
 
             if (existingReview != null)
@@ -91,15 +91,15 @@ namespace BlindBoxShop.Service
 
             var reviewEntity = checkIfExistResult.GetValue<CustomerReviews>();
 
-            _customerReviewsRepository.Delete(reviewEntity);
-            await _customerReviewsRepository.SaveAsync();
+            _reviewsRepository.Delete(reviewEntity);
+            await _reviewsRepository.SaveAsync();
 
             return Result.Success();
         }
 
-        public async Task<Result<IEnumerable<ReviewDto>>> GetReviewsByUserIdAsync(Guid userId, CustomerReviewParameter customerReviewParameter, bool trackChanges)
+        public async Task<Result<IEnumerable<ReviewDto>>> GetReviewsByUserIdAsync(Guid userId, ReviewParameter customerReviewParameter, bool trackChanges)
         {
-            var reviews = await _customerReviewsRepository.GetReviewsByUserIdAsync(userId, customerReviewParameter, trackChanges);
+            var reviews = await _reviewsRepository.GetReviewsByUserIdAsync(userId, customerReviewParameter, trackChanges);
 
             if (!reviews.Any())
                 return Result<IEnumerable<ReviewDto>>.Failure(ReviewErrors.GetNoReviewsFoundForUserError(userId));
@@ -109,9 +109,9 @@ namespace BlindBoxShop.Service
             return (reviewsDto, reviews.MetaData);
         }
 
-        public async Task<Result<IEnumerable<ReviewDto>>> GetReviewsByBlindBoxIdAsync(Guid blindBoxId, CustomerReviewParameter customerReviewParameter, bool trackChanges)
+        public async Task<Result<IEnumerable<ReviewDto>>> GetReviewsByBlindBoxIdAsync(Guid blindBoxId, ReviewParameter customerReviewParameter, bool trackChanges)
         {
-            var reviews = await _customerReviewsRepository.GetReviewsByBlindBoxIdAsync(blindBoxId, customerReviewParameter, trackChanges);
+            var reviews = await _reviewsRepository.GetReviewsByBlindBoxIdAsync(blindBoxId, customerReviewParameter, trackChanges);
 
             if (!reviews.Any())
                 return Result<IEnumerable<ReviewDto>>.Failure(ReviewErrors.GetNoReviewsFoundForBlindBoxError(blindBoxId));
@@ -122,9 +122,9 @@ namespace BlindBoxShop.Service
         }
 
 
-        public async Task<Result<IEnumerable<ReviewDto>>> GetReviewsAsync(CustomerReviewParameter customerReviewParameter, bool trackChanges)
+        public async Task<Result<IEnumerable<ReviewDto>>> GetReviewsAsync(ReviewParameter customerReviewParameter, bool trackChanges)
         {
-            var reviews = await _customerReviewsRepository.GetReviewsAsync(customerReviewParameter, trackChanges);
+            var reviews = await _reviewsRepository.GetReviewsAsync(customerReviewParameter, trackChanges);
 
             var reviewsDto = _mapper.Map<IEnumerable<ReviewDto>>(reviews);
 
@@ -151,14 +151,14 @@ namespace BlindBoxShop.Service
 
             _mapper.Map(reviewForUpdateDto, reviewEntity);
 
-            await _customerReviewsRepository.SaveAsync();
+            await _reviewsRepository.SaveAsync();
 
             return Result.Success();
         }
 
         public void Dispose()
         {
-            _customerReviewsRepository.Dispose();
+            _reviewsRepository.Dispose();
             GC.SuppressFinalize(this);
         }
     }

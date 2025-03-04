@@ -8,6 +8,8 @@ namespace BlindBoxShop.Entities.Models
 
         public Guid? VoucherId { get; set; }
 
+        public string Status {  get; set; } = null!;
+
         public string Address { get; set; } = null!;
 
         public string Province { get; set; } = null!;

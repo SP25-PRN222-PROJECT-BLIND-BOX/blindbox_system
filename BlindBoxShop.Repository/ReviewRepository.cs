@@ -7,9 +7,9 @@ using System.Linq.Expressions;
 
 namespace BlindBoxShop.Repository
 {
-    public class CustomerReviewRepository : RepositoryBase<CustomerReviews>, ICustomerReviewRepository
+    public class ReviewRepository : RepositoryBase<CustomerReviews>, IReviewRepository
     {
-        public CustomerReviewRepository(RepositoryContext repositoryContext) : base(repositoryContext)
+        public ReviewRepository(RepositoryContext repositoryContext) : base(repositoryContext)
         {
         }
 
@@ -21,7 +21,7 @@ namespace BlindBoxShop.Repository
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<PagedList<CustomerReviews>> GetReviewsAsync(CustomerReviewParameter reviewParameter, bool trackChanges)
+        public async Task<PagedList<CustomerReviews>> GetReviewsAsync(ReviewParameter reviewParameter, bool trackChanges)
         {
             var reviews = await FindAll(trackChanges)
                 .Include(r => r.User)
@@ -46,7 +46,7 @@ namespace BlindBoxShop.Repository
                 reviewParameter.PageSize);
         }
 
-        public async Task<PagedList<CustomerReviews>> GetReviewsByUserIdAsync(Guid userId, CustomerReviewParameter customerReviewParameter, bool trackChanges)
+        public async Task<PagedList<CustomerReviews>> GetReviewsByUserIdAsync(Guid userId, ReviewParameter customerReviewParameter, bool trackChanges)
         {
             var query = FindByCondition(r => r.UserId == userId, trackChanges)
                 .Include(r => r.User)
@@ -69,7 +69,7 @@ namespace BlindBoxShop.Repository
                 customerReviewParameter.PageSize);
         }
 
-        public async Task<PagedList<CustomerReviews>> GetReviewsByBlindBoxIdAsync(Guid blindBoxId, CustomerReviewParameter customerReviewParameter, bool trackChanges)
+        public async Task<PagedList<CustomerReviews>> GetReviewsByBlindBoxIdAsync(Guid blindBoxId, ReviewParameter customerReviewParameter, bool trackChanges)
         {
             var query = FindByCondition(r => r.BlindBoxId == blindBoxId, trackChanges)
                 .Include(r => r.User)

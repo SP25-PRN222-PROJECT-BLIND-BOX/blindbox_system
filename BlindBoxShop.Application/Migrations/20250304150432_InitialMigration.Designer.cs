@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BlindBoxShop.Application.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
-    [Migration("20250222052251_AddColumnValueToVoucer")]
-    partial class AddColumnValueToVoucer
+    [Migration("20250304150432_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -198,6 +198,10 @@ namespace BlindBoxShop.Application.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Province")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

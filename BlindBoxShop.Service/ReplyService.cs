@@ -17,7 +17,7 @@ namespace BlindBoxShop.Service
 
         public ReplyService(IRepositoryManager repositoryManager, IMapper mapper) : base(repositoryManager, mapper)
         {
-            _replyReviewsRepository = repositoryManager.ReplyReviews;
+            _replyReviewsRepository = repositoryManager.Replie;
         }
 
         private async Task<Result<ReplyReviews>> GetAndCheckIfReplyExistsByIdAsync(Guid id, bool trackChanges)

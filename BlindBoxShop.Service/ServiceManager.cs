@@ -26,7 +26,7 @@ namespace BlindBoxShop.Service
 
         public IBlindBoxCategoryService BlindBoxCategoryService => new BlindBoxCategoryService(_repositoryManager, _mapper);
 
-        public ICustomerReviewsService CustomerReviewsService => new CustomerReviewService(_repositoryManager, _mapper);
+        public IReviewsService CustomerReviewsService => new ReviewService(_repositoryManager, _mapper);
 
         public IOrderDetailService OrderDetailService => new OrderDetailService(_repositoryManager, _mapper);
 

@@ -34,7 +34,7 @@ namespace BlindBoxShop.Application.Pages.Employee.ReviewPage.Partials
 
         private MetaData? _metaData { get; set; } = new MetaData();
 
-        private CustomerReviewParameter _reviewParameters = new CustomerReviewParameter();
+        private ReviewParameter _reviewParameters = new ReviewParameter();
 
         private bool _disableRemoveBtn = true;
 

@@ -1,4 +1,5 @@
-using AutoMapper;
+﻿using AutoMapper;
+using BlindBoxShop.Application.Pages.Account.Shared;
 using BlindBoxShop.Service.Contract;
 using BlindBoxShop.Shared.DataTransferObject.Voucher;
 using BlindBoxShop.Shared.Extension;
@@ -96,21 +97,16 @@ namespace BlindBoxShop.Application.Pages.Employee.VoucherPage.Partials
             await table!.ReloadServerData();
         }
 
-        private void BackupItem(object element)
-        {
-            _voucherDtoBeforeEdit = Mapper!.Map<VoucherDto>(element);
-        }
-
         private void RowClickEvent(TableRowClickEventArgs<VoucherDto> tableRowClickEventArgs)
         {
-            if (_voucherDto != null && _voucherDto.Equals(tableRowClickEventArgs.Item))
-            {
+            // Cập nhật giá trị mới của _voucherDto
+            _voucherDto = tableRowClickEventArgs.Item;
 
-                _disableRemoveBtn = false;
+            // Kích hoạt nút xóa nếu _voucherDto hợp lệ
+            _disableRemoveBtn = _voucherDto == null || _voucherDto.Id == Guid.Empty;
 
-            }
-            else
-                _disableRemoveBtn = true;
+            // Gọi StateHasChanged để làm mới giao diện
+            StateHasChanged();
         }
 
         private async void ItemHasBeenCommitted(object element)
@@ -135,18 +131,27 @@ namespace BlindBoxShop.Application.Pages.Employee.VoucherPage.Partials
             if (result.IsSuccess)
             {
                 ShowVariant($"Edit category has Id {((VoucherDto)element).Id} successfully.", Severity.Success);
+                _disableRemoveBtn = true;
+                StateHasChanged();
             }
 
         }
 
         private bool HasChanges(VoucherDto currentItem)
         {
-            return _voucherDtoBeforeEdit != null &&
-                   (currentItem.EndDate!.Value.CompareTo(_voucherDtoBeforeEdit.EndDate) != 0 ||
-                    currentItem.StartDate!.Value.CompareTo(_voucherDtoBeforeEdit.StartDate) != 0 ||
-                    !currentItem.Type.Equals(_voucherDtoBeforeEdit.Type) ||
-                    !currentItem.Value.Equals(_voucherDtoBeforeEdit.Value) ||
-                    !currentItem.Status.Equals(_voucherDtoBeforeEdit.Status));
+            return _voucherDtoBeforeEdit != null && !_voucherDtoBeforeEdit.Equals(currentItem);
+        }
+        private void BackupItem(object element)
+        {
+            _voucherDtoBeforeEdit = new VoucherDto
+            {
+                Id = ((VoucherDto)element).Id,
+                Type = ((VoucherDto)element).Type,
+                Value = ((VoucherDto)element).Value,
+                Status = ((VoucherDto)element).Status,
+                StartDate = ((VoucherDto)element).StartDate,
+                EndDate = ((VoucherDto)element).EndDate
+            };
         }
 
         private void ResetItemToOriginalValues(object element)
@@ -155,11 +160,11 @@ namespace BlindBoxShop.Application.Pages.Employee.VoucherPage.Partials
             {
                 Mapper!.Map(_voucherDtoBeforeEdit, element);
             }
-            if (_voucherDtoBeforeEdit!.Equals(table!.SelectedItem))
-            {
-                _disableRemoveBtn = true;
-                table.SetSelectedItem(null);
-            }
+
+            _disableRemoveBtn = true; 
+            _voucherDto = null;
+            table!.SetSelectedItem(null);
+            StateHasChanged();
         }
 
         private void ShowVariant(string message, Severity severity)
@@ -180,19 +185,17 @@ namespace BlindBoxShop.Application.Pages.Employee.VoucherPage.Partials
             }
         }
 
-        private Task OpenRemoveDialogAsync()
+        private async Task OpenRemoveDialogAsync(Guid Id)
         {
-            //var item = table.SelectedItem;
-            //var options = new DialogOptions { CloseOnEscapeKey = true };
-            //var parameters = new DialogParameters<BlindBoxCategoryModalRemove> { { x => x.BlindBoxCategoryDto, item } };
+            var parameter = new DialogParameters();
+            parameter.Add("Id", Id);
+            var dialog = await _dialogService.ShowAsync<ConfirmDeleteDialog>("Delete Confiamtion", parameter);
 
-            //var dialog = await DialogService.ShowAsync<BlindBoxCategoryModalRemove>("Delete category", parameters, options);
-            //var dialogResult = await dialog.Result;
-            //if (!dialogResult.Canceled)
-            //{
-            //    await ReloadDataAsync();
-            //}
-            return null!;
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                await ReloadDataAsync();
+            }
         }
     }
 }

@@ -59,12 +59,12 @@ namespace BlindBoxShop.Repository
             }
         }
 
-        public ICustomerReviewsRepository CustomerReviews
+        public ICustomerReviewRepository CustomerReviews
         {
             get
             {
                 var context = _dbContextFactory.CreateDbContext();
-                return new CustomerReviewsRepository(context);
+                return new CustomerReviewRepository(context);
             }
         }
 
@@ -103,12 +103,12 @@ namespace BlindBoxShop.Repository
             }
         }
 
-        public IReplyReviewsRepository ReplyReviews
+        public IReplyRepository ReplyReviews
         {
             get
             {
                 var context = _dbContextFactory.CreateDbContext();
-                return new ReplyReviewsRepository(context);
+                return new ReplyRepository(context);
             }
         }
 

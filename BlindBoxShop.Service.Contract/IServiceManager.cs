@@ -22,5 +22,7 @@
 
         IVoucherService VoucherService { get; }
 
+        IReplyService ReplyService { get; }
+
     }
 }

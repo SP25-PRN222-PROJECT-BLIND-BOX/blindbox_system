@@ -9,10 +9,9 @@ namespace BlindBoxShop.Application.MappingProfile
         public VoucherMappingProfile()
         {
             CreateMap<Voucher, VoucherDto>();
-            CreateMap<VoucherDto, VoucherDto>();
-            CreateMap<VoucherDto, VoucherForUpdate>();
             CreateMap<VoucherForUpdate, Voucher>();
             CreateMap<VoucherForCreate, Voucher>();
+            CreateMap<VoucherDto, VoucherForUpdate>();
         }
     }
 }

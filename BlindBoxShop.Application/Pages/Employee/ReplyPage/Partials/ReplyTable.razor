@@ -1,0 +1,71 @@
+﻿@using BlindBoxShop.Shared.DataTransferObject.Reply
+@inject ISnackbar Snackbar
+@inject IDialogService _dialogService
+
+<MudTable ServerData="ServerReload" Dense="false" Hover="true" @ref="table" FixedHeader="true" FixedFooter="true" Height="500px"
+          @bind-SelectedItem="_replyDto" T="ReplyDto"
+          OnRowClick="RowClickEvent"
+          CanCancelEdit="true"
+          SortLabel="Sort By"
+          RowEditPreview="BackupItem"
+          RowEditCancel="ResetItemToOriginalValues"
+          RowEditCommit="ItemHasBeenCommitted"
+          IsEditRowSwitchingBlocked="false"
+          AllowUnsorted="false"
+          ApplyButtonPosition="TableApplyButtonPosition.End" EditButtonPosition="TableEditButtonPosition.End" EditTrigger="TableEditTrigger.RowClick">
+    <ToolBarContent>
+        <MudFab StartIcon="@Icons.Material.Filled.Add" DropShadow="true" Size="Size.Small" Label="Add Reply" @onclick="OpenCreateDialogAsync" Class="mr-3" />
+        <MudFab StartIcon="@Icons.Material.Filled.Remove"
+                DropShadow="true"
+                Size="Size.Small"
+                Color="Color.Error"
+                Label="Remove Reply"
+                @onclick="@(() => OpenRemoveDialogAsync(_replyDto?.Id ?? Guid.Empty))"
+                Disabled="_disableRemoveBtn" />
+        <MudSpacer />
+        <MudTextField T="string"
+                      @bind-value="@searchString"
+                      Placeholder="Search replies"
+                      DebounceInterval="500"
+                      OnDebounceIntervalElapsed="SearchChanged"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      Class="mt-0">
+        </MudTextField>
+    </ToolBarContent>
+    <ColGroup>
+        <col style="width:20%;" />
+        <col style="width:50%;" />
+        <col style="width:15%;" />
+        <col style="width:15%;" />
+    </ColGroup>
+    <HeaderContent>
+        <MudTh><MudTableSortLabel SortLabel="CustomerReviewsName" T="ReplyDto">Review</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="Reply" T="ReplyDto">Reply</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="CreatedAt" T="ReplyDto">Created At</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="UpdatedAt" T="ReplyDto">Updated At</MudTableSortLabel></MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Review">@context.Username</MudTd>
+        <MudTd DataLabel="Reply">@context.Reply</MudTd>
+        <MudTd DataLabel="Created At">@context.CreatedAt?.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
+        <MudTd DataLabel="Updated At">@context.UpdatedAt?.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>No replies found</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudProgressCircular Color="Color.Primary" Indeterminate />
+    </LoadingContent>
+    <RowEditingTemplate>
+        <MudTd DataLabel="Review">@context.Username</MudTd>
+        <MudTd DataLabel="Reply">
+            <MudTextField T="string" @bind-Value="context.Reply" Immediate="true" />
+        </MudTd>
+        <MudTd DataLabel="Created At">@context.CreatedAt?.ToString("yyyy-MM-dd")</MudTd>
+        <MudTd DataLabel="Updated At">@context.UpdatedAt?.ToString("yyyy-MM-dd")</MudTd>
+    </RowEditingTemplate>
+    <PagerContent>
+        <MudTablePager PageSizeOptions="new int[] { 5, 10, 20 }" />
+    </PagerContent>
+</MudTable>

@@ -1,0 +1,30 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using BlindBoxShop.Shared.DataTransferObject.CustomerReview
+@inject ISnackbar Snackbar
+
+<EditForm Model="@_reviewForCreate" OnValidSubmit="ValidSubmit" OnInvalidSubmit="InvalidSubmit">
+    <MudDialog OnKeyDown="(e) => OnKeyDownAsync(e, context)" Class="rounded-lg">
+        <DialogContent>
+            <DataAnnotationsValidator />
+            <MudCardContent>
+                <MudTextField Label="Feedback"
+                              @bind-Value="_reviewForCreate.FeedBack"
+                              For="@(() => _reviewForCreate.FeedBack)"
+                              HelperText="Enter your feedback (optional)." />
+
+                <MudNumericField T="float" Label="Rating Star"
+                                 @bind-Value="_reviewForCreate.RatingStar"
+                                 For="@(() => _reviewForCreate.RatingStar)"
+                                 HelperText="Enter a rating between 0 and 5."
+                                 Min="0" Max="5" />
+
+                <ValidationMessage For="@(() => _reviewForCreate.BlindBoxId)" />
+                <ValidationMessage For="@(() => _reviewForCreate.RatingStar)" />
+            </MudCardContent>
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancel">Cancel</MudButton>
+            <MudButton Color="Color.Primary" ButtonType="ButtonType.Submit">Create</MudButton>
+        </DialogActions>
+    </MudDialog>
+</EditForm>

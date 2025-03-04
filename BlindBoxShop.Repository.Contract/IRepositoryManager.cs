@@ -15,7 +15,7 @@ namespace BlindBoxShop.Repository.Contract
 
         IBlindBoxRepository BlindBox { get; }
 
-        ICustomerReviewsRepository CustomerReviews { get; }
+        ICustomerReviewRepository CustomerReviews { get; }
 
         IOrderDetailRepository OrderDetail { get; }
 
@@ -24,6 +24,7 @@ namespace BlindBoxShop.Repository.Contract
         IPackageRepository Package { get; }
 
         IVoucherRepository Voucher { get; }
-        IReplyReviewsRepository ReplyReviews { get; }
+
+        IReplyRepository ReplyReviews { get; }
     }
 }

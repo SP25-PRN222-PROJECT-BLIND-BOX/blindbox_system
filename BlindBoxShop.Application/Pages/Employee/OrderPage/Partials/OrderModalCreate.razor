@@ -1,0 +1,29 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using BlindBoxShop.Shared.DataTransferObject.Order
+@using BlindBoxShop.Shared.Enum
+@inject ISnackbar Snackbar
+
+<EditForm Model="@_orderForCreate" OnValidSubmit="ValidSubmit" OnInvalidSubmit="InvalidSubmit">
+    <MudDialog OnKeyDown="(e) => OnKeyDownAsync(e, context)" Class="rounded-lg">
+        <DialogContent>
+            <DataAnnotationsValidator />
+            <MudCardContent>
+                <MudTextField Label="Address" @bind-Value="_orderForCreate.Address" For="@(() => _orderForCreate.Address)" />
+                <MudTextField Label="Province" @bind-Value="_orderForCreate.Province" For="@(() => _orderForCreate.Province)" />
+                <MudTextField Label="Wards" @bind-Value="_orderForCreate.Wards" For="@(() => _orderForCreate.Wards)" />
+                <MudTextField Label="SubTotal" @bind-Value="_orderForCreate.SubTotal" For="@(() => _orderForCreate.SubTotal)" />
+                <MudTextField Label="Total" @bind-Value="_orderForCreate.Total" For="@(() => _orderForCreate.Total)" />
+
+                <!-- Updated MudSelect for Payment Method -->
+                <MudSelect Label="Payment Method" @bind-Value="_orderForCreate.PaymentMethod">
+                    <MudSelectItem Value="@(PaymentMethod.VnPay)">Credit Card</MudSelectItem>
+                    <MudSelectItem Value="@(PaymentMethod.Cash)">Cash on Delivery</MudSelectItem>
+                </MudSelect>
+            </MudCardContent>
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancel">Cancel</MudButton>
+            <MudButton Color="Color.Primary" ButtonType="ButtonType.Submit">Create Order</MudButton>
+        </DialogActions>
+    </MudDialog>
+</EditForm>

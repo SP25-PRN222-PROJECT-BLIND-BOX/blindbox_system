@@ -1,0 +1,72 @@
+﻿@using BlindBoxShop.Shared.DataTransferObject.Order
+@inject ISnackbar Snackbar
+@inject IDialogService _dialogService
+
+<MudTable ServerData="ServerReload" Dense="false" Hover="true" @ref="table" FixedHeader="true" FixedFooter="true" Height="500px"
+          @bind-SelectedItem="_orderDto" T="OrderDto"
+          OnRowClick="RowClickEvent"
+          CanCancelEdit="false"
+          SortLabel="Sort By"
+          AllowUnsorted="false"
+          ApplyButtonPosition="TableApplyButtonPosition.End" EditButtonPosition="TableEditButtonPosition.End" EditTrigger="TableEditTrigger.RowClick">
+    <ToolBarContent>
+        <MudFab StartIcon="@Icons.Material.Filled.Add" DropShadow="true" Size="Size.Small" Label="Add Order" @onclick="OpenCreateDialogAsync" Class="mr-3" />
+        <MudSpacer />
+        <MudTextField T="string"
+                      @bind-value="@searchString"
+                      Placeholder="Search"
+                      DebounceInterval="500"
+                      OnDebounceIntervalElapsed="SearchChanged"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      IconSize="Size.Medium"
+                      Class="mt-0">
+        </MudTextField>
+    </ToolBarContent>
+    <ColGroup>
+        <col style="width:100px;" /> <!-- Added column for Order Id -->
+        <col style="width:150px;" />
+        <col style="width:150px;" />
+        <col style="width:200px;" />
+        <col style="width:100px;" />
+        <col style="width:150px;" />
+        <col style="width:150px;" />
+        <col style="width:150px;" />
+        <col style="width:150px;" /> <!-- Add column for cancel button -->
+    </ColGroup>
+    <HeaderContent>
+        <MudTh>Order Id</MudTh> <!-- Added header for Order Id -->
+        <MudTh><MudTableSortLabel SortLabel="CustomerName" T="OrderDto">Customer Name</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="VoucherId" T="OrderDto">Voucher</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="Status" T="OrderDto">Status</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="SubTotal" T="OrderDto">Sub Total</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="Total" T="OrderDto">Total</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="CreatedAt" T="OrderDto">Created At</MudTableSortLabel></MudTh>
+        <MudTh>Action</MudTh> <!-- Add header for cancel button -->
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Order Id">@context.Id</MudTd> <!-- Added Order Id column -->
+        <MudTd DataLabel="Customer Name">@context.CustomerName</MudTd>
+        <MudTd DataLabel="Voucher">@(@context.VoucherId.HasValue ? @context.VoucherId.ToString() : "N/A")</MudTd>
+        <MudTd DataLabel="Status">@context.Status</MudTd>
+        <MudTd DataLabel="Sub Total">@context.SubTotal</MudTd>
+        <MudTd DataLabel="Total">@context.Total</MudTd>
+        <MudTd DataLabel="Created At" Format="yyyy/MM/dd">@context.CreatedAt</MudTd>
+        <MudTd>
+            <!-- Cancel button, disabled if status is 'Cancelled' -->
+            <MudButton Color="Color.Error" Disabled="@IsCancelButtonDisabled(@context)" OnClick="@(() => OpenRemoveDialogAsync(@context.Id))">
+                Cancel
+            </MudButton>
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>No matching records found</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudText>Loading...</MudText>
+    </LoadingContent>
+    <PagerContent>
+        <MudTablePager PageSizeOptions="new int[] { 10, 25, 50}" />
+    </PagerContent>
+</MudTable>
+

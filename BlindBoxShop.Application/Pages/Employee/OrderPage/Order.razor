@@ -1,0 +1,13 @@
+﻿@page "/order"
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+@using BlindBoxShop.Application.Pages.Employee.OrderPage.Partials
+
+<PageTitle>Order</PageTitle>
+<MudContainer Class="mt-16 px-8 min-vh-100" MaxWidth="MaxWidth.ExtraExtraLarge">
+    <MudStack>
+        <MudPaper Class="pa-3">
+            <OrderTable />
+        </MudPaper>
+    </MudStack>
+</MudContainer>

@@ -14,14 +14,6 @@
           ApplyButtonPosition="TableApplyButtonPosition.End" EditButtonPosition="TableEditButtonPosition.End" EditTrigger="TableEditTrigger.RowClick">
     <ToolBarContent>
         <MudFab StartIcon="@Icons.Material.Filled.Add" DropShadow="true" Size="Size.Small" Label="Add Voucher" @onclick="OpenCreateDialogAsync" Class="mr-3" />
-        <MudFab StartIcon="@Icons.Material.Filled.Remove"
-                DropShadow="true"
-                Size="Size.Small"
-                Color="Color.Error"
-                Label="Remove Voucher"
-                @onclick="@(() => OpenRemoveDialogAsync(_voucherDto?.Id ?? Guid.Empty))"
-                Disabled="_disableRemoveBtn" />
-        <MudSpacer />
         <MudTextField T="string"
                       @bind-value="@searchString"
                       Placeholder="Search"
@@ -42,7 +34,7 @@
         <col style="width:50px;" />
         <col style="width:50px;" />
         <col style="width:50px;" />
-        <col style="width:50px;" />
+        <col style="width:100px;" /> <!-- Added column for Delete button -->
     </ColGroup>
     <HeaderContent>
         <MudTh><MudTableSortLabel SortLabel="CreatedAt" T="VoucherDto">Created At</MudTableSortLabel></MudTh>
@@ -52,41 +44,46 @@
         <MudTh><MudTableSortLabel SortLabel="EndDate" T="VoucherDto">End Date</MudTableSortLabel></MudTh>
         <MudTh><MudTableSortLabel SortLabel="Type" T="VoucherDto">Type</MudTableSortLabel></MudTh>
         <MudTh><MudTableSortLabel SortLabel="Status" T="VoucherDto">Status</MudTableSortLabel></MudTh>
+        <MudTh>Action</MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Created At" Format="yyyy/MM/dd">@context.CreatedAt</MudTd>
-            <MudTd DataLabel="Id">@context.Id</MudTd>
-            <MudTd DataLabel="Value">@context.Value</MudTd>
-            <MudTd DataLabel="Start Date">@context.StartDate</MudTd>
-            <MudTd DataLabel="End Date">@context.EndDate</MudTd>
-            <MudTd DataLabel="Type">@context.Type</MudTd>
-            <MudTd DataLabel="Status">@context.Status</MudTd>
-        </RowTemplate>
-        <NoRecordsContent>
-            <MudText>No matching records found</MudText>
-        </NoRecordsContent>
-        <LoadingContent>
-            <MudText>Loading...</MudText>
-        </LoadingContent>
-        <RowEditingTemplate>
-            <MudTd DataLabel="Created At" Format="yyyy/MM/dd">@context.CreatedAt</MudTd>
-            <MudTd DataLabel="Id">@context.Id</MudTd>
-            <MudTd DataLabel="Value">
-                <MudNumericField @bind-Value="context.Value" Min="0" Required />
-            </MudTd>
-         <MudTd DataLabel="Start Date">
-             <MudDatePicker PickerVariant="PickerVariant.Dialog" @bind-Date="context.StartDate" MinDate="@DateTime.Now" />
-         </MudTd>
-         <MudTd DataLabel="End Date">
-             <MudDatePicker PickerVariant="PickerVariant.Dialog" @bind-Date="context.EndDate" MinDate="@DateTime.Now" />
-         </MudTd>
+        <MudTd DataLabel="Id">@context.Id</MudTd>
+        <MudTd DataLabel="Value">@context.Value</MudTd>
+        <MudTd DataLabel="Start Date">@context.StartDate</MudTd>
+        <MudTd DataLabel="End Date">@context.EndDate</MudTd>
         <MudTd DataLabel="Type">@context.Type</MudTd>
         <MudTd DataLabel="Status">@context.Status</MudTd>
-        </RowEditingTemplate>
-        <PagerContent>
-            <MudTablePager PageSizeOptions="new int[] { 10, 25, 50}" />
-        </PagerContent>
-        <EditButtonContent Context="button">
-            <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" Class="pa-0" OnClick="@button.ButtonAction" Disabled="@button.ButtonDisabled" />
-        </EditButtonContent>
-    </MudTable>
+        <MudTd>
+            <!-- Delete icon button for each voucher -->
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" @onclick="() => OpenRemoveDialogAsync(context.Id)" />
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>No matching records found</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudText>Loading...</MudText>
+    </LoadingContent>
+    <RowEditingTemplate>
+        <MudTd DataLabel="Created At" Format="yyyy/MM/dd">@context.CreatedAt</MudTd>
+        <MudTd DataLabel="Id">@context.Id</MudTd>
+        <MudTd DataLabel="Value">
+            <MudNumericField @bind-Value="context.Value" Min="0" Required />
+        </MudTd>
+        <MudTd DataLabel="Start Date">
+            <MudDatePicker PickerVariant="PickerVariant.Dialog" @bind-Date="context.StartDate" MinDate="@DateTime.Now" />
+        </MudTd>
+        <MudTd DataLabel="End Date">
+            <MudDatePicker PickerVariant="PickerVariant.Dialog" @bind-Date="context.EndDate" MinDate="@DateTime.Now" />
+        </MudTd>
+        <MudTd DataLabel="Type">@context.Type</MudTd>
+        <MudTd DataLabel="Status">@context.Status</MudTd>
+    </RowEditingTemplate>
+    <PagerContent>
+        <MudTablePager PageSizeOptions="new int[] { 10, 25, 50}" />
+    </PagerContent>
+    <EditButtonContent Context="button">
+        <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" Class="pa-0" OnClick="@button.ButtonAction" Disabled="@button.ButtonDisabled" />
+    </EditButtonContent>
+</MudTable>

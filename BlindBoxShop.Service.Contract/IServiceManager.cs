@@ -12,7 +12,7 @@
 
         IBlindBoxCategoryService BlindBoxCategoryService { get; }
 
-        ICustomerReviewsService CustomerReviewsService { get; }
+        IReviewsService CustomerReviewsService { get; }
 
         IOrderDetailService OrderDetailService { get; }
 

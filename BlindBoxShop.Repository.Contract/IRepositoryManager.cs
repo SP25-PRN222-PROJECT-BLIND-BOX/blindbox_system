@@ -15,16 +15,16 @@ namespace BlindBoxShop.Repository.Contract
 
         IBlindBoxRepository BlindBox { get; }
 
-        ICustomerReviewRepository CustomerReviews { get; }
+        IReviewRepository Review { get; }
 
         IOrderDetailRepository OrderDetail { get; }
-
-        IOrderRepository Order { get; }
 
         IPackageRepository Package { get; }
 
         IVoucherRepository Voucher { get; }
 
-        IReplyRepository ReplyReviews { get; }
+        IReplyRepository Replie { get; }
+
+        IOrderRepository Order { get; }
     }
 }

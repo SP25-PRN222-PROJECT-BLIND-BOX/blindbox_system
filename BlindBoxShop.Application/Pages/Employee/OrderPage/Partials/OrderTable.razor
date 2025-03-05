@@ -42,6 +42,7 @@
         <MudTh><MudTableSortLabel SortLabel="SubTotal" T="OrderDto">Sub Total</MudTableSortLabel></MudTh>
         <MudTh><MudTableSortLabel SortLabel="Total" T="OrderDto">Total</MudTableSortLabel></MudTh>
         <MudTh><MudTableSortLabel SortLabel="CreatedAt" T="OrderDto">Created At</MudTableSortLabel></MudTh>
+        <MudTh>Detail</MudTh>
         <MudTh>Action</MudTh> <!-- Add header for cancel button -->
     </HeaderContent>
     <RowTemplate>
@@ -52,6 +53,11 @@
         <MudTd DataLabel="Sub Total">@context.SubTotal</MudTd>
         <MudTd DataLabel="Total">@context.Total</MudTd>
         <MudTd DataLabel="Created At" Format="yyyy/MM/dd">@context.CreatedAt</MudTd>
+        <MudTd>
+            <MudButton Color="Color.Primary" OnClick="@(() => OpenOrderDetailModalAsync(@context.Id))">
+                Detail
+            </MudButton>
+        </MudTd>
         <MudTd>
             <!-- Cancel button, disabled if status is 'Cancelled' -->
             <MudButton Color="Color.Error" Disabled="@IsCancelButtonDisabled(@context)" OnClick="@(() => OpenRemoveDialogAsync(@context.Id))">

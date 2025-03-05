@@ -1,19 +1,19 @@
 ﻿using BlindBoxShop.Service.Contract;
-using BlindBoxShop.Shared.DataTransferObject.CustomerReview;
+using BlindBoxShop.Shared.DataTransferObject.Review;
 using BlindBoxShop.Shared.Extension;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
 
-namespace BlindBoxShop.Application.Pages.Employee.ReviewPage.Partials
+namespace BlindBoxShop.Application.Pages.Employee.MyReviewPage.Partials
 {
     public partial class ReviewModalCreate
     {
         private ReviewForCreationDto _reviewForCreate = new ReviewForCreationDto
         {
-            BlindBoxId = Guid.Parse("15d17b33-4081-4ea2-b90b-6b6fde7a9ec5"),
-            UserId = Guid.Parse("66c29a04-70ed-49df-8f85-6568aa80cc10"),
+            BlindBoxId = Guid.Parse("6f6b16e9-32b2-4a07-bebd-13947e314633"),
+            UserId = Guid.Parse("5eca5610-cce6-4c8a-90d5-dd667e4bf032"),
             RatingStar = 0,
         };
 

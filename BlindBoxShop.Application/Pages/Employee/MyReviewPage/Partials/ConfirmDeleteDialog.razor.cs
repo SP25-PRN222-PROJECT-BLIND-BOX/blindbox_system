@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
-namespace BlindBoxShop.Application.Pages.Employee.ReviewPage.Partials
+namespace BlindBoxShop.Application.Pages.Employee.MyReviewPage.Partials
 {
     public partial class ConfirmDeleteDialog
     {

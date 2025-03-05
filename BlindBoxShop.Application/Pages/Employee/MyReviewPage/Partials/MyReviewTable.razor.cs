@@ -1,24 +1,25 @@
 ﻿using AutoMapper;
+using BlindBoxShop.Application.Pages.Account.Shared;
 using BlindBoxShop.Service.Contract;
-using BlindBoxShop.Shared.DataTransferObject.Reply;
+using BlindBoxShop.Shared.DataTransferObject.Review;
 using BlindBoxShop.Shared.Extension;
 using BlindBoxShop.Shared.Features;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
-namespace BlindBoxShop.Application.Pages.Employee.ReplyPage.Partials
+namespace BlindBoxShop.Application.Pages.Employee.MyReviewPage.Partials
 {
-    public partial class ReplyTable
+    public partial class MyReviewTable
     {
-        private IEnumerable<ReplyDto>? pagedData;
+        private IEnumerable<ReviewDto>? pagedData;
 
-        private MudTable<ReplyDto>? table;
+        private MudTable<ReviewDto>? table;
 
         private string? searchString;
 
-        private ReplyDto? _replyDto;
+        private ReviewDto? _reviewDto;
 
-        private ReplyDto? _replyDtoBeforeEdit;
+        private ReviewDto? _reviewDtoBeforeEdit;
 
         private Timer? _timer;
 
@@ -33,34 +34,34 @@ namespace BlindBoxShop.Application.Pages.Employee.ReplyPage.Partials
 
         private MetaData? _metaData { get; set; } = new MetaData();
 
-        private ReplyParameter _replyParameters = new ReplyParameter();
+        private ReviewParameter _reviewParameters = new ReviewParameter();
 
         private bool _disableRemoveBtn = true;
 
-        private async Task<TableData<ReplyDto>> ServerReload(TableState state, CancellationToken token)
+        private async Task<TableData<ReviewDto>> ServerReload(TableState state, CancellationToken token)
         {
-            _replyParameters.PageNumber = state.Page + 1;
-            _replyParameters.PageSize = state.PageSize;
-            _replyParameters.SearchByReply = searchString;
+            _reviewParameters.PageNumber = state.Page + 1;
+            _reviewParameters.PageSize = state.PageSize;
+            _reviewParameters.SearchByUsername = searchString;
 
             if (state.SortLabel != null)
             {
                 string sortDirection = state.SortDirection != SortDirection.Ascending ? "desc" : "";
-                _replyParameters.OrderBy = $"{state.SortLabel} {sortDirection}".Trim();
+                _reviewParameters.OrderBy = $"{state.SortLabel} {sortDirection}".Trim();
             }
 
-            using var replyService = ServiceManager!.ReplyService;
-            var result = await replyService.GetRepliesAsync(_replyParameters, false);
+            using var reviewService = ServiceManager!.CustomerReviewsService;
+            var result = await reviewService.GetReviewsByUserIdAsync(Guid.Parse("5eca5610-cce6-4c8a-90d5-dd667e4bf032"), _reviewParameters, false);
             if (result.IsSuccess)
             {
-                pagedData = result.GetValue<IEnumerable<ReplyDto>>();
+                pagedData = result.GetValue<IEnumerable<ReviewDto>>();
                 _metaData = result.Paging;
             }
 
-            return new TableData<ReplyDto>() { TotalItems = _metaData!.TotalCount, Items = pagedData };
+            return new TableData<ReviewDto>() { TotalItems = _metaData!.TotalCount, Items = pagedData };
         }
 
-        private async Task ReloadDataAsync()
+        public async Task ReloadDataAsync()
         {
             if (table != null)
             {
@@ -94,16 +95,16 @@ namespace BlindBoxShop.Application.Pages.Employee.ReplyPage.Partials
             _timer = new Timer(OnTimerElapsed, null, 500, 0);
         }
 
-        private void RowClickEvent(TableRowClickEventArgs<ReplyDto> tableRowClickEventArgs)
+        private void RowClickEvent(TableRowClickEventArgs<ReviewDto> tableRowClickEventArgs)
         {
-            _replyDto = tableRowClickEventArgs.Item;
-            _disableRemoveBtn = _replyDto == null || _replyDto.Id == Guid.Empty;
+            _reviewDto = tableRowClickEventArgs.Item;
+            _disableRemoveBtn = _reviewDto == null || _reviewDto.Id == Guid.Empty;
             StateHasChanged();
         }
 
         private async void ItemHasBeenCommitted(object element)
         {
-            var editedItem = (ReplyDto)element;
+            var editedItem = (ReviewDto)element;
 
             if (!HasChanges(editedItem))
             {
@@ -112,53 +113,53 @@ namespace BlindBoxShop.Application.Pages.Employee.ReplyPage.Partials
                 return;
             }
 
-            var replyForUpdate = Mapper!.Map<ReplyForUpdateDto>(editedItem);
-            if (replyForUpdate == null)
+            var reviewForUpdate = Mapper!.Map<ReviewForUpdateDto>(editedItem);
+            if (reviewForUpdate == null)
             {
-                ShowVariant($"Edit reply with Id {editedItem.Id} failed.", Severity.Warning);
+                ShowVariant($"Edit review with Id {editedItem.Id} failed.", Severity.Warning);
                 return;
             }
 
-            using var replyService = ServiceManager!.ReplyService;
-            var result = await replyService.UpdateReplyAsync(editedItem.Id, replyForUpdate);
+            using var reviewService = ServiceManager!.CustomerReviewsService;
+            var result = await reviewService.UpdateReviewAsync(editedItem.Id, reviewForUpdate);
             if (result.IsSuccess)
             {
-                ShowVariant($"Reply with Id {editedItem.Id} updated successfully.", Severity.Success);
+                ShowVariant($"Review with Id {editedItem.Id} updated successfully.", Severity.Success);
                 _disableRemoveBtn = true;
                 StateHasChanged();
             }
             else
             {
                 var errorMessage = string.Join("; ", result.Errors.Select(e => e.Description));
-                ShowVariant($"Failed to update reply with Id {editedItem.Id}: {errorMessage}", Severity.Error);
+                ShowVariant($"Failed to update review with Id {editedItem.Id}: {errorMessage}", Severity.Error);
                 await ReloadDataAsync();
             }
         }
 
-        private bool HasChanges(ReplyDto currentItem)
+        private bool HasChanges(ReviewDto currentItem)
         {
-            return _replyDtoBeforeEdit != null && !_replyDtoBeforeEdit.Equals(currentItem);
+            return _reviewDtoBeforeEdit != null && !_reviewDtoBeforeEdit.Equals(currentItem);
         }
 
         private void BackupItem(object element)
         {
-            _replyDtoBeforeEdit = new ReplyDto
+            _reviewDtoBeforeEdit = new ReviewDto
             {
-                Id = ((ReplyDto)element).Id,
-                Reply = ((ReplyDto)element).Reply,
-                UpdatedAt = ((ReplyDto)element).UpdatedAt,
+                Id = ((ReviewDto)element).Id,
+                FeedBack = ((ReviewDto)element).FeedBack,
+                RatingStar = ((ReviewDto)element).RatingStar,
             };
         }
 
         private void ResetItemToOriginalValues(object element)
         {
-            if (_replyDtoBeforeEdit != null)
+            if (_reviewDtoBeforeEdit != null)
             {
-                Mapper!.Map(_replyDtoBeforeEdit, element);
+                Mapper!.Map(_reviewDtoBeforeEdit, element);
             }
 
             _disableRemoveBtn = true;
-            _replyDto = null;
+            _reviewDto = null;
             table!.SetSelectedItem(null);
             StateHasChanged();
         }
@@ -172,7 +173,7 @@ namespace BlindBoxShop.Application.Pages.Employee.ReplyPage.Partials
         private async Task OpenCreateDialogAsync()
         {
             var options = new DialogOptions { CloseOnEscapeKey = true };
-            var dialogResult = await (await DialogService!.ShowAsync<ReplyModalCreate>("Create Reply", options)).Result;
+            var dialogResult = await (await DialogService!.ShowAsync<ReviewModalCreate>("Create review", options)).Result;
             if (!dialogResult!.Canceled)
             {
                 await ReloadDataAsync();
@@ -183,7 +184,7 @@ namespace BlindBoxShop.Application.Pages.Employee.ReplyPage.Partials
         {
             var parameter = new DialogParameters();
             parameter.Add("Id", id);
-            var dialog = await _dialogService.ShowAsync<ConfirmDeleteDialog>("Delete Confirmation", parameter);
+            var dialog = await _dialogService.ShowAsync<ConfirmDeleteDialog>("Delete Confiamtion", parameter);
 
             var result = await dialog.Result;
             if (!result.Canceled)

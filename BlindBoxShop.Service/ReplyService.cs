@@ -7,7 +7,6 @@ using BlindBoxShop.Shared.DataTransferObject.Reply;
 using BlindBoxShop.Shared.Extension;
 using BlindBoxShop.Shared.Features;
 using BlindBoxShop.Shared.ResultModel;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace BlindBoxShop.Service
 {
@@ -17,7 +16,7 @@ namespace BlindBoxShop.Service
 
         public ReplyService(IRepositoryManager repositoryManager, IMapper mapper) : base(repositoryManager, mapper)
         {
-            _replyReviewsRepository = repositoryManager.Replie;
+            _replyReviewsRepository = repositoryManager.Replies;
         }
 
         private async Task<Result<ReplyReviews>> GetAndCheckIfReplyExistsByIdAsync(Guid id, bool trackChanges)
@@ -83,16 +82,16 @@ namespace BlindBoxShop.Service
             return Result.Success();
         }
 
-        public async Task<Result<IEnumerable<ReplyDto>>> GetRepliesByReviewIdAsync(Guid reviewId, ReplyParameter replyReviewParameter, bool trackChanges)
+        public async Task<Result<ReplyDto>> GetReplyByReviewIdAsync(Guid reviewId, bool trackChanges)
         {
-            var replies = await _replyReviewsRepository.GetRepliesByReviewIdAsync(reviewId, replyReviewParameter, trackChanges);
+            var reply = await _replyReviewsRepository.GetReplyByReviewIdAsync(reviewId, trackChanges);
 
-            if (!replies.Any())
-                return Result<IEnumerable<ReplyDto>>.Failure(ReplyErrors.GetNoRepliesFoundForReviewError(reviewId));
+            if (reply == null)
+                return Result<ReplyDto>.Failure(ReplyErrors.GetNoRepliesFoundForReviewError(reviewId));
 
-            var repliesDto = _mapper.Map<IEnumerable<ReplyDto>>(replies);
+            var replyDto = _mapper.Map<ReplyDto>(reply);
 
-            return (repliesDto, replies.MetaData);
+            return Result<ReplyDto>.Success(replyDto);
         }
 
         public async Task<Result> UpdateReplyAsync(Guid id, ReplyForUpdateDto replyForUpdateDto)

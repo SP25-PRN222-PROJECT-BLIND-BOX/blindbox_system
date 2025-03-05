@@ -6,6 +6,7 @@ namespace BlindBoxShop.Shared.Constant.ErrorConstant
     {
         #region Errors Message
         public const string ReviewNotFound = "Review with id {0} not found.";
+        public const string ReviewsNotFound = "Reviews not found.";
         public const string ReviewExist = "Review with name {0} already exist.";
         public const string ReviewUpdateNotAllowedAfter30Days = "Cannot update a review after 30 days from its creation date.";
         public const string ReviewUpdateNotAllowedAfterUpdated = "Cannot update a review that has already been updated.";
@@ -19,6 +20,13 @@ namespace BlindBoxShop.Shared.Constant.ErrorConstant
         {
             Code = nameof(ReviewNotFound),
             Description = string.Format(ReviewNotFound, id)
+        };
+
+        public static ErrorResult GetReviewsNotFoundError()
+        => new ErrorResult()
+        {
+            Code = nameof(ReviewNotFound),
+            Description = string.Format(ReviewNotFound)
         };
 
         public static ErrorResult GetReviewExistError(string name)

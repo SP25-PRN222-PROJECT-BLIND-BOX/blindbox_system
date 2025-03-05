@@ -2,9 +2,9 @@
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
-namespace BlindBoxShop.Application.Pages.Employee.ReplyPage.Partials
+namespace BlindBoxShop.Application.Pages.Employee.ReviewPage.Partials
 {
-    public partial class ConfirmDeleteDialog
+    public partial class ConfirmDeleteReviewDialog
     {
         [Inject]
         public IServiceManager? ServiceManager { get; set; }
@@ -16,8 +16,8 @@ namespace BlindBoxShop.Application.Pages.Employee.ReplyPage.Partials
 
         private async void Submit()
         {
-            using var replyService = ServiceManager!.ReplyService;
-            await replyService.DeleteReplyAsync(Id);
+            using var reviewService = ServiceManager!.CustomerReviewsService;
+            await reviewService.DeleteReviewAsync(Id);
             MudDialog.Close(DialogResult.Ok(true));
         }
 

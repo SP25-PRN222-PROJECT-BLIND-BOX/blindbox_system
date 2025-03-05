@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
-using BlindBoxShop.Application.Pages.Account.Shared;
 using BlindBoxShop.Service.Contract;
-using BlindBoxShop.Shared.DataTransferObject.CustomerReview;
+using BlindBoxShop.Shared.DataTransferObject.Reply;
+using BlindBoxShop.Shared.DataTransferObject.Review;
 using BlindBoxShop.Shared.Extension;
 using BlindBoxShop.Shared.Features;
 using Microsoft.AspNetCore.Components;
@@ -11,23 +11,18 @@ namespace BlindBoxShop.Application.Pages.Employee.ReviewPage.Partials
 {
     public partial class ReviewTable
     {
-        private IEnumerable<ReviewDto>? pagedData;
-
-        private MudTable<ReviewDto>? table;
-
+        private IEnumerable<ReviewWithReplyDto>? pagedData; // Dữ liệu chứa reviews và replies
         private string? searchString;
-
-        private ReviewDto? _reviewDto;
-
-        private ReviewDto? _reviewDtoBeforeEdit;
-
         private Timer? _timer;
-
+        private string replyText = string.Empty;
+        private string CardClass => "w-full sm:w-[350px] md:w-[400px] lg:w-[450px]";
         [Inject]
         public IDialogService? DialogService { get; set; }
 
         [Inject]
         public IServiceManager? ServiceManager { get; set; }
+        [CascadingParameter]
+        private IMudDialogInstance? MudDialog { get; set; }
 
         [Inject]
         public IMapper? Mapper { get; set; }
@@ -36,43 +31,82 @@ namespace BlindBoxShop.Application.Pages.Employee.ReviewPage.Partials
 
         private ReviewParameter _reviewParameters = new ReviewParameter();
 
-        private bool _disableRemoveBtn = true;
-
-        private async Task<TableData<ReviewDto>> ServerReload(TableState state, CancellationToken token)
+        /// <summary>
+        /// Reloads reviews with replies from the server.
+        /// </summary>
+        private async Task ReloadReviewsWithRepliesAsync()
         {
-            _reviewParameters.PageNumber = state.Page + 1;
-            _reviewParameters.PageSize = state.PageSize;
             _reviewParameters.SearchByUsername = searchString;
 
-            if (state.SortLabel != null)
-            {
-                string sortDirection = state.SortDirection != SortDirection.Ascending ? "desc" : "";
-                _reviewParameters.OrderBy = $"{state.SortLabel} {sortDirection}".Trim();
-            }
-
             using var reviewService = ServiceManager!.CustomerReviewsService;
-            var result = await reviewService.GetReviewsAsync(_reviewParameters, false);
+            var result = await reviewService.GetReviewsWithReplyAsync(_reviewParameters, false);
+
             if (result.IsSuccess)
             {
-                pagedData = result.GetValue<IEnumerable<ReviewDto>>();
+                pagedData = result.GetValue<IEnumerable<ReviewWithReplyDto>>();
                 _metaData = result.Paging;
+                StateHasChanged();
+            }
+            else
+            {
+                ShowVariant("Failed to load reviews", Severity.Error);
+            }
+        }
+
+        private async Task SubmitReplyAsync(Guid reviewId)
+        {
+            if (string.IsNullOrWhiteSpace(replyText))
+            {
+                Snackbar.Add("Reply cannot be empty!", Severity.Error);
+                return;
             }
 
-            return new TableData<ReviewDto>() { TotalItems = _metaData!.TotalCount, Items = pagedData };
+            try
+            {
+                var replyForCreate = new ReplyForCreationDto
+                {
+                    UserId = Guid.Parse("a5798b68-246a-4ef2-83f0-8c235c54b64a"),
+                    CustomerReviewsId = reviewId,
+                    Reply = replyText,
+                };
+
+                using var replyService = ServiceManager!.ReplyService;
+                var result = await replyService.CreateReplyAsync(replyForCreate);
+
+                if (result.IsSuccess)
+                {
+                    replyText = string.Empty;
+
+                    Snackbar.Add("Reply created successfully.", Severity.Success);
+
+                    await ReloadDataAsync();
+                }
+                else
+                {
+                    var errorsMessage = string.Join(", ", result.Errors!.Select(e => e.Description));
+                    Snackbar.Add(errorsMessage, Severity.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            }
+        }
+
+        protected override async Task OnInitializedAsync()
+        {
+            await ReloadReviewsWithRepliesAsync();
         }
 
         public async Task ReloadDataAsync()
         {
-            if (table != null)
-            {
-                await table.ReloadServerData();
-            }
+            await ReloadReviewsWithRepliesAsync();
         }
 
         private async Task OnSearch(string? text)
         {
             searchString = text;
-            await table!.ReloadServerData();
+            await ReloadDataAsync();
         }
 
         private async void OnTimerElapsed(object? state)
@@ -82,86 +116,13 @@ namespace BlindBoxShop.Application.Pages.Employee.ReviewPage.Partials
                 await OnSearch(searchString);
             });
 
-            _timer!.Dispose();
+            _timer?.Dispose();
         }
 
         private void SearchChanged()
         {
-            if (_timer != null)
-            {
-                _timer.Dispose();
-            }
-
+            _timer?.Dispose();
             _timer = new Timer(OnTimerElapsed, null, 500, 0);
-        }
-
-        private void RowClickEvent(TableRowClickEventArgs<ReviewDto> tableRowClickEventArgs)
-        {
-            _reviewDto = tableRowClickEventArgs.Item;
-            _disableRemoveBtn = _reviewDto == null || _reviewDto.Id == Guid.Empty;
-            StateHasChanged();
-        }
-
-        private async void ItemHasBeenCommitted(object element)
-        {
-            var editedItem = (ReviewDto)element;
-
-            if (!HasChanges(editedItem))
-            {
-                ShowVariant("No changes made. Update not performed.", Severity.Info);
-                ResetItemToOriginalValues(editedItem);
-                return;
-            }
-
-            var reviewForUpdate = Mapper!.Map<ReviewForUpdateDto>(editedItem);
-            if (reviewForUpdate == null)
-            {
-                ShowVariant($"Edit review with Id {editedItem.Id} failed.", Severity.Warning);
-                return;
-            }
-
-            using var reviewService = ServiceManager!.CustomerReviewsService;
-            var result = await reviewService.UpdateReviewAsync(editedItem.Id, reviewForUpdate);
-            if (result.IsSuccess)
-            {
-                ShowVariant($"Review with Id {editedItem.Id} updated successfully.", Severity.Success);
-                _disableRemoveBtn = true;
-                StateHasChanged();
-            }
-            else
-            {
-                var errorMessage = string.Join("; ", result.Errors.Select(e => e.Description));
-                ShowVariant($"Failed to update review with Id {editedItem.Id}: {errorMessage}", Severity.Error);
-                await ReloadDataAsync();
-            }
-        }
-
-        private bool HasChanges(ReviewDto currentItem)
-        {
-            return _reviewDtoBeforeEdit != null && !_reviewDtoBeforeEdit.Equals(currentItem);
-        }
-
-        private void BackupItem(object element)
-        {
-            _reviewDtoBeforeEdit = new ReviewDto
-            {
-                Id = ((ReviewDto)element).Id,
-                FeedBack = ((ReviewDto)element).FeedBack,
-                RatingStar = ((ReviewDto)element).RatingStar,
-            };
-        }
-
-        private void ResetItemToOriginalValues(object element)
-        {
-            if (_reviewDtoBeforeEdit != null)
-            {
-                Mapper!.Map(_reviewDtoBeforeEdit, element);
-            }
-
-            _disableRemoveBtn = true;
-            _reviewDto = null;
-            table!.SetSelectedItem(null);
-            StateHasChanged();
         }
 
         private void ShowVariant(string message, Severity severity)
@@ -170,21 +131,29 @@ namespace BlindBoxShop.Application.Pages.Employee.ReviewPage.Partials
             Snackbar.Add(message, severity, c => c.SnackbarVariant = Variant.Text);
         }
 
-        private async Task OpenCreateDialogAsync()
+        private void ShowSnackbar(string message, Severity severity)
         {
-            var options = new DialogOptions { CloseOnEscapeKey = true };
-            var dialogResult = await (await DialogService!.ShowAsync<ReviewModalCreate>("Create review", options)).Result;
-            if (!dialogResult!.Canceled)
+            Snackbar.Configuration.MaxDisplayedSnackbars = 10;
+            Snackbar.Add(message, severity, options => options.SnackbarVariant = Variant.Text);
+        }
+
+        private async Task OpenRemoveReviewDialogAsync(Guid id)
+        {
+            var parameter = new DialogParameters { { "Id", id } };
+            var dialog = await DialogService!.ShowAsync<ConfirmDeleteReviewDialog>("Delete Confirmation", parameter);
+
+            var result = await dialog.Result;
+            if (!result.Canceled)
             {
                 await ReloadDataAsync();
             }
         }
 
-        private async Task OpenRemoveDialogAsync(Guid id)
+        private async Task OpenRemoveReplyDialogAsync(Guid id)
         {
             var parameter = new DialogParameters();
             parameter.Add("Id", id);
-            var dialog = await _dialogService.ShowAsync<ConfirmDeleteDialog>("Delete Confiamtion", parameter);
+            var dialog = await _dialogService.ShowAsync<ConfirmDeleteReplyDialog>("Delete Confirmation", parameter);
 
             var result = await dialog.Result;
             if (!result.Canceled)

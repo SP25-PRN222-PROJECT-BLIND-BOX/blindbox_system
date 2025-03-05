@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using BlindBoxShop.Entities.Models;
-using BlindBoxShop.Shared.DataTransferObject.CustomerReview;
+using BlindBoxShop.Shared.DataTransferObject.Review;
 
 namespace BlindBoxShop.Application.MappingProfile
 {

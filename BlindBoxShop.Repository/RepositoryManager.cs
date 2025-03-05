@@ -104,7 +104,7 @@ namespace BlindBoxShop.Repository
             }
         }
 
-        public IReplyRepository Replie
+        public IReplyRepository Replies
         {
             get
             {

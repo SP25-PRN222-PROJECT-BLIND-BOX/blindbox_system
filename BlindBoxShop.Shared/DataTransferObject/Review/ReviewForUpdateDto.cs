@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace BlindBoxShop.Shared.DataTransferObject.CustomerReview
+namespace BlindBoxShop.Shared.DataTransferObject.Review
 {
     public class ReviewForUpdateDto
     {

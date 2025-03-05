@@ -1,82 +1,76 @@
-﻿@using BlindBoxShop.Shared.DataTransferObject.CustomerReview
+﻿@using BlindBoxShop.Shared.DataTransferObject.Review
 @inject ISnackbar Snackbar
 @inject IDialogService _dialogService
-<MudTable ServerData="ServerReload" Dense="false" Hover="true" @ref="table" FixedHeader="true" FixedFooter="true" Height="500px"
-          @bind-SelectedItem="_reviewDto" T="ReviewDto"
-          OnRowClick="RowClickEvent"
-          CanCancelEdit="true"
-          SortLabel="Sort By"
-          RowEditPreview="BackupItem"
-          RowEditCancel="ResetItemToOriginalValues"
-          RowEditCommit="ItemHasBeenCommitted"
-          IsEditRowSwitchingBlocked="false"
-          AllowUnsorted="false"
-          ApplyButtonPosition="TableApplyButtonPosition.End" EditButtonPosition="TableEditButtonPosition.End" EditTrigger="TableEditTrigger.RowClick">
 
-    <ToolBarContent>
-        <MudFab StartIcon="@Icons.Material.Filled.Add" DropShadow="true" Size="Size.Small" Label="Add Review" @onclick="OpenCreateDialogAsync" Class="mr-3" />
-        <MudTextField T="string"
-                      @bind-value="@searchString"
-                      Placeholder="Search reviews"
-                      DebounceInterval="500"
-                      OnDebounceIntervalElapsed="SearchChanged"
-                      Adornment="Adornment.Start"
-                      AdornmentIcon="@Icons.Material.Filled.Search"
-                      Class="mt-0">
-        </MudTextField>
-    </ToolBarContent>
+<MudGrid>
+    <MudItem xs="12">
+        @if (pagedData != null && pagedData.Any())
+        {
+            @foreach (var reviewWithReply in pagedData)
+            {
+                <MudCard Class="mb-4 p-3">
+                    <MudCardContent>
+                        <MudGrid>
+                            <!-- Cột thông tin -->
+                            <MudItem xs="11">
+                                <MudText Typography="Typography.H6" Bold="true" Color="Color.Primary">
+                                    @reviewWithReply.Review.Username
+                                </MudText>
+                                <MudText Typography="Typography.Caption" Color="Color.Secondary">
+                                    Reviewed on: @reviewWithReply.Review.CreatedAt.ToString("dd MMM yyyy HH:mm")
+                                </MudText>
 
-    <ColGroup>
-        <col style="width:20%;" />
-        <col style="width:15%;" />
-        <col style="width:10%;" />
-        <col style="width:10%;" />
-        <col style="width:45%;" />
-        <col style="width:10%;" /> <!-- For the Delete button -->
-    </ColGroup>
+                                <MudDivider Class="my-2" />
 
-    <HeaderContent>
-        <MudTh><MudTableSortLabel SortLabel="Username" T="ReviewDto">Username</MudTableSortLabel></MudTh>
-        <MudTh><MudTableSortLabel SortLabel="BlindBoxName" T="ReviewDto">Blind Box</MudTableSortLabel></MudTh>
-        <MudTh><MudTableSortLabel SortLabel="CreatedAt" T="ReviewDto">Created At</MudTableSortLabel></MudTh>
-        <MudTh><MudTableSortLabel SortLabel="RatingStar" T="ReviewDto">Rating</MudTableSortLabel></MudTh>
-        <MudTh>Feedback</MudTh>
-        <MudTh>Actions</MudTh>
-    </HeaderContent>
+                                <MudText Typography="Typography.Body2">@reviewWithReply.Review.BlindBoxName</MudText>
 
-    <RowTemplate>
-        <MudTd DataLabel="Username">@context.Username</MudTd>
-        <MudTd DataLabel="Blind Box">@context.BlindBoxName</MudTd>
-        <MudTd DataLabel="Created At">@context.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
-        <MudTd DataLabel="Rating">@context.RatingStar</MudTd>
-        <MudTd DataLabel="Feedback">@context.FeedBack</MudTd>
-        <MudTd DataLabel="Actions">
-            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" @onclick="() => OpenRemoveDialogAsync(context.Id)" />
-        </MudTd>
-    </RowTemplate>
+                                <MudRating SelectedValue="@(Convert.ToInt32(Math.Round(reviewWithReply.Review.RatingStar)))" ReadOnly="true" MaxValue="5" Class="my-2" />
 
-    <NoRecordsContent>
-        <MudText>No reviews found</MudText>
-    </NoRecordsContent>
+                                <MudText Typography="Typography.Body1" Bold="true" Class="mt-2">
+                                    Feedback: @reviewWithReply.Review.FeedBack
+                                </MudText>
 
-    <LoadingContent>
-        <MudProgressCircular Color="Color.Primary" Indeterminate />
-    </LoadingContent>
+                                <!-- Phần Reply -->
+                                @if (reviewWithReply.Reply != null)
+                                {
+                                    <MudDivider Class="my-2" />
+                                    <MudGrid>
+                                        <MudItem xs="11">
+                                            <MudText Typography="Typography.Body1" Bold="true" Color="Color.Info">
+                                                Reply from: @reviewWithReply.Reply.Username
+                                            </MudText>
+                                            <MudText Typography="Typography.Caption" Color="Color.Secondary">
+                                                Replied on: @reviewWithReply.Reply.CreatedAt.ToString("dd MMM yyyy HH:mm")
+                                            </MudText>
+                                            <MudText Typography="Typography.Body2" Class="mt-1">@reviewWithReply.Reply.Reply</MudText>
+                                        </MudItem>
+                                        <MudItem xs="1" Class="flex justify-end">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" @onclick="() => OpenRemoveReplyDialogAsync(reviewWithReply.Reply.Id)" />
+                                        </MudItem>
+                                    </MudGrid>
+                                }
+                                else
+                                {
+                                    <MudDivider Class="my-2" />
+                                    <MudTextField @bind-Value="replyText" Label="Your Reply" Variant="Variant.Outlined" FullWidth="true" />
+                                    <MudButton Color="Color.Primary" OnClick="() => SubmitReplyAsync(reviewWithReply.Review.Id)" Class="mt-2">
+                                        Reply
+                                    </MudButton>
+                                }
+                            </MudItem>
 
-    <RowEditingTemplate>
-        <MudTd DataLabel="Username">@context.Username</MudTd>
-        <MudTd DataLabel="Blind Box">@context.BlindBoxName</MudTd>
-        <MudTd DataLabel="Created At">@context.CreatedAt.ToString("yyyy-MM-dd")</MudTd>
-        <MudTd DataLabel="Rating">
-            <MudNumericField T="float" @bind-Value="context.RatingStar" Min="0" Max="5" Step="1" Immediate="true" />
-        </MudTd>
-        <MudTd DataLabel="Feedback">
-            <MudTextField T="string" @bind-Value="context.FeedBack" Immediate="true" />
-        </MudTd>
-    </RowEditingTemplate>
-
-    <PagerContent>
-        <MudTablePager PageSizeOptions="new int[] { 5, 10, 20 }" />
-    </PagerContent>
-</MudTable>
-
+                            <!-- Cột nút xóa review -->
+                            <MudItem xs="1" Class="flex justify-end align-items-end">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" @onclick="() => OpenRemoveReviewDialogAsync(reviewWithReply.Review.Id)" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
+            }
+        }
+        else
+        {
+            <MudText Typography="Typography.H6" Class="text-center">No reviews found</MudText>
+        }
+    </MudItem>
+</MudGrid>

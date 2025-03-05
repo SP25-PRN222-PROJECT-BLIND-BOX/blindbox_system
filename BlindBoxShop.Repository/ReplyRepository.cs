@@ -45,28 +45,15 @@ namespace BlindBoxShop.Repository
                 replyParameter.PageSize);
         }
 
-        // 2. Get replies by review ID
-        public async Task<PagedList<ReplyReviews>> GetRepliesByReviewIdAsync(Guid reviewId, ReplyParameter replyParameter, bool trackChanges)
+        // Get reply by review ID
+        public async Task<ReplyReviews?> GetReplyByReviewIdAsync(Guid reviewId, bool trackChanges)
         {
-            var query = FindByCondition(r => r.CustomerReviewsId == reviewId, trackChanges)
-                .Include(r => r.User)
-                .Include(r => r.CustomerReviews)
-                .SearchByContent(replyParameter.SearchByReply)
-                .SearchByUsername(replyParameter.SearchByUsername)
-                .Sort(replyParameter.OrderBy);
+            var reply = await FindByCondition(r => r.CustomerReviewsId == reviewId, trackChanges)
+                .Include(r => r.User) // Include User details
+                .Include(r => r.CustomerReviews) // Include related CustomerReviews
+                .FirstOrDefaultAsync();
 
-            var count = await query.CountAsync();
-
-            var replies = await query
-                .Skip((replyParameter.PageNumber - 1) * replyParameter.PageSize)
-                .Take(replyParameter.PageSize)
-                .ToListAsync();
-
-            return new PagedList<ReplyReviews>(
-                replies,
-                count,
-                replyParameter.PageNumber,
-                replyParameter.PageSize);
+            return reply;
         }
 
         // 3. Get replies by user ID

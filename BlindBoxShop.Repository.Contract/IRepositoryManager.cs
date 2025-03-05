@@ -23,7 +23,7 @@ namespace BlindBoxShop.Repository.Contract
 
         IVoucherRepository Voucher { get; }
 
-        IReplyRepository Replie { get; }
+        IReplyRepository Replies { get; }
 
         IOrderRepository Order { get; }
     }

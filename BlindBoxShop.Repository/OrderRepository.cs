@@ -22,6 +22,17 @@ namespace BlindBoxShop.Repository
                 .FirstOrDefaultAsync();
         }
 
+        // Get an order by its ID with User and OrderDetails included
+        public async Task<Order?> GetOrderByIdAsync(Guid orderId, bool trackChanges)
+        {
+            var query = FindByCondition(o => o.Id == orderId, trackChanges)
+                .Include(o => o.User)
+                .Include(o => o.OrderDetails);
+
+            return await query.FirstOrDefaultAsync();
+        }
+
+
         // Get paged orders with filtering and sorting
         public async Task<PagedList<Order>> GetOrdersAsync(OrderParameter orderParameter, bool trackChanges)
         {

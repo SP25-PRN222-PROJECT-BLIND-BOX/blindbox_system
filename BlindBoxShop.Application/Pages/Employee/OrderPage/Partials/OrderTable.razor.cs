@@ -116,6 +116,25 @@ namespace BlindBoxShop.Application.Pages.Employee.OrderPage.Partials
             }
         }
 
+        private async Task OpenOrderDetailModalAsync(Guid orderId)
+        {
+            var parameters = new DialogParameters
+            {
+                { "OrderId", orderId }
+            };
+
+            var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+            var dialog = await DialogService!.ShowAsync<OrderDetailModal>("Order Details", parameters, options);
+
+            var result = await dialog.Result;
+
+            if (!result.Canceled)
+            {
+                await ReloadDataAsync();
+            }
+        }
+
         private async Task OpenRemoveDialogAsync(Guid Id)
         {
             var parameter = new DialogParameters();
@@ -128,5 +147,6 @@ namespace BlindBoxShop.Application.Pages.Employee.OrderPage.Partials
                 await ReloadDataAsync();
             }
         }
+
     }
 }

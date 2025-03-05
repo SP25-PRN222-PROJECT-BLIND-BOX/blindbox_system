@@ -21,7 +21,8 @@ namespace BlindBoxShop.Application.MappingProfile
                 .ForMember(dest => dest.Wards, opt => opt.MapFrom(src => src.Wards))
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status))
                 .ForMember(dest => dest.PaymentMethod, opt => opt.MapFrom(src => src.PaymentMethod))
-                .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address));
+                .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
+                .ReverseMap();
         }
     }
 }

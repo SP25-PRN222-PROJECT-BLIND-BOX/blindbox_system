@@ -13,13 +13,16 @@ using BlindBoxShop.Shared.DataTransferObject.OrderDetail;
 
 namespace BlindBoxShop.Service
 {
-    public class OrderService : BaseService, IOrderService
-    {
-        private readonly IOrderRepository _orderRepository;
-        public OrderService(IRepositoryManager repositoryManager, IMapper mapper) : base(repositoryManager, mapper)
+        public class OrderService : BaseService, IOrderService
         {
-            _orderRepository = repositoryManager.Order;
-        }
+            private readonly IOrderRepository _orderRepository;
+            private readonly IOrderDetailRepository _orderDetailRepository;
+
+            public OrderService(IRepositoryManager repositoryManager, IMapper mapper, IOrderDetailRepository orderDetailRepository) : base(repositoryManager, mapper)
+            {
+                _orderRepository = repositoryManager.Order;
+                _orderDetailRepository = orderDetailRepository;
+            }
 
         private async Task<Result<Order>> GetAndCheckIfOrderExistByIdAsync(Guid id, bool trackChanges)
         {
@@ -63,33 +66,29 @@ namespace BlindBoxShop.Service
         }
 
         // Get Order by Id with Order Details
-        //public async Task<Result<OrderWithDetailsDto>> GetOrderWithDetailsByIdAsync(Guid id, bool trackChanges)
-        //{
-        //    var orderResult = await GetAndCheckIfOrderExistByIdAsync(id, trackChanges);
-        //    if (!orderResult.IsSuccess)
-        //        return Result<OrderWithDetailsDto>.Failure(orderResult.Errors!);
+        public async Task<Result<OrderWithDetailsDto>> GetOrderWithDetailsByIdAsync(Guid id, bool trackChanges)
+        {
+            // Check if the order exists
+            var orderResult = await _orderRepository.GetOrderByIdAsync(id, trackChanges);
+            if (orderResult == null)
+                return Result<OrderWithDetailsDto>.Failure(OrderErrors.GetOrderNotFoundError(id));
 
-        //    var orderEntity = orderResult.GetValue<Order>();
+            // Fetch order details
+            var orderDetails = await _orderDetailRepository.GetOrderDetailsByOrderIdAsync(id, trackChanges);
 
-        //    // Get Order Details using the OrderDetailService
-        //    var orderDetailsResult = await _orderDetailService.GetOrderDetailsByOrderIdAsync(id, trackChanges);
-        //    if (!orderDetailsResult.IsSuccess)
-        //        return Result<OrderWithDetailsDto>.Failure(orderDetailsResult.Errors!);
+            // Map order and details to DTOs
+            var orderDto = _mapper.Map<OrderDto>(orderResult);
+            var orderDetailsDto = _mapper.Map<IEnumerable<OrderDetailDto>>(orderDetails);
 
-        //    var orderDetailsDto = orderDetailsResult.GetValue<IEnumerable<OrderDetailDto>>();
+            // Combine into OrderWithDetailsDto
+            var orderWithDetailsDto = new OrderWithDetailsDto
+            {
+                Order = orderDto,
+                OrderDetails = orderDetailsDto
+            };
 
-        //    // Map the Order entity to OrderDto
-        //    var orderDto = _mapper.Map<OrderDto>(orderEntity);
-
-        //    // Combine Order and Order Details into a single DTO
-        //    var orderWithDetailsDto = new OrderWithDetailsDto
-        //    {
-        //        Order = orderDto,
-        //        OrderDetails = orderDetailsDto
-        //    };
-
-        //    return Result<OrderWithDetailsDto>.Success(orderWithDetailsDto);
-        //}
+            return Result<OrderWithDetailsDto>.Success(orderWithDetailsDto);
+        }
 
         public async Task<Result> CancelOrderAsync(Guid id)
         {

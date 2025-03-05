@@ -30,7 +30,7 @@ namespace BlindBoxShop.Service
 
         public IOrderDetailService OrderDetailService => new OrderDetailService(_repositoryManager, _mapper);
 
-        public IOrderService OrderService => new OrderService(_repositoryManager, _mapper);
+        public IOrderService OrderService => new OrderService(_repositoryManager, _mapper, _repositoryManager.OrderDetail);
 
         public IPackageService PackageService => new PackageService(_repositoryManager, _mapper);
 

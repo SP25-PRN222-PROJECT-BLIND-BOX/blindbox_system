@@ -98,7 +98,7 @@ namespace BlindBoxShop.Service
 
             var orderEntity = checkIfExistResult.GetValue<Order>();
 
-            if (orderEntity.Status == "Cancelled")
+            if (orderEntity.Status == OrderStatus.Cancelled)
             {
                 return Result.Failure(new ErrorResult
                 {
@@ -107,7 +107,7 @@ namespace BlindBoxShop.Service
                 });
             }
 
-            orderEntity.Status = "Cancelled";
+            orderEntity.Status = OrderStatus.Cancelled;
 
             orderEntity.UpdatedAt = DateTime.UtcNow;
 

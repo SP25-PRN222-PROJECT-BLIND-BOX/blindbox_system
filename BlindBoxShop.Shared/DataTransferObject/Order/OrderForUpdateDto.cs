@@ -1,7 +1,9 @@
-﻿namespace BlindBoxShop.Shared.DataTransferObject.Order
+﻿using BlindBoxShop.Shared.Enum;
+
+namespace BlindBoxShop.Shared.DataTransferObject.Order
 {
     public class OrderForUpdateDto
     {
-        public string Status { get; set; } = null!;
+        public OrderStatus Status { get; set; }
     }
 }

@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BlindBoxShop.Application.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
-    [Migration("20250304150432_InitialMigration")]
+    [Migration("20250305073813_InitialMigration")]
     partial class InitialMigration
     {
         /// <inheritdoc />
@@ -201,9 +201,8 @@ namespace BlindBoxShop.Application.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<decimal>("SubTotal")
                         .HasColumnType("decimal(18,2)");

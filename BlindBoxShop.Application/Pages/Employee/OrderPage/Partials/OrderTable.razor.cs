@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using BlindBoxShop.Shared.Features;
 using BlindBoxShop.Shared.Extension;
+using BlindBoxShop.Shared.Enum;
 
 namespace BlindBoxShop.Application.Pages.Employee.OrderPage.Partials
 {
@@ -40,7 +41,7 @@ namespace BlindBoxShop.Application.Pages.Employee.OrderPage.Partials
         // Method to disable the cancel button if the order status is 'Cancelled'
         private bool IsCancelButtonDisabled(OrderDto order)
         {
-            return order.Status == "Cancelled"; // Adjust the string based on your status value
+            return order.Status == OrderStatus.Cancelled; // Adjust the string based on your status value
         }
 
         private async Task<TableData<OrderDto>> ServerReload(TableState state, CancellationToken token)
@@ -55,7 +56,7 @@ namespace BlindBoxShop.Application.Pages.Employee.OrderPage.Partials
             }
 
             using var orderService = ServiceManager!.OrderService;
-            var result = await orderService.GetOrdersByUserIdAsync(Guid.Parse("a5798b68-246a-4ef2-83f0-8c235c54b64a"), _orderParameters, false);
+            var result = await orderService.GetOrdersByUserIdAsync(Guid.Parse("64ba7e6c-161f-4aed-afa2-1c4c9961a22a"), _orderParameters, false);
             if (result.IsSuccess)
             {
                 pagedData = result.GetValue<IEnumerable<OrderDto>>();

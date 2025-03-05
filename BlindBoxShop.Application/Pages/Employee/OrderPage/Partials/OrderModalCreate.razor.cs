@@ -1,5 +1,6 @@
 ﻿using BlindBoxShop.Service.Contract;
 using BlindBoxShop.Shared.DataTransferObject.Order;
+using BlindBoxShop.Shared.Enum;
 using BlindBoxShop.Shared.Extension;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
@@ -13,7 +14,7 @@ namespace BlindBoxShop.Application.Pages.Employee.OrderPage.Partials
         private OrderForCreationDto _orderForCreate = new OrderForCreationDto
         {
             UserId = Guid.Parse("5eca5610-cce6-4c8a-90d5-dd667e4bf032"),
-            Status = "Pending",
+            Status = OrderStatus.Pending,
         };
 
         [Inject]

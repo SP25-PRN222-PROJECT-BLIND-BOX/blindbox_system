@@ -7,7 +7,7 @@ namespace BlindBoxShop.Shared.DataTransferObject.Order
         public Guid UserId { get; set; }
 
         public Guid? VoucherId { get; set; }
-        public string Status { get; set; } = null!;
+        public OrderStatus Status { get; set; }
         public PaymentMethod PaymentMethod { get; set; }
         public string Address { get; set; } = null!;
 

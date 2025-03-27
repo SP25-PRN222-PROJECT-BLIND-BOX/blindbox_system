@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BlindBoxShop.Shared\BlindBoxShop.Shared.csproj" />
+    <ProjectReference Include="..\BlindBoxShop.Shared.Services\BlindBoxShop.Shared.Services.csproj" />
   </ItemGroup>
 
 </Project>

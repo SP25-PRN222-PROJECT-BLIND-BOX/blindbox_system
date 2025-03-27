@@ -1,0 +1,89 @@
+@page "/order-failed"
+@using BlindBoxShop.Application.Theme
+
+<div class="w-full py-8 px-4">
+    <MudPaper Elevation="3" Class="max-w-3xl mx-auto rounded-xl overflow-hidden">
+        <div class="bg-error text-white p-6 text-center">
+            <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Color="Color.Error" Size="Size.Large" Class="mb-4" Style="width: 80px; height: 80px;" />
+            <MudText Typo="Typo.h4" Class="font-bold">Order Failed</MudText>
+            <MudText Typo="Typo.subtitle1">We're sorry, there was a problem with your order</MudText>
+        </div>
+        
+        <div class="p-6">
+            <MudGrid>
+                <MudItem xs="12" Class="d-flex justify-center">
+                    <MudPaper Class="pa-4 mb-6 w-100" Elevation="0">
+                        <MudText Align="Align.Center" Typo="Typo.body1" Class="mb-4">
+                            @ErrorMessage
+                        </MudText>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudCard Class="mb-6" Elevation="0">
+                        <MudCardHeader>
+                            <MudText Typo="Typo.h6">Possible Causes</MudText>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudList T="string" Dense="true" Clickable="false">
+                                @foreach (var cause in PossibleCauses)
+                                {
+                                    <MudListItem T="string" Icon="@Icons.Material.Filled.ErrorOutline" IconColor="Color.Error">
+                                        @cause
+                                    </MudListItem>
+                                }
+                            </MudList>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudCard Class="mb-6" Elevation="0">
+                        <MudCardHeader>
+                            <MudText Typo="Typo.h6">What To Do Next</MudText>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudList T="string" Dense="true" Clickable="false">
+                                <MudListItem T="string" Icon="@Icons.Material.Filled.Refresh" IconColor="Color.Info">
+                                    Try again with different payment details
+                                </MudListItem>
+                                <MudListItem T="string" Icon="@Icons.Material.Filled.ContactSupport" IconColor="Color.Info">
+                                    Contact our customer support team
+                                </MudListItem>
+                                <MudListItem T="string" Icon="@Icons.Material.Filled.ShoppingCart" IconColor="Color.Info">
+                                    Review your cart and try checking out again
+                                </MudListItem>
+                            </MudList>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+            
+            <div class="d-flex justify-center flex-wrap gap-2 mt-6">
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           Size="Size.Large"
+                           Href="/checkout"
+                           StartIcon="@Icons.Material.Filled.ShoppingBag">
+                    Try Again
+                </MudButton>
+                
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Secondary"
+                           Size="Size.Large"
+                           Href="/cart"
+                           StartIcon="@Icons.Material.Filled.ShoppingCart">
+                    Back to Cart
+                </MudButton>
+                
+                <MudButton Variant="Variant.Text"
+                           Color="Color.Default"
+                           Size="Size.Large"
+                           Href="/"
+                           StartIcon="@Icons.Material.Filled.Home">
+                    Home
+                </MudButton>
+            </div>
+        </div>
+    </MudPaper>
+</div> 

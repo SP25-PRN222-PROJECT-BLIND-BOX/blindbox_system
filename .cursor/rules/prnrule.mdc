@@ -1,0 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+đây là dự án blazor, luôn luôn tách biệt giữa UI và code behind, TUYỆT ĐỐI ko để @code{} trong UI, dùng toàn bộ text hiển thị là tiếng việt, style phải đẹp theo phong cách bán blindbox, dùng tailwind để style, đây là trang web về bán blindbox, màu chủ đạo của web sẽ xoay quanh cyan đậm

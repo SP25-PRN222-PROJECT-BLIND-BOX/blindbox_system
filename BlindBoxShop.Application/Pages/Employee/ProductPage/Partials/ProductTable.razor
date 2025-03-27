@@ -1,0 +1,80 @@
+<div class="d-flex justify-space-between align-center mb-4">
+    <div>
+        <MudTextField T="string"
+                     @bind-Value="@_searchString"
+                     Placeholder="Search products"
+                     Adornment="Adornment.Start"
+                     AdornmentIcon="@Icons.Material.Filled.Search"
+                     IconSize="Size.Medium"
+                     Class="mt-0 mr-4" 
+                     Style="width: 300px;"
+                     DebounceInterval="500"
+                     OnDebounceIntervalElapsed="OnSearch" />
+    </div>
+    <div>
+        <MudButton Variant="Variant.Filled" 
+                  Color="Color.Primary" 
+                  StartIcon="@Icons.Material.Filled.Add" 
+                  OnClick="OpenCreateDialog" 
+                  Class="ml-auto">
+            Create product
+        </MudButton>
+    </div>
+</div>
+
+<MudGrid Spacing="4">
+    @if (_isLoading)
+    {
+        <div class="d-flex justify-center align-center w-100" style="height: 400px;">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        </div>
+    }
+    else if (_products == null || !_products.Any())
+    {
+        <div class="d-flex justify-center align-center w-100" style="height: 400px;">
+            <MudText Typo="Typo.h6" Color="Color.Secondary">No products found</MudText>
+        </div>
+    }
+    else
+    {
+        @foreach (var product in _products)
+        {
+            <MudItem xs="12" sm="6" md="4" lg="4">
+                <MudCard Elevation="3" Style="height: 100%;">
+                    <MudCardMedia Image="@(product.ImageUrl ?? "/images/placeholder-product.jpg")" Height="200" />
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6" Class="text-truncate">@product.Name</MudText>
+                        <MudText Typo="Typo.body2" Class="text-truncate mb-2">@product.Description</MudText>
+                        <div class="d-flex align-center">
+                            <MudText Typo="Typo.h6" Color="Color.Primary" Style="font-weight: 500;">@FormatPrice(product.CurrentPrice)</MudText>
+                            @if (product.OriginalPrice > product.CurrentPrice)
+                            {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary" Style="text-decoration: line-through; margin-left: 8px;">
+                                    @FormatPrice(product.OriginalPrice)
+                                </MudText>
+                            }
+                        </div>
+                    </MudCardContent>
+                    <MudCardActions Class="d-flex justify-space-between pa-4">
+                        <MudButton Variant="Variant.Filled" 
+                                  Color="Color.Primary" 
+                                  Size="Size.Small"
+                                  OnClick="@(() => OpenEditDialog(product))">
+                            Edit
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" 
+                                  Color="Color.Error" 
+                                  Size="Size.Small"
+                                  OnClick="@(() => OpenDeleteDialog(product))">
+                            Delete
+                        </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        }
+    }
+</MudGrid>
+
+<div class="d-flex justify-center mt-4">
+    <MudPagination Count="@_totalPages" SelectedChanged="PageChanged" Selected="@_currentPage" Class="pa-4" />
+</div> 

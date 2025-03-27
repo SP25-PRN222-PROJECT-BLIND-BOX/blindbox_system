@@ -1,0 +1,168 @@
+@page "/checkout"
+@layout BlindBoxShop.Application.Components.Layout.MainLayout
+
+<PageTitle>Thanh Toán</PageTitle>
+
+<div class="container mx-auto py-6 px-4">
+    <div class="bg-cyan-50 rounded-lg p-4 mb-6">
+        <h1 class="text-xl font-bold text-cyan-800">Thanh Toán</h1>
+    </div>
+
+    @if (_cartItems.Count == 0)
+    {
+        <div class="bg-white rounded-lg shadow-sm p-8 text-center">
+            <MudIcon Icon="@Icons.Material.Outlined.ShoppingCart" Size="Size.Large" Class="text-gray-400 mb-4" />
+            <h3 class="text-lg font-medium mb-2">Giỏ hàng của bạn đang trống</h3>
+            <p class="text-gray-500 mb-4">Bạn cần thêm sản phẩm vào giỏ hàng trước khi thanh toán.</p>
+            <div class="flex flex-col md:flex-row gap-3 justify-center">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/shop" Class="rounded-md px-6">
+                    Tiếp tục mua sắm
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href="/sample-products" Class="rounded-md px-6">
+                    Xem sản phẩm mẫu
+                </MudButton>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Left Column - Shipping Information -->
+            <div class="lg:col-span-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <!-- Shipping Info -->
+                    <div class="md:col-span-2">
+                        <div class="bg-white rounded-lg shadow-sm p-6">
+                            <h3 class="text-lg font-medium mb-4">Địa chỉ giao hàng</h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <MudTextField T="string" 
+                                                Label="Họ" 
+                                                Variant="Variant.Outlined" 
+                                                FullWidth="true" 
+                                                @bind-Value="_checkoutInfo.FirstName" />
+                                </div>
+                                <div>
+                                    <MudTextField T="string" 
+                                                Label="Tên" 
+                                                Variant="Variant.Outlined" 
+                                                FullWidth="true" 
+                                                @bind-Value="_checkoutInfo.LastName" />
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <MudTextField T="string" 
+                                          Label="Địa chỉ" 
+                                          Variant="Variant.Outlined" 
+                                          FullWidth="true" 
+                                          @bind-Value="_checkoutInfo.Address" />
+                            </div>
+
+                            <div class="mb-4">
+                                <MudTextField T="string" 
+                                          Label="Số điện thoại" 
+                                          Variant="Variant.Outlined" 
+                                          FullWidth="true" 
+                                          @bind-Value="_checkoutInfo.Phone" />
+                            </div>
+                            
+                            <div class="mb-4">
+                                <MudTextField T="string" 
+                                          Label="Email" 
+                                          Variant="Variant.Outlined" 
+                                          FullWidth="true" 
+                                          @bind-Value="_checkoutInfo.Email" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Methods -->
+                    <div class="md:col-span-2">
+                        <div class="bg-white rounded-lg shadow-sm p-6">
+                            <h3 class="text-lg font-medium mb-4">Phương thức thanh toán</h3>
+                            
+                            <MudRadioGroup @bind-SelectedOption="_checkoutInfo.PaymentMethod" T="string">
+                                <MudRadio Option="@("Cash on Delivery")" Color="Color.Primary" T="string">
+                                    <div class="flex items-center">
+                                        <MudIcon Icon="@Icons.Material.Filled.MonetizationOn" Class="mr-2 text-cyan-600" />
+                                        <span>Thanh toán khi nhận hàng</span>
+                                    </div>
+                                </MudRadio>
+                                <MudRadio Option="@("VNPay")" Color="Color.Primary" Class="mt-4" T="string">
+                                    <div class="flex items-center">
+                                        <MudIcon Icon="@Icons.Material.Filled.Payment" Class="mr-2 text-cyan-600" />
+                                        <span>VNPay</span>
+                                    </div>
+                                </MudRadio>
+                            </MudRadioGroup>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Order Items -->
+                <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-medium">Sản phẩm</h3>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/cart">Chỉnh sửa giỏ hàng</MudButton>
+                    </div>
+                    
+                    <MudTable Items="_cartItems" Hover="true" Breakpoint="Breakpoint.Sm" Class="border-0">
+                        <HeaderContent>
+                            <MudTh Class="uppercase text-xs font-medium text-gray-500">Sản phẩm</MudTh>
+                            <MudTh Class="uppercase text-xs font-medium text-gray-500 text-right">Đơn giá</MudTh>
+                            <MudTh Class="uppercase text-xs font-medium text-gray-500 text-center">Số lượng</MudTh>
+                            <MudTh Class="uppercase text-xs font-medium text-gray-500 text-right">Thành tiền</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>
+                                <div class="flex items-center">
+                                    <img src="@context.ImageUrl" alt="@context.ProductName" class="w-16 h-16 object-cover mr-3 rounded" />
+                                    <div>
+                                        <div class="font-medium">@context.ProductName</div>
+                                    </div>
+                                </div>
+                            </MudTd>
+                            <MudTd Class="text-right">@FormatPrice(context.Price)</MudTd>
+                            <MudTd Class="text-center">x@(context.Quantity)</MudTd>
+                            <MudTd Class="text-right font-medium">@FormatPrice(context.Price * context.Quantity)</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </div>
+            </div>
+            
+            <!-- Right Column - Order Summary -->
+            <div class="lg:col-span-4">
+                <div class="bg-white rounded-lg shadow-sm p-6 sticky top-4">
+                    <h3 class="text-lg font-medium mb-4">Tổng đơn hàng</h3>
+                    
+                    <div class="flex justify-between py-2">
+                        <div>Tạm tính</div>
+                        <div class="font-medium">@FormatPrice(Subtotal)</div>
+                    </div>
+                    <div class="flex justify-between py-2">
+                        <div>Phí vận chuyển</div>
+                        <div class="font-medium">@FormatPrice(ShippingCost)</div>
+                    </div>
+                    <div class="border-t border-gray-200 my-3"></div>
+                    <div class="flex justify-between py-2 font-bold text-lg">
+                        <div>Tổng cộng</div>
+                        <div class="text-cyan-700">@FormatPrice(Subtotal + ShippingCost)</div>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <MudButton Variant="Variant.Filled" 
+                                  Color="Color.Primary" 
+                                  FullWidth="true" 
+                                  Class="rounded-md"
+                                  OnClick="PlaceOrder"
+                                  Disabled="@(!IsFormValid())">
+                            Đặt hàng
+                        </MudButton>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div> 

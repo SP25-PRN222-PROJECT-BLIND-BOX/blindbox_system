@@ -1,0 +1,152 @@
+@page "/my-account"
+@using System;
+@using System.Collections.Generic;
+@using System.Linq;
+@using BlindBoxShop.Entities.Models;
+@using Microsoft.AspNetCore.Identity;
+@using Microsoft.AspNetCore.Components.Authorization;
+
+@layout BlindBoxShop.Application.Components.Layout.MainLayout
+
+<PageTitle>My Account</PageTitle>
+
+<div class="w-full" style="background-color: var(--mud-palette-primary);">
+    <div class="container mx-auto px-4 py-6">
+        <div class="flex items-center">
+            <div class="mr-4">
+                <MudAvatar Color="Color.Primary" Style="background-color: #23a1aa; height: 60px; width: 60px;">
+                    @GetUserInitials()
+                </MudAvatar>
+            </div>
+            <div class="text-white">
+                <h3 class="text-xl font-bold">@(_user?.FirstName) @(_user?.LastName)</h3>
+                <p class="text-sm opacity-90">@(_user?.Email)</p>
+                <p class="text-xs opacity-70">Member since @(_user?.CreatedAt.ToString("MMM dd yyyy"))</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mx-auto px-4 py-4">
+    <div class="text-2xl font-bold mb-4">My Account</div>
+    
+    <div class="grid grid-cols-12 gap-6">
+        <!-- Simple sidebar with icons -->
+        <div class="col-span-12 sm:col-span-1">
+            <div class="flex flex-row sm:flex-col justify-center sm:justify-start">
+                <a href="/my-account" class="p-3 mx-2 sm:mx-0 mb-0 sm:mb-4 flex justify-center items-center text-primary border-b-2 sm:border-b-0 sm:border-l-2 border-primary">
+                    <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Medium" />
+                </a>
+                <a href="/order-history" class="p-3 mx-2 sm:mx-0 mb-0 sm:mb-4 flex justify-center items-center text-gray-600 hover:text-primary">
+                    <MudIcon Icon="@Icons.Material.Filled.Receipt" Size="Size.Medium" />
+                </a>
+                <a href="/logout" class="p-3 mx-2 sm:mx-0 mb-0 sm:mb-4 flex justify-center items-center text-red-500 hover:text-red-700">
+                    <MudIcon Icon="@Icons.Material.Filled.Logout" Size="Size.Medium" />
+                </a>
+            </div>
+        </div>
+        
+        <!-- Main content -->
+        <div class="col-span-12 sm:col-span-11">
+            
+            
+            <div class="mt-6 hidden">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-lg font-bold">Profile Picture</h3>
+                            <MudText Typo="Typo.body2" Class="text-gray-600">Update your profile picture</MudText>
+                        </div>
+                        <MudFileUpload T="IBrowserFile" Accept=".jpg,.jpeg,.png" OnFilesChanged="UploadProfilePicture">
+                            <ButtonTemplate>
+                                <MudButton HtmlTag="label"
+                                          for="fileInput"
+                                          Variant="Variant.Filled"
+                                          Color="Color.Primary"
+                                          StartIcon="@Icons.Material.Filled.CloudUpload">
+                                    Upload
+                                </MudButton>
+                            </ButtonTemplate>
+                        </MudFileUpload>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <MudAvatar Size="Size.Large" Style="height: 100px; width: 100px; background-color: var(--mud-palette-primary);" Class="mr-4">
+                            @GetUserInitials()
+                        </MudAvatar>
+                        
+                        @if (_uploading)
+                        {
+                            <MudProgressCircular Indeterminate="true" />
+                        }
+                    </div>
+                </MudPaper>
+            </div>
+            <MudPaper Class="pa-4" Elevation="2">
+                <h2 class="text-xl font-bold mb-6">Personal Information</h2>
+                
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="@Username" 
+                                     Label="Username" 
+                                     Variant="Variant.Outlined" 
+                                     Class="mb-4" />
+                    </MudItem>
+                    
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="@Phone" 
+                                     Label="Phone number" 
+                                     Variant="Variant.Outlined" 
+                                     Class="mb-4" />
+                    </MudItem>
+                    
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="@FullName" 
+                                     Label="Full name" 
+                                     Variant="Variant.Outlined" 
+                                     Class="mb-4" />
+                    </MudItem>
+                    
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="@Email" 
+                                     Label="Email Address" 
+                                     Variant="Variant.Outlined"
+                                     InputType="InputType.Email"
+                                     Class="mb-4" />
+                    </MudItem>
+                    
+                    <MudItem xs="12">
+                        <div class="flex flex-row items-center">
+                            <div class="flag-container flex-none mr-2">
+                                <MudImage Src="/images/flags/us.png" Alt="US" Height="24" Class="rounded" />
+                            </div>
+                            <MudTextField @bind-Value="@PhoneWithCode" 
+                                         Label="Phone number" 
+                                         Variant="Variant.Outlined"
+                                         FullWidth="true"
+                                         Class="flex-grow" />
+                        </div>
+                    </MudItem>
+                </MudGrid>
+                
+                <MudText Typo="Typo.body2" Class="my-4 text-gray-600">
+                    In order to access some features of the Service, you will have fill out your account details.
+                </MudText>
+                
+                <div class="flex justify-end gap-3 mt-6">
+                    <MudButton Variant="Variant.Outlined" 
+                              Color="Color.Primary"
+                              OnClick="CancelChanges">
+                        Cancel
+                    </MudButton>
+                    <MudButton Variant="Variant.Filled" 
+                              Color="Color.Primary"
+                              Style="background-color: #00919c;"
+                              OnClick="SaveChanges">
+                        Save
+                    </MudButton>
+                </div>
+            </MudPaper>
+        </div>
+    </div>
+</div> 

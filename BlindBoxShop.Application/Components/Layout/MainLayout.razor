@@ -1,25 +1,202 @@
 ﻿@inherits LayoutComponentBase
+@using BlindBoxShop.Application.Theme
+@using Microsoft.AspNetCore.Components.Authorization
 
-<MudThemeProvider />
+<MudThemeProvider Theme="@CustomTheme.Theme" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
 
-
+<!-- Persistent Navbar for SPA layout -->
+<MudAppBar Elevation="0" Color="Color.Primary" Fixed="true" Dense="false" Class="px-4" Style="background-color: var(--mud-palette-primary);">
+    <MudText Typo="Typo.h5" Class="mr-4 font-weight-bold">BoxBox</MudText>
+    
+    <!-- Đã điều chỉnh ô tìm kiếm -->
+    <div class="d-flex align-center mx-2" style="min-width: 300px; max-width: 400px; background-color: rgba(255,255,255,0.1); border-radius: 4px; padding: 0 8px;">
+        <MudTextField T="string" 
+                    Placeholder="Search" 
+                    Variant="Variant.Text"
+                    Margin="Margin.Dense"
+                    Adornment="Adornment.End" 
+                    AdornmentIcon="@Icons.Material.Filled.Search" 
+                    AdornmentColor="Color.Inherit"
+                    Class="my-1 ml-2"
+                    Style="color: white;"
+                    Immediate="true"
+                    FullWidth="true"
+                    Clearable="true"
+                    InputClass="text-white"
+                    PlaceholderClass="text-white opacity-60">
+        </MudTextField>
+    </div>
+    
+    <!-- Đã điều chỉnh dropdown danh mục -->
+    <div class="d-flex align-center mx-2" style="width: 180px; background-color: rgba(255,255,255,0.1); border-radius: 4px; padding: 0 8px;">
+        <MudSelect T="string" 
+                  Value="@_selectedCategory" 
+                  Variant="Variant.Text"
+                  Margin="Margin.Dense"
+                  Class="my-1 white-text-field"
+                  FullWidth="true">
+            <MudSelectItem Value="@("All")" Class="white-text">All Categories</MudSelectItem>
+            <MudSelectItem Value="@("Anime")" Class="white-text">Anime</MudSelectItem>
+            <MudSelectItem Value="@("Gaming")" Class="white-text">Gaming</MudSelectItem>
+            <MudSelectItem Value="@("Limited")" Class="white-text">Limited Edition</MudSelectItem>
+        </MudSelect>
+    </div>
+    
+    <MudSpacer />
+    <MudButton Variant="Variant.Text" Color="Color.Inherit" Href="/" Class="mx-2">TRANG CHỦ</MudButton>
+    <MudButton Variant="Variant.Text" Color="Color.Inherit" Href="/shop" Class="mx-2">CỬA HÀNG</MudButton>
+    <MudButton Variant="Variant.Text" Color="Color.Inherit" Href="/sample-products" Class="mx-2">SẢN PHẨM MẪU</MudButton>
+    
+    <AuthorizeView>
+        <Authorized>
+            <MudMenu Icon="@Icons.Material.Filled.Person" Color="Color.Inherit" Dense="true" Direction="Direction.Bottom" OffsetY="true" Class="mx-2">
+                <MudText Typo="Typo.body1" Class="px-3 py-2 mud-text-secondary">@context.User.Identity?.Name</MudText>
+                <MudDivider Class="mb-2" />
+                <MudMenuItem Href="/my-account" Icon="@Icons.Material.Filled.Person">Tài khoản của tôi</MudMenuItem>
+                <MudMenuItem Href="/my-orders" Icon="@Icons.Material.Filled.ShoppingBag">Đơn hàng của tôi</MudMenuItem>
+                <MudDivider />
+                <form method="post" action="Account/Logout">
+                    <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="@HandleLogout">Đăng xuất</MudMenuItem>
+                </form>
+            </MudMenu>
+        </Authorized>
+        <NotAuthorized>
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Secondary" 
+                       Href="/account/login" 
+                       StartIcon="@Icons.Material.Filled.Login" 
+                       Class="mx-2">
+                ĐĂNG NHẬP
+            </MudButton>
+        </NotAuthorized>
+    </AuthorizeView>
+    
+    <MudBadge Content="@_cartItemCount" Color="Color.Secondary" Overlap="true" Class="mx-2" Visible="@(_cartItemCount > 0)">
+        <MudIconButton Href="/cart" Icon="@Icons.Material.Filled.ShoppingCart" Color="Color.Inherit" />
+    </MudBadge>
+</MudAppBar>
 
 <MudLayout>
-    <MudAppBar>
-        <MudIconButton Icon="@Icons.Material.Filled.Menu"
-                       Color="Color.Inherit"
-                       Edge="Edge.Start"
-                       OnClick="@((e) => DrawerToggle())" />
-        BlindBoxShop
-    </MudAppBar>
-    <MudDrawer @bind-Open="@_drawerOpen">
-        <NavMenu />
-    </MudDrawer>
-    <MudMainContent>
+    <MudMainContent Class="pt-16"> <!-- Add padding-top to account for fixed navbar -->
         @Body
     </MudMainContent>
 </MudLayout>
+
+<style>
+    :root {
+        /* Main primary color - Teal */
+        --mud-palette-primary: #008b8b;
+        --mud-palette-primary-text: white;
+        --mud-palette-primary-darken: #007070;
+        --mud-palette-primary-lighten: #00a6a6;
+        --mud-palette-primary-hover: rgba(0,139,139,0.1);
+        
+        /* Secondary color - Turquoise */
+        --mud-palette-secondary: #20b2aa;
+        --mud-palette-secondary-text: white;
+        --mud-palette-secondary-darken: #199089;
+        --mud-palette-secondary-lighten: #26d3ca;
+        --mud-palette-secondary-hover: rgba(32,178,170,0.1);
+        
+        /* Tertiary color - Lighter Teal */
+        --mud-palette-tertiary: #48d1cc;
+        --mud-palette-tertiary-text: white;
+        
+        /* Page headers should use secondary color */
+        --header-bg-color: var(--mud-palette-secondary);
+        --header-text-color: white;
+        --section-title-color: var(--mud-palette-secondary);
+    }
+    
+    /* Additional styles for section titles and headers */
+    .section-title {
+        color: var(--section-title-color);
+        font-weight: bold;
+        position: relative;
+    }
+    
+    .section-title::after {
+        content: "";
+        position: absolute;
+        height: 4px;
+        width: 60px;
+        background-color: var(--mud-palette-secondary);
+        bottom: -8px;
+        left: 0;
+    }
+    
+    .page-header {
+        background-color: var(--header-bg-color);
+        color: var(--header-text-color);
+        padding: 2rem 1rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .white-text-field {
+        color: white !important;
+    }
+    
+    .white-text-field ::deep .mud-input,
+    .white-text-field ::deep .mud-input-slot,
+    .white-text-field ::deep .mud-input::placeholder,
+    .white-text-field ::deep .mud-input-label,
+    .white-text-field ::deep .mud-select-input {
+        color: white !important;
+    }
+    
+    .white-text {
+        color: white !important;
+    }
+    
+    .mud-select-menu {
+        background-color: var(--mud-palette-primary) !important;
+    }
+    
+    .mud-list-item-text {
+        color: white !important;
+    }
+    
+    .mud-list-item:hover {
+        background-color: rgba(255,255,255,0.1) !important;
+    }
+    
+    .mud-list .mud-selected-item.mud-list-item {
+        background-color: rgba(255,255,255,0.2) !important;
+    }
+    
+    .mud-popover-paper .mud-list {
+        background-color: var(--mud-palette-primary) !important;
+    }
+    
+    /* Ghi đè màu chữ cho các loại component */
+    .mud-button-filled.mud-button-filled-primary {
+        background-color: var(--mud-palette-primary) !important;
+        color: var(--mud-palette-primary-text) !important;
+    }
+    
+    .mud-button-filled.mud-button-filled-secondary {
+        background-color: var(--mud-palette-secondary) !important;
+        color: var(--mud-palette-secondary-text) !important;
+    }
+    
+    .mud-button-text.mud-button-text-primary {
+        color: var(--mud-palette-primary) !important;
+    }
+    
+    .mud-button-text.mud-button-text-secondary {
+        color: var(--mud-palette-secondary) !important;
+    }
+    
+    .mud-paper.mud-elevation-1 {
+        border-radius: 8px;
+    }
+</style>
+
+<!-- Find where the navigation links are -->
+<MudNavLink Href="/shop" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Store">Shop</MudNavLink>
+<MudNavLink Href="/sample-products" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Category">Sample Products</MudNavLink>
 

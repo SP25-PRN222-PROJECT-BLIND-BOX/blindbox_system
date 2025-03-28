@@ -1,0 +1,12 @@
+@using BlindBoxShop.Shared.DataTransferObject.BlindBox
+
+<MudDialog>
+    <DialogContent>
+        <MudText>Are you sure you want to delete the BlindBox <strong>"@BlindBoxDto?.Name"</strong>?</MudText>
+        <MudText Class="pt-3" Typo="Typo.body2">This action cannot be undone.</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="DeleteAsync">Delete</MudButton>
+    </DialogActions>
+</MudDialog> 

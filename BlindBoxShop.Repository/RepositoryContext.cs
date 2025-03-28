@@ -25,7 +25,9 @@ namespace BlindBoxShop.Repository
             }
 
             builder.ApplyConfiguration(new UserConfiguration());
+            builder.ApplyConfiguration(new BlindBoxCategoryConfiguration());
             builder.ApplyConfiguration(new BlindBoxConfiguration());
+            builder.ApplyConfiguration(new BlindBoxImageConfiguration());
             builder.ApplyConfiguration(new BlindBoxPriceHistoryConfiguration());
             builder.ApplyConfiguration(new CustomerReviewsConfiguration());
             builder.ApplyConfiguration(new OrderConfiguration());

@@ -69,6 +69,5 @@ namespace BlindBoxShop.Application.Extensions
 
         public static void ConfigureServiceManager(this IServiceCollection services) =>
             services.AddScoped<IServiceManager, ServiceManager>();
-
     }
 }

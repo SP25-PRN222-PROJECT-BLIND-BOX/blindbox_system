@@ -1,0 +1,271 @@
+@page "/physical-blindboxes"
+@using BlindBoxShop.Shared.Enum
+
+<PageTitle>BlindBox Shop - Physical BlindBoxes</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="px-2 px-sm-4 mt-4">
+    <!-- Hero Banner -->
+    <MudPaper Elevation="0" Class="relative overflow-hidden rounded-xl mb-8" Style="height: 300px;">
+        <MudImage Src="https://www.popmart.com.my/cdn/shop/files/Banner_POP_MART_Box_Desktop.jpg?v=1692607089&width=2000" 
+                Alt="Physical BlindBox" Class="object-cover w-full h-full" Style="filter: brightness(0.8);" />
+        <div class="absolute inset-0 flex flex-col items-center justify-center text-center p-4 bg-gradient-to-r from-cyan-900/50 to-teal-900/50">
+            <MudText Typo="Typo.h2" Color="Color.Surface" Class="font-weight-bold mb-2 text-shadow">Physical BlindBoxes</MudText>
+            <MudText Typo="Typo.h5" Color="Color.Surface" Class="mb-6 text-shadow">Discover and collect unique physical BlindBoxes</MudText>
+        </div>
+    </MudPaper>
+
+    <!-- Why Choose Our BlindBoxes -->
+    <MudGrid Class="mb-8">
+        <MudItem xs="12">
+            <MudText Typo="Typo.h4" Class="mb-4 font-weight-bold">Why Choose Our BlindBoxes?</MudText>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2" Class="h-100">
+                <MudCardContent Class="d-flex flex-column align-center text-center">
+                    <MudIcon Icon="@Icons.Material.Filled.Verified" Color="Color.Primary" Size="Size.Large" Class="mb-3" />
+                    <MudText Typo="Typo.h6" Class="mb-2">100% Authentic</MudText>
+                    <MudText Typo="Typo.body2">All products are genuine with guaranteed quality</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2" Class="h-100">
+                <MudCardContent Class="d-flex flex-column align-center text-center">
+                    <MudIcon Icon="@Icons.Material.Filled.LocalShipping" Color="Color.Primary" Size="Size.Large" Class="mb-3" />
+                    <MudText Typo="Typo.h6" Class="mb-2">Fast Shipping</MudText>
+                    <MudText Typo="Typo.body2">Nationwide shipping with careful packaging</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2" Class="h-100">
+                <MudCardContent Class="d-flex flex-column align-center text-center">
+                    <MudIcon Icon="@Icons.Material.Filled.NewReleases" Color="Color.Primary" Size="Size.Large" Class="mb-3" />
+                    <MudText Typo="Typo.h6" Class="mb-2">Regular Updates</MudText>
+                    <MudText Typo="Typo.body2">Constantly updating with the latest and limited collections</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2" Class="h-100">
+                <MudCardContent Class="d-flex flex-column align-center text-center">
+                    <MudIcon Icon="@Icons.Material.Filled.SupportAgent" Color="Color.Primary" Size="Size.Large" Class="mb-3" />
+                    <MudText Typo="Typo.h6" Class="mb-2">24/7 Support</MudText>
+                    <MudText Typo="Typo.body2">Professional customer service team with quick assistance</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    <!-- Filter Controls -->
+    <MudGrid Class="mb-6">
+        <MudItem xs="12" sm="6" md="4">
+            <MudSelect T="Guid?" Value="_selectedCategory" ValueChanged="OnCategoryChanged" Label="Category" 
+                      Variant="Variant.Outlined" Class="mt-0">
+                <MudSelectItem T="Guid?" Value="@((Guid?)null)">All Categories</MudSelectItem>
+                @foreach (var category in _categories)
+                {
+                    <MudSelectItem T="Guid?" Value="@category.Id">@category.Name</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <MudSelect T="Guid?" Value="_selectedPackage" ValueChanged="OnPackageChanged" Label="Collection" 
+                      Variant="Variant.Outlined" Class="mt-0">
+                <MudSelectItem T="Guid?" Value="@((Guid?)null)">All Collections</MudSelectItem>
+                @foreach (var package in _packages)
+                {
+                    <MudSelectItem T="Guid?" Value="@package.Id">@package.Name</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" sm="12" md="4">
+            <MudTextField @bind-Value="_searchTerm" Label="Search" Variant="Variant.Outlined"
+                         Immediate="true" Clearable="true" OnClearButtonClick="OnClearSearch" 
+                         OnKeyDown="OnSearchKeyDown" Adornment="Adornment.End" 
+                         AdornmentIcon="@Icons.Material.Filled.Search" Class="mt-0" />
+        </MudItem>
+    </MudGrid>
+
+    <!-- Sorting and Results Count -->
+    <div class="d-flex justify-space-between align-center mb-4">
+        <MudText Typo="Typo.body1">Found @_filteredBlindBoxes.Count products</MudText>
+        <MudSelect T="string" Value="_sortOrder" ValueChanged="OnSortOrderChanged" Label="Sort By" 
+                  Style="width: 180px;" Variant="Variant.Outlined" Margin="Margin.Dense">
+            <MudSelectItem Value="@("price_asc")">Price: Low to High</MudSelectItem>
+            <MudSelectItem Value="@("price_desc")">Price: High to Low</MudSelectItem>
+            <MudSelectItem Value="@("name_asc")">Name: A-Z</MudSelectItem>
+            <MudSelectItem Value="@("name_desc")">Name: Z-A</MudSelectItem>
+        </MudSelect>
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="d-flex justify-center my-12">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        </div>
+    }
+    else if (_filteredBlindBoxes.Count == 0)
+    {
+        <MudPaper Elevation="0" Class="d-flex flex-column align-center justify-center py-8 px-4 text-center">
+            <MudIcon Icon="@Icons.Material.Filled.SearchOff" Color="Color.Secondary" Size="Size.Large" Class="mb-4" />
+            <MudText Typo="Typo.h5" Class="mb-2">No Products Found</MudText>
+            <MudText Typo="Typo.body1" Class="mb-4 mx-auto" Style="max-width: 500px;">
+                No BlindBoxes match your filter criteria. Please try different search parameters.
+            </MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ResetFilters">CLEAR FILTERS</MudButton>
+        </MudPaper>
+    }
+    else
+    {
+        <MudGrid Spacing="3">
+            @foreach (var box in _pagedBlindBoxes)
+            {
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudPaper Elevation="3" Class="pa-0 h-100 d-flex flex-column rounded-lg overflow-hidden mud-transition-on-hover mud-hover:mud-elevation-8"
+                              Style="cursor: pointer;"
+                              @onclick="@(() => NavigateToProductDetail(box.Id))">
+                        <div class="position-relative overflow-hidden" style="height: 240px;">
+                            <MudImage Src="@((_blindBoxImages.ContainsKey(box.Id) ? _blindBoxImages[box.Id] : 
+                                   (!string.IsNullOrEmpty(box.MainImageUrl) ? box.MainImageUrl : "/images/box-placeholder.jpg")))"
+                                    Alt="@box.Name" Class="w-full h-full object-cover mud-transition transform duration-500 mud-hover:scale-110" />
+                            
+                            <div class="position-absolute" style="top: 4px; right: 4px;">
+                                <MudChip T="string" Color="Color.Primary" Size="Size.Small" Class="px-2 font-weight-bold text-capitalize">
+                                    <MudIcon Icon="@Icons.Material.Filled.Inventory2" Size="Size.Small" Class="mr-1" />
+                                    Physical
+                                </MudChip>
+                            </div>
+                        </div>
+                        <div class="pa-4 d-flex flex-column flex-grow-1">
+                            <MudText Typo="Typo.h6" Class="mb-1 text-truncate font-weight-bold">@box.Name</MudText>
+                            
+                            <div class="d-flex gap-1 mb-2">
+                                @if (box.BlindBoxCategoryId != null && !string.IsNullOrEmpty(box.CategoryName))
+                                {
+                                    <MudChip T="string" Color="Color.Primary" Size="Size.Small" Class="mb-1" @onclick:stopPropagation="true">
+                                        @if (box.BlindBoxCategoryId.HasValue)
+                                        {
+                                            <MudLink Href="@($"/categories/{box.BlindBoxCategoryId.Value}")" @onclick:stopPropagation="true">@box.CategoryName</MudLink>
+                                        }
+                                        else
+                                        {
+                                            @box.CategoryName
+                                        }
+                                    </MudChip>
+                                }
+
+                                @if (!string.IsNullOrEmpty(box.PackageName))
+                                {
+                                    <MudChip T="string" Color="Color.Secondary" Size="Size.Small" Class="ml-1 mb-1" @onclick:stopPropagation="true">
+                                        <MudLink Href="@($"/packages/{box.PackageId}")" @onclick:stopPropagation="true">@box.PackageName</MudLink>
+                                    </MudChip>
+                                }
+                            </div>
+                            
+                            <MudText Typo="Typo.body2" Class="mb-3 flex-grow-1" Style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                @box.Description
+                            </MudText>
+                            
+                            <!-- Stock indicator -->
+                            <div class="d-flex justify-space-between align-center mt-2">
+                                <div>
+                                    <h6 class="mud-typography mud-typography-h6 mb-0">@string.Format("{0:n0}", box.CurrentPrice) ₫</h6>
+                                </div>
+                                
+                                <div class="d-flex align-center">
+                                    @if (box.Status == BlindBoxShop.Shared.Enum.BlindBoxStatus.Available)
+                                    {
+                                        <span class="mud-chip mud-chip-text mud-chip-color-success mud-chip-size-small mr-2">
+                                            <span class="mud-chip-content">In Stock</span>
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="mud-chip mud-chip-text mud-chip-color-error mud-chip-size-small mr-2">
+                                            <span class="mud-chip-content">Out of Stock</span>
+                                        </span>
+                                    }
+                                    
+                                    <MudIconButton Color="Color.Primary" 
+                                                  Icon="@Icons.Material.Filled.AddShoppingCart" 
+                                                  Size="Size.Small"
+                                                  OnClick="@((e) => { AddToCartWithoutPropagation(box, e); })"
+                                                  Disabled="@(box.Status != BlindBoxShop.Shared.Enum.BlindBoxStatus.Available)" />
+                                </div>
+                            </div>
+                        </div>
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+        
+        <!-- Pagination -->
+        <div class="d-flex justify-center mt-8">
+            <MudPagination Count="@_totalPages" SelectedChanged="OnPageChanged" Selected="_currentPage" Color="Color.Primary" />
+        </div>
+    }
+
+    <!-- Featured Categories -->
+    <MudDivider Class="my-8" />
+    <MudText Typo="Typo.h4" Class="mb-4 font-weight-bold">Featured Categories</MudText>
+    <MudGrid>
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard Class="mud-transition-on-hover mud-hover:mud-elevation-8" Elevation="2" Style="cursor: pointer;" @onclick="@(() => FilterByCategory("anime"))">
+                <MudCardMedia Image="https://media.vkool.tv/media/images/2023/01/top-15-phu-kien-blind-box-anime-hot-nhat-hien-nay.jpg" Height="200" />
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Class="font-weight-bold">Anime</MudText>
+                    <MudText Typo="Typo.body2">Collection of famous anime characters from Japanese animation</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard Class="mud-transition-on-hover mud-hover:mud-elevation-8" Elevation="2" Style="cursor: pointer;" @onclick="@(() => FilterByCategory("game"))">
+                <MudCardMedia Image="https://cdngarenanow-a.akamaihd.net/webmain/static/pss/lol/wp-content/uploads/2022/09/URF6_Cover.png" Height="200" />
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Class="font-weight-bold">Game</MudText>
+                    <MudText Typo="Typo.body2">Characters from popular games like League of Legends, Genshin Impact...</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard Class="mud-transition-on-hover mud-hover:mud-elevation-8" Elevation="2" Style="cursor: pointer;" @onclick="@(() => FilterByCategory("designer"))">
+                <MudCardMedia Image="https://oss.91wink.com/upload/g/3/50d28fc2-c644-411f-a0a0-90f97d47b2be.png" Height="200" />
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Class="font-weight-bold">Designer Toys</MudText>
+                    <MudText Typo="Typo.body2">Artistic pieces from renowned designers around the world</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+<style>
+    .text-shadow {
+        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    
+    .mud-transition {
+        transition: all 0.3s ease-in-out;
+    }
+    
+    .mud-transition-on-hover:hover {
+        transform: translateY(-5px);
+    }
+    
+    .transform {
+        transform: scale(1);
+    }
+    
+    .duration-500 {
+        transition-duration: 500ms;
+    }
+    
+    .mud-hover\:scale-110:hover {
+        transform: scale(1.1);
+    }
+    
+    .mud-hover\:mud-elevation-8:hover {
+        box-shadow: var(--mud-elevation-8);
+    }
+</style> 

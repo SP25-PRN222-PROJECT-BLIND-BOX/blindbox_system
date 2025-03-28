@@ -1,28 +1,25 @@
+using BlindBoxShop.Service.Contract;
+using BlindBoxShop.Shared.DataTransferObject.BlindBox;
+using BlindBoxShop.Shared.DataTransferObject.BlindBoxCategory;
+using BlindBoxShop.Shared.DataTransferObject.Package;
 using BlindBoxShop.Shared.Enum;
+using BlindBoxShop.Shared.Features;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace BlindBoxShop.Application.Pages.Pages
 {
-    // DTO classes for Home page
+    // Custom DTO classes for the UI
     public class CategoryDto
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public string ImageUrl { get; set; } = string.Empty;
-    }
-
-    public class BlindBoxDto
-    {
-        public Guid Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public string ImageUrl { get; set; } = string.Empty;
-        public decimal Price { get; set; }
-        public BlindBoxRarity Rarity { get; set; }
-        public int Rating { get; set; }
-        public int ReviewCount { get; set; }
     }
 
     public class CollectionDto
@@ -32,6 +29,19 @@ namespace BlindBoxShop.Application.Pages.Pages
         public string Description { get; set; } = string.Empty;
         public string ImageUrl { get; set; } = string.Empty;
         public int ItemCount { get; set; }
+        public string Type { get; set; } = string.Empty;
+    }
+
+    public class PackageDto
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string ImageUrl { get; set; } = string.Empty;
+        public int ItemCount { get; set; }
+        public string Type { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public bool IsFeatured { get; set; } = true;
     }
 
     public class TestimonialDto
@@ -43,132 +53,360 @@ namespace BlindBoxShop.Application.Pages.Pages
         public DateTime Date { get; set; }
     }
 
-    public partial class Home
+    public partial class Home : ComponentBase
     {
         [Inject]
         private NavigationManager NavigationManager { get; set; } = default!;
 
-        // Sample data
-        private List<CategoryDto> _featuredCategories = new List<CategoryDto>
-        {
-            new CategoryDto
-            {
-                Id = Guid.NewGuid(),
-                Name = "Anime Collectibles",
-                Description = "Discover exclusive anime figurines and collectibles from your favorite series.",
-                ImageUrl = "/images/category-anime.jpg"
-            },
-            new CategoryDto
-            {
-                Id = Guid.NewGuid(),
-                Name = "Gaming Mystery Boxes",
-                Description = "Unbox gaming merchandise, accessories, and collectibles from popular franchises.",
-                ImageUrl = "/images/category-gaming.jpg"
-            },
-            new CategoryDto
-            {
-                Id = Guid.NewGuid(),
-                Name = "Limited Edition",
-                Description = "Ultra-rare and exclusive items with limited availability. Collectors' paradise!",
-                ImageUrl = "/images/category-limited.jpg"
-            }
-        };
+        [Inject]
+        private IServiceManager ServiceManager { get; set; } = default!;
 
-        private List<BlindBoxDto> _newArrivals = new List<BlindBoxDto>
-        {
-            new BlindBoxDto
-            {
-                Id = Guid.NewGuid(),
-                Name = "Mystic Heroes Collection",
-                Description = "Limited edition collectibles featuring your favorite superheroes with special powers.",
-                ImageUrl = "/images/box-heroes.jpg",
-                Price = 299000,
-                Rarity = BlindBoxRarity.Rare,
-                Rating = 4,
-                ReviewCount = 28
-            },
-            new BlindBoxDto
-            {
-                Id = Guid.NewGuid(),
-                Name = "Cyberpunk Edition",
-                Description = "Futuristic merchandise inspired by the neon-lit dystopian world of cyberpunk.",
-                ImageUrl = "/images/box-cyberpunk.jpg",
-                Price = 199000,
-                Rarity = BlindBoxRarity.Uncommon,
-                Rating = 5,
-                ReviewCount = 42
-            },
-            new BlindBoxDto
-            {
-                Id = Guid.NewGuid(),
-                Name = "Kawaii Surprise",
-                Description = "Adorable Japanese-inspired cute items that will bring joy to your collection.",
-                ImageUrl = "/images/box-kawaii.jpg",
-                Price = 149000,
-                Rarity = BlindBoxRarity.Common,
-                Rating = 4,
-                ReviewCount = 63
-            },
-            new BlindBoxDto
-            {
-                Id = Guid.NewGuid(),
-                Name = "Legendary Dragons",
-                Description = "Ultra-rare dragon figurines with detailed craftsmanship and premium quality.",
-                ImageUrl = "/images/box-dragons.jpg",
-                Price = 499000,
-                Rarity = BlindBoxRarity.Rare,
-                Rating = 5,
-                ReviewCount = 17
-            }
-        };
+        [Inject]
+        private ISnackbar Snackbar { get; set; } = default!;
 
-        private List<CollectionDto> _popularCollections = new List<CollectionDto>
-        {
-            new CollectionDto
-            {
-                Id = Guid.NewGuid(),
-                Name = "Summer 2023 Special",
-                Description = "Limited time collection featuring exclusive summer-themed collectibles and accessories.",
-                ImageUrl = "/images/collection-summer.jpg",
-                ItemCount = 12
-            },
-            new CollectionDto
-            {
-                Id = Guid.NewGuid(),
-                Name = "Retro Gaming Nostalgia",
-                Description = "Classic gaming memorabilia from the golden era of video games. Perfect for retro gamers!",
-                ImageUrl = "/images/collection-retro.jpg",
-                ItemCount = 8
-            }
-        };
+        private List<CategoryDto> _featuredCategories = new();
+        private List<BlindBoxDto> _newArrivals = new();
+        private List<CollectionDto> _popularCollections = new();
+        private List<PackageDto> _featuredPackages = new();
+        private List<TestimonialDto> _testimonials = new();
+        private Dictionary<Guid, string> _blindBoxImages = new();
+        private DateTime _lastUpdateTime = DateTime.Now;
+        private bool _isLoading = true;
 
-        private List<TestimonialDto> _testimonials = new List<TestimonialDto>
+        protected override async Task OnInitializedAsync()
         {
-            new TestimonialDto
+            await LoadDataAsync();
+        }
+
+        private async Task LoadDataAsync()
+        {
+            _isLoading = true;
+            try
             {
-                Name = "Minh Anh",
-                Comment = "I've been collecting BlindBoxes for years, but this shop has the best variety and rarest items I've ever seen. Super satisfied with my legendary dragon figurine!",
-                Rating = 5,
-                AvatarUrl = "/images/avatar1.jpg",
-                Date = DateTime.Now.AddDays(-5)
-            },
-            new TestimonialDto
-            {
-                Name = "Thanh Hà",
-                Comment = "The packaging is beautiful and the surprise element makes it so exciting. I got an uncommon item in my first purchase!",
-                Rating = 4,
-                AvatarUrl = "/images/avatar2.jpg",
-                Date = DateTime.Now.AddDays(-12)
-            },
-            new TestimonialDto
-            {
-                Name = "Quang Huy",
-                Comment = "Fast shipping and excellent customer service. The quality of items exceeds my expectations. Will definitely buy again!",
-                Rating = 5,
-                AvatarUrl = "/images/avatar3.jpg",
-                Date = DateTime.Now.AddDays(-20)
+                await Task.WhenAll(
+                    LoadCategoriesAsync(),
+                    LoadNewArrivalsAsync(),
+                    LoadPopularCollectionsAsync(),
+                    LoadFeaturedPackagesAsync()
+                );
+                
+                // If there's a ReviewService available, we could load real testimonials here
+                await LoadTestimonialsAsync();
             }
-        };
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error loading data: {ex.Message}", Severity.Error);
+            }
+            finally
+            {
+                _isLoading = false;
+                StateHasChanged();
+            }
+        }
+
+        private async Task LoadCategoriesAsync()
+        {
+            var categoryParameter = new BlindBoxCategoryParameter
+            {
+                PageSize = 6,
+                OrderBy = "CreatedAt desc"
+            };
+            
+            using var categoryService = ServiceManager.BlindBoxCategoryService;
+            var result = await categoryService.GetBlindBoxCategoriesAsync(categoryParameter, false);
+            
+            if (result.IsSuccess && result.Value != null)
+            {
+                var categories = result.Value.ToList();
+                
+                if (categories.Count > 0)
+                {
+                    _featuredCategories = categories.Select(c => new CategoryDto
+                    {
+                        Id = c.Id,
+                        Name = c.Name ?? string.Empty,
+                        Description = c.Description ?? string.Empty,
+                        ImageUrl = GetCategoryImageUrl(c.Name ?? string.Empty)
+                    }).ToList();
+                }
+            }
+            else if (result.Errors != null && result.Errors.Any())
+            {
+                foreach (var error in result.Errors)
+                {
+                    Snackbar.Add($"Category error: {error.Description}", Severity.Warning);
+                }
+            }
+        }
+
+        private async Task LoadNewArrivalsAsync()
+        {
+            var parameter = new BlindBoxParameter
+            {
+                PageSize = 8,
+                OrderBy = "CreatedAt desc"
+            };
+            
+            using var blindBoxService = ServiceManager.BlindBoxService;
+            var result = await blindBoxService.GetBlindBoxesAsync(parameter, false);
+            
+            if (result.IsSuccess && result.Value != null)
+            {
+                var boxes = result.Value.ToList();
+                
+                if (boxes.Count > 0)
+                {
+                    _newArrivals = boxes
+                        .OrderByDescending(box => box.CreatedAt)
+                        .Take(8)
+                        .ToList();
+                    
+                    // Load images for the new arrivals
+                    await LoadBlindBoxImagesAsync(_newArrivals);
+                    
+                    _lastUpdateTime = DateTime.Now;
+                }
+            }
+            else if (result.Errors != null && result.Errors.Any())
+            {
+                foreach (var error in result.Errors)
+                {
+                    Snackbar.Add($"Product error: {error.Description}", Severity.Warning);
+                }
+            }
+        }
+
+        private async Task LoadBlindBoxImagesAsync(List<BlindBoxDto> blindBoxes)
+        {
+            try
+            {
+                _blindBoxImages.Clear();
+                
+                using var blindBoxImageService = ServiceManager.BlindBoxImageService;
+                
+                foreach (var box in blindBoxes)
+                {
+                    // Get first image from BlindBoxImages table
+                    var images = await blindBoxImageService.GetBlindBoxImagesByBlindBoxIdAsync(box.Id);
+                    
+                    if (images.IsSuccess && images.Value?.Any() == true)
+                    {
+                        var firstImage = images.Value.First().ImageUrl;
+                        
+                        // Ensure URL formatting
+                        if (!string.IsNullOrWhiteSpace(firstImage))
+                        {
+                            if (!firstImage.StartsWith("http://") && !firstImage.StartsWith("https://") && !firstImage.StartsWith("/"))
+                            {
+                                firstImage = "/" + firstImage;
+                            }
+                            
+                            _blindBoxImages[box.Id] = firstImage;
+                        }
+                    }
+                    else if (!string.IsNullOrWhiteSpace(box.MainImageUrl))
+                    {
+                        // Fallback to MainImageUrl if no images in BlindBoxImages
+                        var imageUrl = box.MainImageUrl;
+                        if (!imageUrl.StartsWith("http://") && !imageUrl.StartsWith("https://") && !imageUrl.StartsWith("/"))
+                        {
+                            imageUrl = "/" + imageUrl;
+                        }
+                        
+                        _blindBoxImages[box.Id] = imageUrl;
+                    }
+                    else
+                    {
+                        // Default placeholder
+                        _blindBoxImages[box.Id] = "/images/box-placeholder.jpg";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading blind box images: {ex.Message}");
+            }
+        }
+
+        private async Task LoadPopularCollectionsAsync()
+        {
+            using var packageService = ServiceManager.PackageService;
+            var result = await packageService.GetAllPackagesAsync(false);
+            
+            if (result.IsSuccess && result.Value != null)
+            {
+                var packages = result.Value.ToList();
+
+                if (packages.Count > 0)
+                {
+                    // Create a dictionary to categorize packages by their likely type based on name
+                    var packagesByType = new Dictionary<string, List<PackageDto>>();
+                    
+                    foreach (var package in packages)
+                    {
+                        var type = GetPackageTypeFromName(package.Name);
+                        if (!packagesByType.ContainsKey(type))
+                            packagesByType[type] = new List<PackageDto>();
+                        
+                        packagesByType[type].Add(new PackageDto
+                        {
+                            Id = package.Id,
+                            Name = package.Name ?? "Package",
+                            Description = package.Description ?? string.Empty,
+                            ImageUrl = package.ImageUrl ?? GetPackageImageUrl(package.Name ?? "Package"),
+                            ItemCount = await GetPackageItemCount(package.Id),
+                            Type = type,
+                            Price = package.Price
+                        });
+                    }
+                    
+                    // Select one representative package from each type
+                    _popularCollections = packagesByType
+                        .SelectMany(group => group.Value.Take(1)
+                            .Select(p => new CollectionDto
+                            {
+                                Id = p.Id,
+                                Name = p.Name,
+                                Type = group.Key,
+                                Description = p.Description,
+                                ImageUrl = p.ImageUrl,
+                                ItemCount = p.ItemCount
+                            }))
+                        .Take(4)
+                        .ToList();
+                }
+            }
+            else if (result.Errors != null && result.Errors.Any())
+            {
+                foreach (var error in result.Errors)
+                {
+                    Snackbar.Add($"Collection error: {error.Description}", Severity.Warning);
+                }
+            }
+        }
+
+        private async Task LoadFeaturedPackagesAsync()
+        {
+            using var packageService = ServiceManager.PackageService;
+            var result = await packageService.GetAllPackagesAsync(false);
+            
+            if (result.IsSuccess && result.Value != null)
+            {
+                var packages = result.Value.ToList();
+                
+                if (packages.Count > 0)
+                {
+                    _featuredPackages = new List<PackageDto>();
+                    
+                    // Get a mix of different types
+                    foreach (var package in packages.Take(6))
+                    {
+                        var type = GetPackageTypeFromName(package.Name);
+                        _featuredPackages.Add(new PackageDto
+                        {
+                            Id = package.Id,
+                            Name = package.Name ?? "Package",
+                            Description = package.Description ?? string.Empty,
+                            ImageUrl = package.ImageUrl ?? GetPackageImageUrl(package.Name ?? "Package"),
+                            ItemCount = await GetPackageItemCount(package.Id),
+                            Type = type,
+                            Price = package.Price
+                        });
+                    }
+                }
+            }
+            else if (result.Errors != null && result.Errors.Any())
+            {
+                foreach (var error in result.Errors)
+                {
+                    Snackbar.Add($"Package error: {error.Description}", Severity.Warning);
+                }
+            }
+        }
+
+        private async Task<int> GetPackageItemCount(Guid packageId)
+        {
+            // Get count of blind boxes in this package
+            var parameter = new BlindBoxParameter
+            {
+                PageSize = 100,
+                PageNumber = 1
+            };
+            
+            using var blindBoxService = ServiceManager.BlindBoxService;
+            var result = await blindBoxService.GetBlindBoxesAsync(parameter, false);
+            
+            if (result.IsSuccess && result.Value != null)
+            {
+                // Count the blind boxes that belong to this package
+                return result.Value.Count(box => box.PackageId == packageId);
+            }
+            
+            return 0;
+        }
+
+        private async Task LoadTestimonialsAsync()
+        {
+            _testimonials = new List<TestimonialDto>();
+            
+            try
+            {
+                // Since ReviewService is not available in IServiceManager, we'll use a fallback approach
+                // In a real implementation, you would fetch from the actual review service if available
+                
+                // Fallback to some default testimonials since we can't get real ones yet
+                _testimonials = new List<TestimonialDto>
+                {
+                    new TestimonialDto
+                    {
+                        Name = "Minh Anh",
+                        Comment = "I've been collecting BlindBoxes for years, but this store has the most diverse and rare items I've ever seen. Very happy with my legendary dragon model!",
+                        Rating = 5,
+                        AvatarUrl = "/images/avatar1.jpg",
+                        Date = DateTime.Now.AddDays(-5)
+                    },
+                    new TestimonialDto
+                    {
+                        Name = "Thanh Hà",
+                        Comment = "Beautiful packaging and the element of surprise makes unboxing exciting. I received a rare item on my first purchase!",
+                        Rating = 4,
+                        AvatarUrl = "/images/avatar2.jpg",
+                        Date = DateTime.Now.AddDays(-12)
+                    },
+                    new TestimonialDto
+                    {
+                        Name = "Quang Huy",
+                        Comment = "Fast shipping and excellent customer service. Product quality exceeded my expectations. Will definitely buy again!",
+                        Rating = 5,
+                        AvatarUrl = "/images/avatar3.jpg",
+                        Date = DateTime.Now.AddDays(-20)
+                    }
+                };
+            }
+            catch
+            {
+                // Fallback in case of errors
+                _testimonials = new List<TestimonialDto>
+                {
+                    new TestimonialDto
+                    {
+                        Name = "Customer",
+                        Comment = "Great products and excellent service!",
+                        Rating = 5,
+                        AvatarUrl = "/images/avatar1.jpg",
+                        Date = DateTime.Now.AddDays(-3)
+                    }
+                };
+            }
+            
+            await Task.CompletedTask; // Make the method truly async
+        }
+
+        // Check if a BlindBox is new (created within last 7 days)
+        public bool IsNewProduct(DateTime createdAt)
+        {
+            return (DateTime.Now - createdAt).TotalDays <= 7;
+        }
 
         // Helper methods
         private string FormatPrice(decimal price)
@@ -189,7 +427,75 @@ namespace BlindBoxShop.Application.Pages.Pages
 
         private void NavigateToProductDetail(Guid productId)
         {
-            NavigationManager.NavigateTo($"/shop/{productId}");
+            NavigationManager.NavigateTo($"/blindbox/{productId}");
+        }
+
+        // Helper method to get a placeholder image URL based on category name
+        private string GetCategoryImageUrl(string categoryName)
+        {
+            var name = categoryName.ToLower();
+            
+            if (name.Contains("anime"))
+                return "https://th.bing.com/th/id/OIP.0RO7lxBvGsBVZGYbLXC9CAHaEK?rs=1&pid=ImgDetMain";
+            
+            if (name.Contains("game"))
+                return "https://vending-cdn.kootoro.com/torov-cms/upload/image/1723016271998-L%C3%BD%20gi%E1%BA%A3i%20xu%20h%C6%B0%E1%BB%9Bng%20%C4%91%E1%BB%93%20ch%C6%A1i%20blind%20box%20%C4%91%C6%B0%E1%BB%A3c%20gi%E1%BB%9Bi%20tr%E1%BA%BB%20s%C4%83n%20%C4%91%C3%B3n.jpg";
+
+            if (name.Contains("phim") || name.Contains("movie"))
+                return "https://th.bing.com/th/id/OIP.g34yQKGm8B6UxnQyjfJKwAHaE8?rs=1&pid=ImgDetMain";
+
+            if (name.Contains("sport") || name.Contains("thể thao"))
+                return "https://th.bing.com/th/id/OIP.JbqKu93pqBO4EBDrGgABjwHaFU?rs=1&pid=ImgDetMain";
+            
+            if (name.Contains("hoạt hình") || name.Contains("cartoon"))
+                return "https://th.bing.com/th/id/OIP.p8S23BaFnpn23GFgxQCJ9gHaEK?rs=1&pid=ImgDetMain";
+            
+            // Default image for other categories
+            return "https://vending-cdn.kootoro.com/torov-cms/upload/image/1723016271998-L%C3%BD%20gi%E1%BA%A3i%20xu%20h%C6%B0%E1%BB%9Bng%20%C4%91%E1%BB%93%20ch%C6%A1i%20blind%20box%20%C4%91%C6%B0%E1%BB%A3c%20gi%E1%BB%9Bi%20tr%E1%BA%BB%20s%C4%83n%20%C4%91%C3%B3n.jpg";
+        }
+
+        // Helper method to get a placeholder image URL based on package name
+        private string GetPackageImageUrl(string packageName)
+        {
+            var name = packageName.ToLower();
+            
+            if (name.Contains("anime"))
+                return "https://th.bing.com/th/id/OIP.0RO7lxBvGsBVZGYbLXC9CAHaEK?rs=1&pid=ImgDetMain";
+            
+            if (name.Contains("game"))
+                return "https://th.bing.com/th/id/OIP.i0KMhRFQAMnZYtRQFvEMqQHaEK?rs=1&pid=ImgDetMain";
+
+            if (name.Contains("movie") || name.Contains("phim"))
+                return "https://th.bing.com/th/id/OIP.wVQV2DcbEXZk-hEwdutB0gHaFK?rs=1&pid=ImgDetMain";
+
+            if (name.Contains("limited") || name.Contains("giới hạn"))
+                return "https://th.bing.com/th/id/OIP.VRZmTy-P25nLzl0yqgEVjAHaFj?rs=1&pid=ImgDetMain";
+                
+            if (name.Contains("sport") || name.Contains("thể thao"))
+                return "https://th.bing.com/th/id/OIP.JbqKu93pqBO4EBDrGgABjwHaFU?rs=1&pid=ImgDetMain";
+            
+            // Default image for other packages
+            return "https://vending-cdn.kootoro.com/torov-cms/upload/image/1723016271998-L%C3%BD%20gi%E1%BA%A3i%20xu%20h%C6%B0%E1%BB%9Bng%20%C4%91%E1%BB%93%20ch%C6%A1i%20blind%20box%20%C4%91%C6%B0%E1%BB%A3c%20gi%E1%BB%9Bi%20tr%E1%BA%BB%20s%C4%83n%20%C4%91%C3%B3n.jpg";
+        }
+
+        // Determine package type from name for better categorization
+        private string GetPackageTypeFromName(string packageName)
+        {
+            if (string.IsNullOrEmpty(packageName))
+                return "Standard";
+                
+            var nameLower = packageName.ToLower();
+            
+            if (nameLower.Contains("anime")) return "Anime";
+            if (nameLower.Contains("game")) return "Game";
+            if (nameLower.Contains("movie")) return "Movie";
+            if (nameLower.Contains("standard")) return "Standard";
+            if (nameLower.Contains("premium")) return "Premium";
+            if (nameLower.Contains("online")) return "Opened";
+            if (nameLower.Contains("limited")) return "Limited Edition";
+            if (nameLower.Contains("vol")) return "Collection";
+            
+            return "Standard";
         }
     }
 }

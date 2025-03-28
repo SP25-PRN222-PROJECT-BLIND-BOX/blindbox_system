@@ -1,0 +1,184 @@
+@page "/blindbox/{id}"
+@using BlindBoxShop.Service.Contract
+@using BlindBoxShop.Shared.Enum
+
+<PageTitle>@(BlindBox?.Name ?? "Chi tiết BlindBox") - BlindBox Shop</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 px-2 px-sm-4">
+    @if (_isLoading)
+    {
+        <div class="d-flex justify-center my-16">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        </div>
+    }
+    else if (BlindBox == null)
+    {
+        <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="my-8">
+            Không tìm thấy Blind Box.
+        </MudAlert>
+    }
+    else
+    {
+        <div class="d-flex flex-column flex-md-row gap-8">
+            <!-- Image Gallery Section -->
+            <div class="flex-grow-0" style="width: 100%; max-width: 500px;">
+                <MudPaper Elevation="2" Class="overflow-hidden rounded-lg mb-4">
+                    <MudCarousel TData="string" AutoCycle="true" ShowArrows="true" ShowBullets="true" Style="height: 400px;" 
+                                Class="mud-width-full" EnableSwipeGesture="true">
+                        @if (_images.Any())
+                        {
+                            @foreach (var image in _images)
+                            {
+                                <MudCarouselItem Transition="Transition.Slide">
+                                    <div class="d-flex justify-center align-center h-100">
+                                        <MudImage Src="@image" Alt="@BlindBox.Name" ObjectFit="ObjectFit.Contain"
+                                                 Class="rounded-lg" Style="max-height: 380px; max-width: 100%;" 
+                                                 Elevation="0" ErrorText="Cannot load image" />
+                                    </div>
+                                </MudCarouselItem>
+                            }
+                        }
+                        else
+                        {
+                            <MudCarouselItem Transition="Transition.Slide">
+                                <div class="d-flex justify-center align-center h-100">
+                                    <MudImage Src="/images/box-placeholder.jpg" Alt="@BlindBox.Name" 
+                                             ObjectFit="ObjectFit.Contain" Class="rounded-lg" 
+                                             Style="max-height: 380px; max-width: 100%;" Elevation="0" />
+                                </div>
+                            </MudCarouselItem>
+                        }
+                    </MudCarousel>
+                </MudPaper>
+
+                <!-- Status Badges Section -->
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    <MudChip T="string" Color="@GetRarityColor(BlindBox.Rarity)" Size="Size.Medium" Variant="Variant.Filled">
+                        <MudIcon Icon="@Icons.Material.Filled.Diamond" Class="mr-2" />
+                        @BlindBox.Rarity.ToString()
+                    </MudChip>
+                    
+                    <MudChip T="string" Color="@(BlindBox.Status == BlindBoxStatus.Available ? Color.Success : Color.Error)" 
+                             Size="Size.Medium" Variant="Variant.Filled">
+                        <MudIcon Icon="@(BlindBox.Status == BlindBoxStatus.Available ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)" 
+                                 Class="mr-2" />
+                        @(BlindBox.Status == BlindBoxStatus.Available ? "Còn hàng" : "Hết hàng")
+                    </MudChip>
+                    
+                    @if (IsNewProduct(BlindBox.CreatedAt))
+                    {
+                        <MudChip T="string" Color="Color.Secondary" Size="Size.Medium" Variant="Variant.Filled">
+                            <MudIcon Icon="@Icons.Material.Filled.NewReleases" Class="mr-2" />
+                            Mới
+                        </MudChip>
+                    }
+                </div>
+            </div>
+
+            <!-- Product Info Section -->
+            <div class="flex-grow-1">
+                <div class="mb-6">
+                    <MudText Typo="Typo.h4" Class="mb-2 font-weight-bold">@BlindBox.Name</MudText>
+                    
+                    <div class="d-flex align-center mb-4">
+                        <MudRating ReadOnly="true" SelectedValue="@((int)BlindBox.TotalRatingStar)" Size="Size.Medium" />
+                        <MudText Typo="Typo.body2" Class="ml-2">(@BlindBox.TotalRatingStar)</MudText>
+                    </div>
+                    
+                    <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4 font-weight-bold">
+                        @FormatPrice(BlindBox.CurrentPrice)
+                    </MudText>
+                    
+                    <MudText Typo="Typo.body1" Class="mb-6">
+                        @BlindBox.Description
+                    </MudText>
+                    
+                    <MudText Typo="Typo.subtitle1" Class="mb-1">
+                        <span class="font-weight-medium">Danh mục:</span> @BlindBox.CategoryName
+                    </MudText>
+                    
+                    @if (BlindBox.Probability > 0)
+                    {
+                        <MudText Typo="Typo.subtitle1" Class="mb-1">
+                            <span class="font-weight-medium">Tỷ lệ:</span> @(BlindBox.Probability)%
+                        </MudText>
+                    }
+                </div>
+                
+                <!-- Add to Cart Section -->
+                <MudPaper Elevation="0" Class="pa-4 rounded-lg mb-6" Style="background-color: rgba(0,139,139,0.05);">
+                    <div class="d-flex flex-column flex-sm-row gap-4">
+                        <MudNumericField @bind-Value="_quantity" Min="1" Max="10" Label="Số lượng" Variant="Variant.Filled" Class="flex-grow-0" />
+                        
+                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" 
+                                  StartIcon="@Icons.Material.Filled.ShoppingCart" 
+                                  Size="Size.Large"
+                                  Disabled="@(BlindBox.Status != BlindBoxStatus.Available)"
+                                  Class="flex-grow-1" 
+                                  OnClick="AddToCart">
+                            Thêm vào giỏ hàng
+                        </MudButton>
+                    </div>
+                </MudPaper>
+                
+                <!-- Additional Info Tabs -->
+                <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4">
+                    <MudTabPanel Text="Thông tin chi tiết">
+                        <MudText Typo="Typo.body1">
+                            <p>@BlindBox.Description</p>
+                            <p>BlindBox là một loại sản phẩm đồ chơi bí ẩn, nơi bạn không biết chính xác mình sẽ nhận được gì cho đến khi mở hộp.</p>
+                            <p>Mỗi BlindBox có thể chứa một trong nhiều nhân vật hoặc đồ vật khác nhau, thường là một phần của bộ sưu tập.</p>
+                        </MudText>
+                    </MudTabPanel>
+                    
+                    <MudTabPanel Text="Đánh giá">
+                        <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Dense="true" Class="mb-4">
+                            Số lượng đánh giá: @BlindBox.TotalRatingStar ⭐
+                        </MudAlert>
+                        <MudText Typo="Typo.body1">Mua hàng và đăng nhập để đánh giá sản phẩm này.</MudText>
+                    </MudTabPanel>
+                </MudTabs>
+            </div>
+        </div>
+        
+        <!-- Related Products Section -->
+        @if (_relatedProducts.Any())
+        {
+            <div class="mt-12">
+                <MudText Typo="Typo.h5" Class="mb-4">Sản phẩm liên quan</MudText>
+                
+                <MudGrid>
+                    @foreach (var product in _relatedProducts)
+                    {
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudPaper Elevation="3" Class="pa-0 h-100 d-flex flex-column rounded-lg overflow-hidden"
+                                    Style="transition: all 0.3s ease-in-out;">
+                                <div class="position-relative overflow-hidden" style="height: 200px; cursor: pointer;" 
+                                    @onclick="() => NavigateToProductDetail(product.Id)">
+                                    <MudImage Src="@((_relatedProductImages.ContainsKey(product.Id) ? _relatedProductImages[product.Id] : "/images/box-placeholder.jpg"))" 
+                                            Alt="@product.Name" Class="w-100 h-100 object-cover" />
+                                    
+                                    <div class="position-absolute d-flex gap-1" style="top: 4px; right: 4px;">
+                                        <MudChip T="string" Color="@GetRarityColor(product.Rarity)" Size="Size.Small">
+                                            @product.Rarity.ToString()
+                                        </MudChip>
+                                    </div>
+                                </div>
+                                <div class="pa-3 d-flex flex-column flex-grow-1">
+                                    <MudText Typo="Typo.subtitle1" Class="text-truncate">@product.Name</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Primary" Class="mt-auto pt-2 font-weight-bold">@FormatPrice(product.CurrentPrice)</MudText>
+                                </div>
+                            </MudPaper>
+                        </MudItem>
+                    }
+                </MudGrid>
+            </div>
+        }
+    }
+</MudContainer>
+
+<style>
+    .mud-tabs-panels {
+        padding: 16px;
+    }
+</style> 

@@ -2,6 +2,7 @@ using BlindBoxShop.Service.Contract;
 using BlindBoxShop.Shared.DataTransferObject.BlindBox;
 using BlindBoxShop.Shared.Enum;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
 using System;
 using System.Collections.Generic;
@@ -31,6 +32,9 @@ namespace BlindBoxShop.Application.Pages.Pages
         [Inject]
         private IJSRuntime JSRuntime { get; set; } = default!;
 
+        [Inject]
+        private IDialogService DialogService { get; set; } = default!;
+
         private BlindBoxDto BlindBox { get; set; }
         private List<BlindBoxDto> _relatedProducts = new();
         private List<string> _images = new();
@@ -56,6 +60,12 @@ namespace BlindBoxShop.Application.Pages.Pages
         
         // Animation timer
         private Timer _animationTimer;
+        
+        // Fixed shipping price
+        private readonly decimal _shippingPrice = 20000;
+        
+        // Getting total price including shipping
+        private decimal TotalPrice => (BlindBox?.CurrentPrice ?? 0) + _shippingPrice;
         
         // Mock result item data
         private class MockResultItem
@@ -93,6 +103,11 @@ namespace BlindBoxShop.Application.Pages.Pages
         private bool _itemPreviewVisible;
         private BlindBoxItemDto _selectedItem;
 
+        // Image preview variables
+        private bool _imagePreviewVisible;
+        private string _selectedImage;
+        private bool _isZoomed;
+
         protected override async Task OnInitializedAsync()
         {
             await LoadBlindBoxAsync();
@@ -123,6 +138,38 @@ namespace BlindBoxShop.Application.Pages.Pages
                 if (response.IsSuccess && response.Value != null)
                 {
                     BlindBox = response.Value;
+                    
+                    // Debug info for items
+                    if (BlindBox.Items != null)
+                    {
+                        Console.WriteLine($"Loaded {BlindBox.Items.Count} items for BlindBox {BlindBox.Id}");
+                        
+                        foreach (var item in BlindBox.Items)
+                        {
+                            Console.WriteLine($"Item {item.Id} - Name: {item.Name} - ImageUrl before: {item.ImageUrl}");
+                            
+                            if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+                            {
+                                // Ensure the URL is properly formatted
+                                var imageUrl = item.ImageUrl.Trim();
+                                if (!imageUrl.StartsWith("http://") && !imageUrl.StartsWith("https://") && !imageUrl.StartsWith("/"))
+                                {
+                                    item.ImageUrl = "/" + imageUrl;
+                                }
+                            }
+                            else
+                            {
+                                // Set a default placeholder for items without images
+                                item.ImageUrl = "/images/placeholder-item.jpg";
+                            }
+                            
+                            Console.WriteLine($"Item {item.Id} - ImageUrl after: {item.ImageUrl}");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"No items found for BlindBox {BlindBox.Id}");
+                    }
                     
                     // Fetch blind box images from database
                     using var blindBoxImageService = ServiceManager.BlindBoxImageService;
@@ -305,11 +352,7 @@ namespace BlindBoxShop.Application.Pages.Pages
         {
             try
             {
-                // Get current user info if logged in
-                // Note: Implement this when the user service is ready
-                // For now, just use default values or localstorage values
-                
-                // Try to get name from localStorage
+                // Try to get user info from localStorage as fallback
                 var firstName = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "user_firstName");
                 var lastName = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "user_lastName");
                 var address = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "user_address");
@@ -323,6 +366,8 @@ namespace BlindBoxShop.Application.Pages.Pages
                 if (!string.IsNullOrEmpty(province)) _province = province;
                 if (!string.IsNullOrEmpty(ward)) _ward = ward;
                 if (!string.IsNullOrEmpty(phone)) _phone = phone;
+                
+                Console.WriteLine("Loaded user info from localStorage");
             }
             catch (Exception ex)
             {
@@ -513,11 +558,13 @@ namespace BlindBoxShop.Application.Pages.Pages
         }
         
         // Open the gacha dialog
-        private void OpenGachaDialog()
+        private async Task OpenGachaDialog()
         {
             if (BlindBox == null || BlindBox.Status != BlindBoxStatus.Available) return;
             
             _gachaDialogVisible = true;
+            StateHasChanged();
+            Console.WriteLine("Opened gacha dialog, visible: " + _gachaDialogVisible);
         }
         
         // Close the gacha dialog
@@ -793,33 +840,43 @@ namespace BlindBoxShop.Application.Pages.Pages
             {
                 _isProcessing = true;
                 
-                // Create a simple order object - note: actual implementation depends on what OrderForCreationDto supports
-                // This is a simplified version that should match your actual service API
+                // Validate shipping information
+                if (string.IsNullOrWhiteSpace(_firstName) || 
+                    string.IsNullOrWhiteSpace(_lastName) || 
+                    string.IsNullOrWhiteSpace(_address) || 
+                    string.IsNullOrWhiteSpace(_province) || 
+                    string.IsNullOrWhiteSpace(_phone))
+                {
+                    Snackbar.Add("Vui lòng điền đầy đủ thông tin giao hàng", Severity.Warning);
+                    _isProcessing = false;
+                    return;
+                }
+                
+                // Create a simplified order data object
                 var orderData = new
                 {
-                    Status = (int)BlindBoxShop.Shared.Enum.OrderStatus.AwaitingPayment,
-                    PaymentMethod = (int)BlindBoxShop.Shared.Enum.PaymentMethod.VnPay,
-                    Address = $"{_firstName} {_lastName}, {_phone}, {_address}",
+                    Status = BlindBoxShop.Shared.Enum.OrderStatus.AwaitingPayment,
+                    PaymentMethod = BlindBoxShop.Shared.Enum.PaymentMethod.VnPay,
+                    CustomerName = $"{_firstName} {_lastName}",
+                    Phone = _phone,
+                    Address = _address,
                     Province = _province,
                     Wards = _ward,
-                    SubTotal = BlindBox.CurrentPrice * _quantity,
-                    Total = BlindBox.CurrentPrice * _quantity,
+                    ShippingFee = _shippingPrice,
+                    SubTotal = BlindBox.CurrentPrice,
+                    Total = TotalPrice,
                     BlindBoxId = BlindBox.Id,
-                    Quantity = _quantity
+                    Quantity = 1
                 };
                 
                 // Store order data in localStorage for reference
                 await JSRuntime.InvokeVoidAsync("localStorage.setItem", "gacha_order_data", 
                     System.Text.Json.JsonSerializer.Serialize(orderData));
                 
-                // Create a mock order ID for testing purposes
-                // In a real implementation, this would be created by the backend
+                // Create a mock order ID for testing
                 var orderId = Guid.NewGuid();
                 await JSRuntime.InvokeVoidAsync("localStorage.setItem", "gacha_order_id", orderId.ToString());
                 await JSRuntime.InvokeVoidAsync("localStorage.setItem", "gacha_blindbox_id", BlindBox.Id.ToString());
-                
-                // Use a default/guest user ID for demonstration
-                var userId = Guid.Parse("00000000-0000-0000-0000-000000000001");
                 
                 // Close the confirmation dialog
                 _gachaDialogVisible = false;
@@ -827,19 +884,17 @@ namespace BlindBoxShop.Application.Pages.Pages
                 // Get base URL for the VNPay redirect
                 var baseUrl = NavigationManager.BaseUri.TrimEnd('/');
                 
-                // In a real implementation, this would call your VNPay service
-                // For demonstration, we'll simulate this with a direct navigation
-                Snackbar.Add("Redirecting to VNPay payment gateway...", Severity.Info);
+                // For demonstration, navigate to a mock VNPay URL
+                Snackbar.Add("Đang chuyển đến cổng thanh toán VNPay...", Severity.Info);
                 
-                // Simplify for demo - navigate to a mock VNPay URL
-                // In production, replace this with actual API call to VNPay service
+                // Navigate to the mock VNPay URL
                 var mockVnpayUrl = $"{baseUrl}/payment/vnpay?orderId={orderId}&amount={orderData.Total * 100}";
                 NavigationManager.NavigateTo(mockVnpayUrl);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error processing VNPay payment: {ex.Message}");
-                Snackbar.Add($"Error processing payment: {ex.Message}", Severity.Error);
+                Snackbar.Add($"Lỗi xử lý thanh toán: {ex.Message}", Severity.Error);
                 _isProcessing = false;
             }
         }
@@ -854,6 +909,74 @@ namespace BlindBoxShop.Application.Pages.Pages
         private void CloseItemPreview()
         {
             _itemPreviewVisible = false;
+        }
+
+        // Image preview methods
+        private void OpenImagePreview(string imageUrl)
+        {
+            Console.WriteLine($"Opening image preview for URL: {imageUrl}");
+            
+            try 
+            {
+                _selectedImage = imageUrl;
+                _imagePreviewVisible = true;
+                
+                // Force UI update
+                StateHasChanged();
+                
+                Console.WriteLine("Image preview dialog should be visible now");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in OpenImagePreview: {ex.Message}");
+            }
+        }
+
+        private void CloseImagePreview()
+        {
+            Console.WriteLine("Closing image preview");
+            _imagePreviewVisible = false;
+            _isZoomed = false;
+            
+            // Force UI update
+            StateHasChanged();
+        }
+
+        private void NavigatePreviewImage(int direction)
+        {
+            if (_images.Count <= 1) return;
+            
+            var currentIndex = _images.IndexOf(_selectedImage);
+            if (currentIndex < 0) currentIndex = 0;
+            
+            var newIndex = (currentIndex + direction) % _images.Count;
+            if (newIndex < 0) newIndex = _images.Count - 1;
+            
+            _selectedImage = _images[newIndex];
+            _isZoomed = false;
+        }
+
+        private void ToggleZoom()
+        {
+            _isZoomed = !_isZoomed;
+        }
+
+        private void HandleKeyDown(KeyboardEventArgs e)
+        {
+            if (!_imagePreviewVisible) return;
+
+            switch (e.Key)
+            {
+                case "ArrowLeft":
+                    NavigatePreviewImage(-1);
+                    break;
+                case "ArrowRight":
+                    NavigatePreviewImage(1);
+                    break;
+                case "Escape":
+                    CloseImagePreview();
+                    break;
+            }
         }
     }
 }

@@ -1,197 +1,294 @@
-@page "/order-detail/{OrderId}"
-@using System;
-@using System.Collections.Generic;
-@using System.Linq;
-@using BlindBoxShop.Entities.Models;
-@using Microsoft.AspNetCore.Identity;
-@using Microsoft.AspNetCore.Components.Authorization;
+@page "/account/order-detail/{OrderId}"
+@layout MainLayout
+@using BlindBoxShop.Shared.Enum
 
-@layout BlindBoxShop.Application.Components.Layout.MainLayout
+<PageTitle>Order Details</PageTitle>
 
-<PageTitle>Order Detail as Customer</PageTitle>
-
-<div class="container mx-auto py-6 px-4">
-    <div class="bg-cyan-50 rounded-lg p-4 mb-6">
-        <h1 class="text-xl font-bold text-cyan-800">Order Detail as Customer</h1>
-    </div>
-
-    <div class="flex flex-col md:flex-row gap-6">
-        <!-- Navigation Sidebar -->
-        <div class="w-full md:w-1/4">
-            <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-                <div class="p-4 border-b border-gray-200">
-                    <h3 class="text-lg font-medium">Navigation</h3>
-                </div>
-                <div class="p-2">
-                    <a href="/my-account" class="flex items-center p-2 rounded-md hover:bg-gray-100 text-gray-700">
-                        <MudIcon Icon="@Icons.Material.Outlined.Person" Class="mr-3 text-gray-500" Size="Size.Small" />
-                        <span>User info</span>
-                    </a>
-                    <a href="/order-history" class="flex items-center p-2 rounded-md bg-gray-100 text-cyan-600">
-                        <MudIcon Icon="@Icons.Material.Outlined.Receipt" Class="mr-3 text-cyan-600" Size="Size.Small" />
-                        <span>Order History</span>
-                    </a>
-                    <a href="/logout" class="flex items-center p-2 rounded-md hover:bg-gray-100 text-gray-700">
-                        <MudIcon Icon="@Icons.Material.Outlined.Logout" Class="mr-3 text-gray-500" Size="Size.Small" />
-                        <span>Log-out</span>
-                    </a>
-                </div>
+<div class="container mx-auto px-4 py-8">
+    @if (IsLoading)
+    {
+        <div class="flex justify-center items-center p-12">
+            <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+        </div>
+    }
+    else if (Order == null)
+    {
+        <div class="text-center py-12">
+            <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Color="Color.Error" Size="Size.Large" Class="mb-4" />
+            <h3 class="text-xl font-medium text-gray-800 mb-2">Order Not Found</h3>
+            <p class="text-gray-600 mb-6">The order you're looking for doesn't exist or has been removed.</p>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/account/order-history">
+                Return to Orders
+            </MudButton>
+        </div>
+    }
+    else
+    {
+        <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800 mb-1">Order Details</h1>
+                <p class="text-gray-600">
+                    Order placed on <span class="font-medium">@Order.CreatedAt.ToString("MMMM dd, yyyy")</span>
+                </p>
+            </div>
+            <div class="mt-4 sm:mt-0">
+                <MudButton Variant="Variant.Outlined" 
+                          Color="Color.Primary" 
+                          Href="/account/order-history" 
+                          StartIcon="@Icons.Material.Filled.ArrowBack">
+                    Back to Orders
+                </MudButton>
             </div>
         </div>
-        
-        <!-- Main Content -->
-        <div class="w-full md:w-3/4">
-            @if (_order == null)
-            {
-                <div class="flex justify-center items-center py-8">
-                    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
-                </div>
-            }
-            else
-            {
-                <!-- Order Detail Header -->
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-                    <div>
-                        <h2 class="text-xl font-bold mb-2">Order Details</h2>
-                        <div class="flex flex-wrap items-center text-sm text-gray-500">
-                            <span>@_order.OrderDate.ToString("MMMM dd, yyyy")</span>
-                            <span class="mx-2">•</span>
-                            <span>@(_order.Items?.Count ?? 0) Products</span>
-                        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Order Summary and Status -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Order Status -->
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                    <div class="p-5 border-b border-gray-100">
+                        <h2 class="text-lg font-semibold text-gray-800">Order Status</h2>
                     </div>
-                    <MudButton Variant="Variant.Text" 
-                              Color="Color.Primary"
-                              Href="/order-history"
-                              Class="text-cyan-600 mt-3 md:mt-0">
-                        Back to List
-                    </MudButton>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <!-- Shipping Address -->
-                    <div class="bg-white rounded-lg shadow-sm p-6">
-                        <h3 class="uppercase text-gray-500 text-sm font-medium mb-4">SHIPPING ADDRESS</h3>
-                        <div class="text-gray-800 font-medium">@_order.CustomerName</div>
-                        <div class="text-gray-600 mt-1">@_order.Address</div>
-                        
-                        <div class="mt-6">
-                            <div class="text-xs uppercase text-gray-500 mb-1">EMAIL</div>
-                            <div class="text-gray-700">@_order.Email</div>
-                        </div>
-                        
-                        <div class="mt-4">
-                            <div class="text-xs uppercase text-gray-500 mb-1">PHONE</div>
-                            <div class="text-gray-700">@_order.Phone</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Order Summary -->
-                    <div class="bg-white rounded-lg shadow-sm p-6">
-                        <div class="grid grid-cols-2 gap-2 mb-4">
-                            <div class="text-xs uppercase text-gray-500 font-medium">ORDER ID:</div>
-                            <div class="text-right font-medium">#@_order.Id</div>
-                            
-                            <div class="text-xs uppercase text-gray-500 font-medium">PAYMENT METHOD:</div>
-                            <div class="text-right">@_order.PaymentMethod</div>
-                        </div>
-                        
-                        <div class="mt-4 pt-4 border-t border-gray-200">
-                            <div class="flex justify-between py-2">
-                                <div>Subtotal:</div>
-                                <div class="font-medium">@FormatPrice(_order.Subtotal)</div>
+                    <div class="p-5">
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <span class="text-sm text-gray-500">Order ID:</span>
+                                <div class="font-medium">#@Order.Id.ToString().ToUpper()</div>
                             </div>
-                            <div class="flex justify-between py-2">
-                                <div>Shipping:</div>
-                                <div class="font-medium">@FormatPrice(_order.ShippingCost)</div>
-                            </div>
-                            <div class="border-t border-gray-200 my-2"></div>
-                            <div class="flex justify-between py-2 font-bold text-lg">
-                                <div>Total</div>
-                                <div class="text-cyan-700">@FormatPrice(_order.Total)</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Order Status Tracker -->
-                @if (_statusSteps != null && _statusSteps.Any())
-                {
-                    <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
-                        <div class="relative pt-2">
-                            <div class="absolute top-10 left-0 right-0 h-1 bg-gray-200">
-                                <div class="h-full bg-green-500" style="width: @_statusProgressPercentage%;"></div>
-                            </div>
-                            
-                            <div class="flex justify-between relative">
-                                @foreach (var status in _statusSteps)
+                            <div>
+                                @switch (Order.Status)
                                 {
-                                    <div class="flex flex-col items-center z-10">
-                                        @if (status.IsCompleted)
-                                        {
-                                            <div class="bg-green-500 text-white w-12 h-12 rounded-full flex items-center justify-center mb-3">
-                                                <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" />
-                                            </div>
-                                        }
-                                        else if (status.IsActive)
-                                        {
-                                            <div class="bg-cyan-600 text-white w-12 h-12 rounded-full flex items-center justify-center font-bold mb-3">
-                                                @status.Step
-                                            </div>
-                                        }
-                                        else
-                                        {
-                                            <div class="bg-gray-200 text-gray-500 w-12 h-12 rounded-full flex items-center justify-center font-bold mb-3">
-                                                @status.Step
-                                            </div>
-                                        }
-                                        <div class="text-center text-sm mt-1 @GetStatusTextClass(status)">@status.Name</div>
-                                    </div>
+                                    case OrderStatus.Pending:
+                                        <div class="px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                            Pending
+                                        </div>
+                                        break;
+                                    case OrderStatus.Cancelled:
+                                        <div class="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                            Cancelled
+                                        </div>
+                                        break;
+                                    default:
+                                        <div class="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            @Order.Status
+                                        </div>
+                                        break;
                                 }
                             </div>
                         </div>
-                    </div>
-                }
-                
-                <!-- Product List -->
-                @if (_order.Items != null && _order.Items.Any())
-                {
-                    <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-6">
-                        <MudTable Items="_order.Items" Hover="true" Breakpoint="Breakpoint.Sm" Class="border-0">
-                            <HeaderContent>
-                                <MudTh Class="uppercase text-xs font-medium text-gray-500">PRODUCT</MudTh>
-                                <MudTh Class="uppercase text-xs font-medium text-gray-500 text-right">PRICE</MudTh>
-                                <MudTh Class="uppercase text-xs font-medium text-gray-500 text-center">QUANTITY</MudTh>
-                                <MudTh Class="uppercase text-xs font-medium text-gray-500 text-right">SUBTOTAL</MudTh>
-                            </HeaderContent>
-                            <RowTemplate>
-                                <MudTd>
-                                    <div class="flex items-center">
-                                        <img src="@context.ImageUrl" alt="@context.ProductName" class="w-16 h-16 object-cover mr-3 rounded" />
-                                        <div>
-                                            <div class="font-medium">@context.ProductName</div>
+
+                        <!-- Status Timeline -->
+                        <div class="relative">
+                            <div class="absolute left-8 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+                            @foreach (var status in OrderStatusSteps)
+                            {
+                                <div class="relative flex items-start mb-6 last:mb-0">
+                                    @if (status.IsCompleted)
+                                    {
+                                        <div class="flex-shrink-0 h-16 w-16 bg-green-100 rounded-full border-4 border-green-500 flex items-center justify-center z-10">
+                                            <MudIcon Icon="@Icons.Material.Filled.Check" Color="Color.Success" />
                                         </div>
+                                    }
+                                    else if (status.IsActive)
+                                    {
+                                        <div class="flex-shrink-0 h-16 w-16 bg-cyan-100 rounded-full border-4 border-cyan-500 flex items-center justify-center z-10">
+                                            <MudIcon Icon="@status.Icon" Color="Color.Primary" />
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="flex-shrink-0 h-16 w-16 bg-gray-100 rounded-full border-4 border-gray-300 flex items-center justify-center z-10">
+                                            <MudIcon Icon="@status.Icon" Color="Color.Default" />
+                                        </div>
+                                    }
+                                    <div class="ml-4 pt-1">
+                                        <h3 class="text-md font-medium @(status.IsActive ? "text-cyan-600" : status.IsCompleted ? "text-green-600" : "text-gray-600")">
+                                            @status.Name
+                                        </h3>
+                                        @if (!string.IsNullOrEmpty(status.Description))
+                                        {
+                                            <p class="text-sm text-gray-500">@status.Description</p>
+                                        }
+                                        @if (status.Date.HasValue)
+                                        {
+                                            <p class="text-sm text-gray-500 mt-1">@status.Date.Value.ToString("MMM dd, yyyy HH:mm")</p>
+                                        }
                                     </div>
-                                </MudTd>
-                                <MudTd Class="text-right">@FormatPrice(context.Price)</MudTd>
-                                <MudTd Class="text-center">x@(context.Quantity)</MudTd>
-                                <MudTd Class="text-right font-medium">@FormatPrice(context.Price * context.Quantity)</MudTd>
-                            </RowTemplate>
-                        </MudTable>
+                                </div>
+                            }
+                        </div>
                     </div>
-                    
-                    @if (_order.Status != "Delivered" && _order.Status != "Cancelled")
-                    {
-                        <div class="flex justify-end">
+                </div>
+
+                <!-- Order Items -->
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                    <div class="p-5 border-b border-gray-100">
+                        <h2 class="text-lg font-semibold text-gray-800">Items</h2>
+                    </div>
+                    <div class="p-5">
+                        <div class="overflow-x-auto">
+                            <MudTable Items="@OrderItems" Hover="true" Breakpoint="Breakpoint.Sm">
+                                <HeaderContent>
+                                    <MudTh>Product</MudTh>
+                                    <MudTh>Price</MudTh>
+                                    <MudTh>Qty</MudTh>
+                                    <MudTh>Total</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd>
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-16 h-16 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
+                                                @if (!string.IsNullOrEmpty(context.ImageUrl))
+                                                {
+                                                    <img src="@context.ImageUrl" alt="@context.BlindBoxName" 
+                                                         class="h-full w-full object-cover object-center" />
+                                                }
+                                                else
+                                                {
+                                                    <div class="w-full h-full bg-gray-100 flex items-center justify-center">
+                                                        <MudIcon Icon="@Icons.Material.Filled.Spa" Color="Color.Primary" />
+                                                    </div>
+                                                }
+                                            </div>
+                                            <div>
+                                                <div class="font-medium text-gray-800">@context.BlindBoxName</div>
+                                            </div>
+                                        </div>
+                                    </MudTd>
+                                    <MudTd>@FormatPrice(context.Price)</MudTd>
+                                    <MudTd>@context.Quantity</MudTd>
+                                    <MudTd>@FormatPrice(context.Price * context.Quantity)</MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                        </div>
+                        
+                        <div class="mt-6 border-t border-gray-100 pt-4">
+                            <div class="flex justify-between py-2">
+                                <span class="text-gray-600">Subtotal:</span>
+                                <span class="font-medium">@FormatPrice(Order.SubTotal)</span>
+                            </div>
+                            
+                            <div class="flex justify-between py-2">
+                                <span class="text-gray-600">Shipping:</span>
+                                <span class="font-medium">@FormatPrice(ShippingCost)</span>
+                            </div>
+                            
+                            <div class="flex justify-between py-2">
+                                <span class="text-gray-600">Discount:</span>
+                                <span class="font-medium">@FormatPrice(Discount)</span>
+                            </div>
+                            
+                            <div class="flex justify-between py-2 border-t border-gray-100 mt-2 font-bold">
+                                <span>Total:</span>
+                                <span>@FormatPrice(Order.Total)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar Information -->
+            <div class="space-y-6">
+                <!-- Payment Summary -->
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                    <div class="p-5 border-b border-gray-100">
+                        <h2 class="text-lg font-semibold text-gray-800">Payment Summary</h2>
+                    </div>
+                    <div class="p-5">
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Subtotal:</span>
+                                <span class="font-medium">@FormatPrice(Order.SubTotal)</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Shipping:</span>
+                                <span class="font-medium">@FormatPrice(ShippingCost)</span>
+                            </div>
+                            @if (Discount > 0)
+                            {
+                                <div class="flex justify-between items-center text-green-600">
+                                    <span>Discount:</span>
+                                    <span class="font-medium">-@FormatPrice(Discount)</span>
+                                </div>
+                            }
+                            <div class="border-t border-gray-100 my-3 pt-3">
+                                <div class="flex justify-between items-center text-lg">
+                                    <span class="font-bold text-gray-800">Total:</span>
+                                    <span class="font-bold text-primary">@FormatPrice(Order.Total)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-5 pt-5 border-t border-gray-100">
+                            <h3 class="text-md font-medium text-gray-800 mb-3">Payment Method</h3>
+                            <div class="flex items-center bg-gray-50 p-3 rounded-md">
+                                <MudIcon Icon="@GetPaymentIcon()" Color="Color.Primary" Class="mr-3" />
+                                <span>@GetPaymentMethodName()</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shipping Information -->
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                    <div class="p-5 border-b border-gray-100">
+                        <h2 class="text-lg font-semibold text-gray-800">Shipping Address</h2>
+                    </div>
+                    <div class="p-5">
+                        <div class="space-y-2">
+                            <p class="font-medium text-gray-800">@Order.CustomerName</p>
+                            <p class="text-gray-600">@Order.Address</p>
+                            <p class="text-gray-600">@Order.Wards, @Order.Province</p>
+                            @if (!string.IsNullOrEmpty(Phone))
+                            {
+                                <p class="text-gray-600 mt-1">
+                                    <span class="font-medium">Phone: </span>@Phone
+                                </p>
+                            }
+                            @if (!string.IsNullOrEmpty(Email))
+                            {
+                                <p class="text-gray-600">
+                                    <span class="font-medium">Email: </span>@Email
+                                </p>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                @if (Order.Status == OrderStatus.Pending)
+                {
+                    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                        <div class="p-5">
                             <MudButton Variant="Variant.Filled" 
-                                      Color="Color.Error"
-                                      OnClick="@(() => CancelOrder())"
-                                      Class="rounded-md px-6">
-                                Cancel order
+                                      Color="Color.Error" 
+                                      OnClick="CancelOrder"
+                                      FullWidth="true">
+                                Cancel Order
                             </MudButton>
                         </div>
-                    }
+                    </div>
                 }
-            }
+            </div>
         </div>
-    </div>
-</div> 
+    }
+</div>
+
+@if (IsDialogVisible)
+{
+    <MudDialog Open="IsDialogVisible" DisableBackdropClick="true">
+        <TitleContent>
+            <div class="flex items-center">
+                <MudIcon Icon="@Icons.Material.Filled.Warning" Class="mr-3 text-orange-500" />
+                <MudText Typo="Typo.h6">Cancel Order</MudText>
+            </div>
+        </TitleContent>
+        <DialogContent>
+            <MudText>Are you sure you want to cancel this order? This action cannot be undone.</MudText>
+        </DialogContent>
+        <DialogActions>
+            <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="CloseDialog">Back</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="ConfirmCancelOrder">Confirm Cancel</MudButton>
+        </DialogActions>
+    </MudDialog>
+} 

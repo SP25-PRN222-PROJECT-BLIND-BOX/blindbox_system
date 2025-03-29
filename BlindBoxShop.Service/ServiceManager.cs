@@ -37,5 +37,7 @@ namespace BlindBoxShop.Service
         public IVoucherService VoucherService => new VoucherService(_repositoryManager, _mapper);
 
         public IReplyService ReplyService => new ReplyService(_repositoryManager, _mapper);
+        
+        public IAuthService AuthService => new AuthService(_repositoryManager, _mapper);
     }
 }

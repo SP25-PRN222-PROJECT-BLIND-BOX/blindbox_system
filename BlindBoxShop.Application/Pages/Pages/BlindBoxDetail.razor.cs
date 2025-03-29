@@ -7,6 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Text.Json;
+using Microsoft.JSInterop;
 
 namespace BlindBoxShop.Application.Pages.Pages
 {
@@ -23,6 +25,9 @@ namespace BlindBoxShop.Application.Pages.Pages
 
         [Inject]
         private ISnackbar Snackbar { get; set; } = default!;
+        
+        [Inject]
+        private IJSRuntime JSRuntime { get; set; } = default!;
 
         private BlindBoxDto BlindBox { get; set; }
         private List<BlindBoxDto> _relatedProducts = new();
@@ -243,20 +248,79 @@ namespace BlindBoxShop.Application.Pages.Pages
             NavigationManager.NavigateTo($"/blindbox/{productId}");
         }
 
-        private void AddToCart()
+        private async Task AddToCart()
         {
             if (BlindBox == null || BlindBox.Status != BlindBoxStatus.Available) return;
             
             try
             {
-                // Call your cart service to add the item
-                // CartService.AddItem(BlindBox.Id, _quantity);
+                // Kiểm tra nếu là BlindBox có thể mở online (probability > 0)
+                if (BlindBox.Probability > 0)
+                {
+                    Snackbar.Add("Sản phẩm này chỉ có thể mở trực tuyến, không thể thêm vào giỏ hàng", Severity.Warning);
+                    return;
+                }
+                
+                // Regular blind box - add to cart
+                // Get existing cart from localStorage
+                var cartJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "blindbox_cart");
+                List<BlindBoxShop.Application.Models.CartItem> cartItems = new();
+                
+                if (!string.IsNullOrEmpty(cartJson))
+                {
+                    cartItems = System.Text.Json.JsonSerializer.Deserialize<List<BlindBoxShop.Application.Models.CartItem>>(cartJson) ?? new List<BlindBoxShop.Application.Models.CartItem>();
+                }
+                
+                // Check if item already in cart by BlindBoxId
+                var existingItem = cartItems.FirstOrDefault(i => i.BlindBoxId == BlindBox.Id);
+                
+                if (existingItem != null)
+                {
+                    // Increase quantity by the selected amount
+                    existingItem.Quantity += _quantity;
+                }
+                else
+                {
+                    // Add new item
+                    cartItems.Add(new BlindBoxShop.Application.Models.CartItem
+                    {
+                        Id = BlindBox.Id.GetHashCode(),
+                        BlindBoxId = BlindBox.Id,
+                        ProductName = BlindBox.Name,
+                        Description = BlindBox.Description?.Substring(0, Math.Min(50, BlindBox.Description.Length)) + "...",
+                        ImageUrl = !string.IsNullOrEmpty(BlindBox.MainImageUrl) ? BlindBox.MainImageUrl : 
+                            (_images.Any() ? _images.First() : "/images/box-placeholder.jpg"),
+                        Price = BlindBox.CurrentPrice,
+                        Quantity = _quantity
+                    });
+                }
+                
+                // Save to localStorage
+                await JSRuntime.InvokeVoidAsync("localStorage.setItem", "blindbox_cart", System.Text.Json.JsonSerializer.Serialize(cartItems));
                 
                 Snackbar.Add($"Đã thêm {_quantity} sản phẩm vào giỏ hàng", Severity.Success);
+                
+                // Optionally navigate to cart
+                // NavigationManager.NavigateTo("/cart");
             }
             catch (Exception ex)
             {
                 Snackbar.Add($"Lỗi khi thêm vào giỏ hàng: {ex.Message}", Severity.Error);
+            }
+        }
+        
+        private void BuyAndOpenOnline()
+        {
+            if (BlindBox == null || BlindBox.Status != BlindBoxStatus.Available) return;
+            
+            try
+            {
+                // Redirect to checkout with special parameter for direct purchase
+                NavigationManager.NavigateTo($"/checkout/direct/{BlindBox.Id}?quantity={_quantity}");
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Lỗi khi mua trực tiếp: {ex.Message}", Severity.Error);
             }
         }
 

@@ -11,7 +11,9 @@ using MudBlazor;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
+using BlindBoxShop.Application.Models;
 
 namespace BlindBoxShop.Application.Pages.Pages
 {
@@ -371,9 +373,42 @@ namespace BlindBoxShop.Application.Pages.Pages
         {
             try
             {
-                // Simple implementation without calling service methods
+                // Get existing cart from localStorage
+                var cartJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "blindbox_cart");
+                List<CartItem> cartItems = new();
+                
+                if (!string.IsNullOrEmpty(cartJson))
+                {
+                    cartItems = JsonSerializer.Deserialize<List<CartItem>>(cartJson) ?? new List<CartItem>();
+                }
+                
+                // Check if item already in cart using BlindBoxId for consistency
+                var existingItem = cartItems.FirstOrDefault(i => i.BlindBoxId == blindBox.Id);
+                
+                if (existingItem != null)
+                {
+                    // Increase quantity
+                    existingItem.Quantity += 1;
+                }
+                else
+                {
+                    // Add new item
+                    cartItems.Add(new CartItem
+                    {
+                        Id = blindBox.Id.GetHashCode(),
+                        BlindBoxId = blindBox.Id,
+                        ProductName = blindBox.Name,
+                        Description = blindBox.Description?.Substring(0, Math.Min(50, blindBox.Description?.Length ?? 0)) + "...",
+                        ImageUrl = _blindBoxImages.ContainsKey(blindBox.Id) ? _blindBoxImages[blindBox.Id] : "/images/box-placeholder.jpg",
+                        Price = blindBox.CurrentPrice,
+                        Quantity = 1
+                    });
+                }
+                
+                // Save to localStorage
+                await JSRuntime.InvokeVoidAsync("localStorage.setItem", "blindbox_cart", JsonSerializer.Serialize(cartItems));
+                
                 Snackbar.Add($"Đã thêm \"{blindBox.Name}\" vào giỏ hàng!", Severity.Success);
-                await Task.CompletedTask;
             }
             catch (Exception ex)
             {
@@ -383,8 +418,7 @@ namespace BlindBoxShop.Application.Pages.Pages
 
         private async Task AddToCartWithoutPropagation(BlindBoxDto blindBox, MouseEventArgs e)
         {
-            // Just call the original method - we don't need to prevent default
-            // since we're handling the event separately with stopPropagation
+            // Handle the event separately to prevent navigation
             await AddToCart(blindBox);
         }
 

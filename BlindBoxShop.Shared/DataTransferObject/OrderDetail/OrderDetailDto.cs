@@ -11,5 +11,7 @@ namespace BlindBoxShop.Shared.DataTransferObject.OrderDetail
         public string BlindBoxName { get; set; }
         public decimal Price { get; set; }
         public decimal TotalPrice => Price * Quantity;
+        public string ImageUrl { get; set; }
+        public Guid BlindBoxId { get; set; }
     }
 }

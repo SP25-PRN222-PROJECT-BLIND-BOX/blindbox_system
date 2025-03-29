@@ -1,0 +1,301 @@
+@page "/open-blindbox/{blindBoxId}"
+@using BlindBoxShop.Shared.Enum
+@using BlindBoxShop.Service.Contract
+@using System.Text.Json
+@using System.Web
+
+<PageTitle>Open BlindBox Online - BlindBox Shop</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="py-8">
+    @if (_isLoading)
+    {
+        <div class="d-flex flex-column align-center my-12">
+            <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+            <MudText Typo="Typo.subtitle1" Class="mt-4">Preparing your BlindBox...</MudText>
+        </div>
+    }
+    else if (_isOpened)
+    {
+        <MudPaper Elevation="3" Class="pa-6 rounded-lg text-center">
+            <div class="d-flex flex-column align-center">
+                <MudIcon Icon="@Icons.Material.Filled.Celebration" Color="Color.Secondary" Size="Size.Large" Class="mb-4" />
+                <MudText Typo="Typo.h4" Class="mb-4">Congratulations, luck is on your side! 🎉</MudText>
+                
+                <div class="position-relative mb-6" style="width: 280px; height: 280px;">
+                    <MudImage Src="@_revealedItemImage" Alt="@_revealedItemName" 
+                             Class="w-100 h-100 object-contain rounded-lg" 
+                             Style="box-shadow: 0 0 15px rgba(0,200,200,0.4);" />
+                    
+                    @if (!string.IsNullOrEmpty(_rarityText))
+                    {
+                        <MudChip T="string" Color="@_rarityColor" Size="Size.Large" 
+                                Class="position-absolute font-weight-bold px-3" 
+                                Style="top: 10px; right: 10px;">
+                            @_rarityText
+                        </MudChip>
+                    }
+                </div>
+                
+                <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-2">@_revealedItemName</MudText>
+                <MudText Typo="Typo.body1" Class="mb-4">@_revealedItemDescription</MudText>
+                
+                <MudButton Variant="Variant.Filled" 
+                          Color="Color.Secondary" 
+                          EndIcon="@Icons.Material.Filled.EmojiEvents" 
+                          Size="Size.Large"
+                          Class="px-6 py-2 mb-4"
+                          OnClick="ClaimGift">
+                    Claim Your Gift!
+                </MudButton>
+                
+                <MudText Typo="Typo.caption" Color="Color.Info">
+                    Order #@_orderId has been created for your purchase
+                </MudText>
+            </div>
+        </MudPaper>
+        
+        <MudCard Elevation="0" Class="mt-8 py-4 px-6 bg-transparent border-2 border-info-lighten-3">
+            <MudText Typo="Typo.subtitle1" Color="Color.Info" Class="mb-2">What happens next?</MudText>
+            <MudText Typo="Typo.body2">
+                Your opened item will be shipped to your provided address. You can track your order
+                status in your account's order history section.
+            </MudText>
+        </MudCard>
+    }
+    else
+    {
+        <MudPaper Elevation="3" Class="px-6 py-8 rounded-lg">
+            <MudGrid>
+                <MudItem xs="12" md="5">
+                    <div class="d-flex justify-center align-center h-100">
+                        <MudPaper Elevation="4" Class="position-relative rounded-lg overflow-hidden" 
+                                Style="width: 280px; height: 280px; cursor: pointer;"
+                                @onclick="RevealBlindBox">
+                            <MudImage Src="@_blindBoxImage" Alt="@_blindBoxName" Class="w-100 h-100 object-cover" />
+                            
+                            <div class="position-absolute inset-0 d-flex flex-column justify-center align-center text-center" 
+                                Style="background: rgba(0,0,0,0.4);">
+                                <MudIcon Icon="@Icons.Material.Filled.Visibility" Color="Color.Surface" Size="Size.Large" Class="mb-2" />
+                                <MudText Typo="Typo.h6" Color="Color.Surface" Class="px-4">Click to open your BlindBox</MudText>
+                            </div>
+                            
+                            <MudOverlay Visible="_isOpening" DarkBackground="true" Absolute="true" 
+                                      Class="d-flex flex-column justify-center align-center">
+                                <MudProgressCircular Color="Color.Secondary" Indeterminate="true" Size="Size.Large" />
+                                <MudText Typo="Typo.subtitle1" Color="Color.Surface" Class="mt-4">Opening...</MudText>
+                            </MudOverlay>
+                        </MudPaper>
+                    </div>
+                </MudItem>
+                
+                <MudItem xs="12" md="7">
+                    <MudText Typo="Typo.h4" Class="mb-4">Ready to unbox!</MudText>
+                    <MudText Typo="Typo.subtitle1" Class="mb-4">
+                        <span class="font-weight-bold">@_blindBoxName</span>
+                    </MudText>
+                    
+                    <MudList T="string" Dense="true" DisablePadding="true" Class="mb-6">
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Info">
+                            <MudText>
+                                <span class="font-weight-medium">Order ID:</span> @_orderId
+                            </MudText>
+                        </MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.LocalShipping">
+                            <MudText>
+                                <span class="font-weight-medium">Shipping Address:</span> @_address
+                            </MudText>
+                        </MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Payments">
+                            <MudText>
+                                <span class="font-weight-medium">Total Paid:</span> @FormatPrice(_totalPaid)
+                            </MudText>
+                        </MudListItem>
+                    </MudList>
+                    
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-6">
+                        Click on the box to reveal your mystery item. Once opened, the result is final!
+                    </MudAlert>
+                    
+                    <MudButton Variant="Variant.Filled" 
+                              Color="Color.Primary" 
+                              StartIcon="@Icons.Material.Filled.Visibility" 
+                              Size="Size.Large"
+                              FullWidth="true"
+                              OnClick="RevealBlindBox">
+                        Open My BlindBox Now!
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+    }
+</MudContainer>
+
+@code {
+    [Parameter]
+    public string BlindBoxId { get; set; }
+    
+    [Inject]
+    private NavigationManager NavigationManager { get; set; }
+    
+    [Inject]
+    private ISnackbar Snackbar { get; set; }
+    
+    [Inject]
+    private IServiceManager ServiceManager { get; set; }
+    
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; }
+    
+    private bool _isLoading = true;
+    private bool _isOpening = false;
+    private bool _isOpened = false;
+    
+    private string _blindBoxName = string.Empty;
+    private string _blindBoxImage = "/images/box-placeholder.jpg";
+    private string _revealedItemName = string.Empty;
+    private string _revealedItemDescription = string.Empty;
+    private string _revealedItemImage = string.Empty;
+    private string _rarityText = string.Empty;
+    private Color _rarityColor = Color.Default;
+    private string _orderId = string.Empty;
+    private string _address = string.Empty;
+    private decimal _totalPaid = 0;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _isLoading = true;
+            
+            // Get order ID from query string
+            var uri = new Uri(NavigationManager.Uri);
+            var query = HttpUtility.ParseQueryString(uri.Query);
+            _orderId = query["orderId"] ?? Guid.NewGuid().ToString();
+            
+            // Get blindbox info
+            var blindBoxId = Guid.Parse(BlindBoxId);
+            var result = await ServiceManager.BlindBoxService.GetBlindBoxByIdAsync(blindBoxId, false);
+            
+            if (result.IsSuccess && result.Value != null)
+            {
+                var blindBox = result.Value;
+                _blindBoxName = blindBox.Name;
+                
+                // Get blindbox image
+                if (!string.IsNullOrEmpty(blindBox.MainImageUrl))
+                {
+                    _blindBoxImage = blindBox.MainImageUrl;
+                }
+                else
+                {
+                    // Try to get first image from images
+                    var imagesResult = await ServiceManager.BlindBoxImageService.GetBlindBoxImagesByBlindBoxIdAsync(blindBox.Id);
+                    if (imagesResult.IsSuccess && imagesResult.Value?.Any() == true)
+                    {
+                        _blindBoxImage = imagesResult.Value.First().ImageUrl;
+                    }
+                }
+                
+                // Get shipping info from localStorage
+                var checkoutInfoJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "blindbox_checkout_info");
+                if (!string.IsNullOrEmpty(checkoutInfoJson))
+                {
+                    var checkoutInfo = JsonSerializer.Deserialize<BlindBoxShop.Application.Models.CheckoutInfo>(checkoutInfoJson);
+                    if (checkoutInfo != null)
+                    {
+                        _address = $"{checkoutInfo.Address}";
+                    }
+                }
+                
+                // Set total paid
+                _totalPaid = blindBox.CurrentPrice + 20000; // Product price + shipping
+            }
+            else
+            {
+                Snackbar.Add("Could not load BlindBox information.", Severity.Error);
+                NavigationManager.NavigateTo("/");
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+    
+    private async Task RevealBlindBox()
+    {
+        if (_isOpening) return;
+        
+        try
+        {
+            _isOpening = true;
+            StateHasChanged();
+            
+            // Simulate opening animation
+            await Task.Delay(2000);
+            
+            // For demo, we'll just simulate a random result
+            // In production, this would call an API to determine the actual item based on probabilities
+            await SimulateRandomResult();
+            
+            _isOpening = false;
+            _isOpened = true;
+        }
+        catch (Exception ex)
+        {
+            _isOpening = false;
+            Snackbar.Add($"Error opening BlindBox: {ex.Message}", Severity.Error);
+        }
+    }
+    
+    private async Task SimulateRandomResult()
+    {
+        // Simulate server determining what item the user got
+        // This would normally be a server-side logic that considers probabilities
+        var random = new Random();
+        var rarity = random.Next(1, 101);
+        
+        if (rarity <= 5) // 5% chance for rare
+        {
+            _rarityText = "Rare";
+            _rarityColor = Color.Warning;
+            _revealedItemName = "Reward Name - Rare";
+            _revealedItemImage = "/images/shop/blind-box-rare.jpg";
+        }
+        else if (rarity <= 30) // 25% chance for uncommon
+        {
+            _rarityText = "Uncommon";
+            _rarityColor = Color.Success;
+            _revealedItemName = "Reward Name - Uncommon";
+            _revealedItemImage = "/images/shop/blind-box-uncommon.jpg";
+        }
+        else // 70% chance for common
+        {
+            _rarityText = "Common";
+            _rarityColor = Color.Default;
+            _revealedItemName = "Reward Name - Common";
+            _revealedItemImage = "/images/shop/blind-box-common.jpg";
+        }
+        
+        _revealedItemDescription = "This is a description of the item you received. Congratulations on your new collectible!";
+        
+        // Create order in database (would be implemented in a real app)
+        await Task.Delay(500); // Simulate API call
+    }
+    
+    private void ClaimGift()
+    {
+        // This would register the gift to the user's account and redirect to order details
+        NavigationManager.NavigateTo($"/order-detail/{_orderId}");
+    }
+    
+    private string FormatPrice(decimal price)
+    {
+        return string.Format("{0:n0} ₫", price);
+    }
+} 

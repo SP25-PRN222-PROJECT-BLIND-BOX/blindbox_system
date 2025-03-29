@@ -1,0 +1,119 @@
+@using BlindBoxShop.Shared.DataTransferObject.Order
+@using BlindBoxShop.Shared.DataTransferObject.OrderDetail
+@using BlindBoxShop.Shared.Enum
+@using MudBlazor
+
+<MudDialog>
+    <DialogContent>
+        @if (OrderWithDetails == null)
+        {
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        }
+        else
+        {
+            <div class="py-2">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <MudText Typo="Typo.h6">Order #@OrderWithDetails.Order.Id.ToString().Substring(0, 8)</MudText>
+                        <MudText Typo="Typo.body2" Class="text-gray-500">@OrderWithDetails.Order.CreatedAt.ToString("dd MMMM yyyy, HH:mm")</MudText>
+                    </div>
+                    <MudBadge Color="@GetOrderStatusColor(OrderWithDetails.Order.Status)" Overlap="true" Class="mx-6 my-4">
+                        @OrderWithDetails.Order.Status.ToString()
+                    </MudBadge>
+                </div>
+                
+                <MudDivider Class="my-4" />
+                
+                <MudText Typo="Typo.subtitle1" Class="mb-2">Items</MudText>
+                <div>
+                    @foreach (var item in OrderWithDetails.OrderDetails)
+                    {
+                        <div class="flex justify-between w-full items-center p-2 border-b">
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 mr-3">
+                                    @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                    {
+                                        <img src="@item.ImageUrl" alt="@item.BlindBoxName" 
+                                             class="h-full w-full object-cover object-center" />
+                                    }
+                                    else
+                                    {
+                                        <div class="w-full h-full bg-gray-100 flex items-center justify-center">
+                                            <MudIcon Icon="@Icons.Material.Filled.Spa" Size="Size.Small" Color="Color.Primary" />
+                                        </div>
+                                    }
+                                </div>
+                                <div>
+                                    <div class="font-medium">@item.BlindBoxName</div>
+                                    <div class="text-xs text-gray-500">Qty: @item.Quantity</div>
+                                </div>
+                            </div>
+                            <MudText Typo="Typo.body2">@FormatPrice(item.Price)</MudText>
+                        </div>
+                    }
+                </div>
+                
+                <MudDivider Class="my-4" />
+                
+                <div class="flex justify-between items-center mb-2">
+                    <MudText Typo="Typo.body1">Subtotal</MudText>
+                    <MudText Typo="Typo.body2">@FormatPrice(OrderWithDetails.Order.SubTotal)</MudText>
+                </div>
+                <div class="flex justify-between items-center mb-2">
+                    <MudText Typo="Typo.body1">Shipping</MudText>
+                    <MudText Typo="Typo.body2">@FormatPrice(20000)</MudText>
+                </div>
+                @if (OrderWithDetails.Order.VoucherId.HasValue)
+                {
+                    <div class="flex justify-between items-center mb-2">
+                        <MudText Typo="Typo.body1">Discount</MudText>
+                        <MudText Typo="Typo.body2">-@FormatPrice(OrderWithDetails.Order.SubTotal - OrderWithDetails.Order.Total)</MudText>
+                    </div>
+                }
+                <div class="flex justify-between items-center mt-4">
+                    <MudText Typo="Typo.h6">Total</MudText>
+                    <MudText Typo="Typo.h6" Color="Color.Primary">@FormatPrice(OrderWithDetails.Order.Total)</MudText>
+                </div>
+                
+                <MudDivider Class="my-4" />
+                
+                <MudText Typo="Typo.subtitle1" Class="mb-2">Shipping Address</MudText>
+                <MudText Typo="Typo.body2">@OrderWithDetails.Order.Address</MudText>
+                <MudText Typo="Typo.body2">@OrderWithDetails.Order.Wards, @OrderWithDetails.Order.Province</MudText>
+                
+                <MudDivider Class="my-4" />
+                
+                <MudText Typo="Typo.subtitle1" Class="mb-2">Payment Method</MudText>
+                <MudText Typo="Typo.body2">@OrderWithDetails.Order.PaymentMethod.ToString()</MudText>
+            </div>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Color="Color.Primary" Variant="Variant.Filled">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] 
+    public MudBlazor.IMudDialogInstance MudDialog { get; set; }
+    
+    [Parameter] 
+    public OrderWithDetailsDto OrderWithDetails { get; set; }
+    
+    private void Cancel() => MudDialog.Cancel();
+    
+    private Color GetOrderStatusColor(OrderStatus status)
+    {
+        return status switch
+        {
+            OrderStatus.Pending => Color.Warning,
+            OrderStatus.Cancelled => Color.Error,
+            _ => Color.Default
+        };
+    }
+    
+    private string FormatPrice(decimal price)
+    {
+        return $"{price.ToString("N0")} ₫";
+    }
+} 

@@ -94,8 +94,12 @@
                                         Class="flex-grow-0 px-2 text-transform-none">Details</MudButton>
                                 <MudSpacer />
                                 <MudButton Variant="Variant.Filled" Color="Color.Secondary" 
-                                          StartIcon="@Icons.Material.Filled.ShoppingCart" 
-                                          Class="text-transform-none">Add to Cart</MudButton>
+                                          StartIcon="@Icons.Material.Filled.ShoppingCart"
+                                          OnClick="@(() => AddToCart(box))"
+                                          Disabled="@(box.Probability > 0)"
+                                          Class="text-transform-none">
+                                    @(box.Probability > 0 ? "Online Only" : "Add to Cart")
+                                </MudButton>
                             </div>
                         </div>
                     </MudPaper>

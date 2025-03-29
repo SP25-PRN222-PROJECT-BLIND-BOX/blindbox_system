@@ -5,10 +5,12 @@ using BlindBoxShop.Shared.DataTransferObject.Package;
 using BlindBoxShop.Shared.Enum;
 using BlindBoxShop.Shared.Features;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using MudBlazor;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace BlindBoxShop.Application.Pages.Pages
@@ -63,6 +65,9 @@ namespace BlindBoxShop.Application.Pages.Pages
 
         [Inject]
         private ISnackbar Snackbar { get; set; } = default!;
+        
+        [Inject]
+        private IJSRuntime JSRuntime { get; set; } = default!;
 
         private List<CategoryDto> _featuredCategories = new();
         private List<BlindBoxDto> _newArrivals = new();
@@ -428,6 +433,60 @@ namespace BlindBoxShop.Application.Pages.Pages
         private void NavigateToProductDetail(Guid productId)
         {
             NavigationManager.NavigateTo($"/blindbox/{productId}");
+        }
+
+        private async Task AddToCart(BlindBoxDto blindBox)
+        {
+            try
+            {
+                // Kiểm tra xem BlindBox có phải loại physical không (probability = 0)
+                if (blindBox.Probability > 0)
+                {
+                    Snackbar.Add("Sản phẩm này chỉ có thể mở trực tuyến, không thể thêm vào giỏ hàng", Severity.Warning);
+                    return;
+                }
+                
+                // Lấy thông tin image URL
+                string imageUrl = _blindBoxImages.ContainsKey(blindBox.Id) 
+                    ? _blindBoxImages[blindBox.Id] 
+                    : (!string.IsNullOrEmpty(blindBox.MainImageUrl) ? blindBox.MainImageUrl : "/images/box-placeholder.jpg");
+                
+                // Tạo đối tượng CartItem
+                var cartItem = new
+                {
+                    Id = new Random().Next(10000, 99999),
+                    BlindBoxId = blindBox.Id,
+                    ProductName = blindBox.Name,
+                    Description = blindBox.Description,
+                    ImageUrl = imageUrl,
+                    Price = blindBox.CurrentPrice,
+                    Quantity = 1
+                };
+                
+                // Lấy giỏ hàng hiện tại từ localStorage
+                var cartJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "blindbox_cart");
+                List<object> cartItems = new List<object>();
+                
+                if (!string.IsNullOrEmpty(cartJson))
+                {
+                    // Deserialize giỏ hàng
+                    cartItems = JsonSerializer.Deserialize<List<object>>(cartJson);
+                }
+                
+                // Thêm sản phẩm mới vào giỏ hàng
+                cartItems.Add(cartItem);
+                
+                // Lưu giỏ hàng vào localStorage
+                await JSRuntime.InvokeVoidAsync("localStorage.setItem", "blindbox_cart", 
+                    JsonSerializer.Serialize(cartItems));
+                
+                // Hiển thị thông báo
+                Snackbar.Add($"Đã thêm {blindBox.Name} vào giỏ hàng", Severity.Success);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Lỗi: {ex.Message}", Severity.Error);
+            }
         }
 
         // Helper method to get a placeholder image URL based on category name

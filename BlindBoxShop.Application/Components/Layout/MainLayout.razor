@@ -1,6 +1,7 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 @using BlindBoxShop.Application.Theme
 @using Microsoft.AspNetCore.Components.Authorization
+@using BlindBoxShop.Service.Contract
 
 <MudThemeProvider Theme="@CustomTheme.Theme" />
 <MudPopoverProvider />
@@ -50,29 +51,36 @@
     <MudButton Variant="Variant.Text" Color="Color.Inherit" Href="/physical-blindboxes" Class="mx-2">HỘP QUÀ VẬT LÝ</MudButton>
     <MudButton Variant="Variant.Text" Color="Color.Inherit" Href="/openable-blindboxes" Class="mx-2">HỘP QUÀ ONLINE</MudButton>
     
-    <AuthorizeView>
-        <Authorized>
-            <MudMenu Icon="@Icons.Material.Filled.Person" Color="Color.Inherit" Dense="true" Direction="Direction.Bottom" OffsetY="true" Class="mx-2">
-                <MudText Typo="Typo.body1" Class="px-3 py-2 mud-text-secondary">@context.User.Identity?.Name</MudText>
-                <MudDivider Class="mb-2" />
-                <MudMenuItem Href="/my-account" Icon="@Icons.Material.Filled.Person">Tài khoản của tôi</MudMenuItem>
-                <MudMenuItem Href="/my-orders" Icon="@Icons.Material.Filled.ShoppingBag">Đơn hàng của tôi</MudMenuItem>
-                <MudDivider />
-                <form method="post" action="Account/Logout">
-                    <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="@HandleLogout">Đăng xuất</MudMenuItem>
-                </form>
-            </MudMenu>
-        </Authorized>
-        <NotAuthorized>
-            <MudButton Variant="Variant.Filled" 
-                       Color="Color.Secondary" 
-                       Href="/account/login" 
-                       StartIcon="@Icons.Material.Filled.Login" 
-                       Class="mx-2">
-                ĐĂNG NHẬP
-            </MudButton>
-        </NotAuthorized>
-    </AuthorizeView>
+    @if (_isUserLoggedIn)
+    {
+        <MudMenu Icon="@Icons.Material.Filled.Person" Color="Color.Inherit" Dense="true" Direction="Direction.Bottom" OffsetY="true" Class="mx-2">
+            <MudMenuItem Class="px-2">
+                <div class="d-flex flex-column">
+                    <MudText Typo="Typo.subtitle1" Class="mud-text-secondary font-weight-bold mb-n1">@_userName</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@_userEmail</MudText>
+                </div>
+            </MudMenuItem>
+            <MudDivider Class="mb-2" />
+            <MudMenuItem Href="/my-account" Icon="@Icons.Material.Filled.Person">Tài khoản của tôi</MudMenuItem>
+            <MudMenuItem Href="/my-orders" Icon="@Icons.Material.Filled.ShoppingBag">Đơn hàng của tôi</MudMenuItem>
+            @if (_userRoles != null && (_userRoles.Contains("Admin") || _userRoles.Contains("Manager")))
+            {
+                <MudMenuItem Href="/admin/dashboard" Icon="@Icons.Material.Filled.Dashboard">Quản trị</MudMenuItem>
+            }
+            <MudDivider />
+            <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="HandleLogout">Đăng xuất</MudMenuItem>
+        </MudMenu>
+    }
+    else
+    {
+        <MudButton Variant="Variant.Filled" 
+                    Color="Color.Secondary" 
+                    Href="/account/login" 
+                    StartIcon="@Icons.Material.Filled.Login" 
+                    Class="mx-2">
+            ĐĂNG NHẬP
+        </MudButton>
+    }
     
     <MudBadge Content="@_cartItemCount" Color="Color.Secondary" Overlap="true" Class="mx-2" Visible="@(_cartItemCount > 0)">
         <MudIconButton Href="/cart" Icon="@Icons.Material.Filled.ShoppingCart" Color="Color.Inherit" />
@@ -194,5 +202,4 @@
     .mud-paper.mud-elevation-1 {
         border-radius: 8px;
     }
-</style>
-
+</style> 

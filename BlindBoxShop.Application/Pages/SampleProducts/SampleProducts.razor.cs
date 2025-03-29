@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Timers;
+using BlindBoxShop.Application.Models;
 
 namespace BlindBoxShop.Application.Pages.SampleProducts
 {
@@ -111,7 +112,18 @@ namespace BlindBoxShop.Application.Pages.SampleProducts
                     cartItems = JsonSerializer.Deserialize<List<CartItem>>(cartJson) ?? new List<CartItem>();
                 }
 
-                var existingItem = cartItems.Find(item => item.Id == product.Id);
+                // Convert product Id to Guid to use as BlindBoxId (for sample products)
+                Guid productGuid = Guid.NewGuid(); // Generate a unique ID for sample products
+                
+                // First check by BlindBoxId for consistency with other components
+                var existingItem = cartItems.Find(item => item.BlindBoxId == productGuid);
+                
+                // If not found, check by Id as fallback (for backward compatibility)
+                if (existingItem == null)
+                {
+                    existingItem = cartItems.Find(item => item.Id == product.Id);
+                }
+
                 if (existingItem != null)
                 {
                     existingItem.Quantity++;
@@ -121,6 +133,7 @@ namespace BlindBoxShop.Application.Pages.SampleProducts
                     cartItems.Add(new CartItem
                     {
                         Id = product.Id,
+                        BlindBoxId = productGuid, // Set the BlindBoxId for consistency
                         ProductName = product.Name,
                         Description = product.Description,
                         ImageUrl = product.ImageUrl,
@@ -178,6 +191,7 @@ namespace BlindBoxShop.Application.Pages.SampleProducts
     public class CartItem
     {
         public int Id { get; set; }
+        public Guid BlindBoxId { get; set; }
         public string ProductName { get; set; }
         public string Description { get; set; }
         public string ImageUrl { get; set; }

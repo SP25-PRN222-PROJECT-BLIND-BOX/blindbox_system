@@ -1,124 +1,108 @@
 @page "/order-success/{OrderId}"
-@using BlindBoxShop.Application.Theme
-@using System.Text.Json
+@layout MainLayout
 
-<div class="w-full py-8 px-4">
-    <MudPaper Elevation="3" Class="max-w-3xl mx-auto rounded-xl overflow-hidden">
-        <div class="bg-primary text-white p-6 text-center">
-            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" Class="mb-4" Style="width: 80px; height: 80px;" />
-            <MudText Typo="Typo.h4" Class="font-bold">Order Successful</MudText>
-            <MudText Typo="Typo.subtitle1">Thanks for your purchase!</MudText>
-        </div>
-        
-        <div class="p-6">
-            <MudGrid>
-                <MudItem xs="12" Class="d-flex justify-center">
-                    <MudPaper Class="pa-4 mb-6 w-100" Elevation="0">
-                        <MudText Align="Align.Center" Class="mb-2">
-                            Your order number is <strong>#@OrderId</strong>
-                        </MudText>
-                        <MudText Align="Align.Center" Class="mb-4">
-                            You'll receive an email confirming your order details
-                        </MudText>
-                    </MudPaper>
-                </MudItem>
-
-                <MudItem xs="12">
-                    <MudCard Class="mb-6" Elevation="0">
-                        <MudCardContent>
-                            <MudGrid>
-                                <MudItem xs="12" md="4">
-                                    <MudText Typo="Typo.subtitle1" Class="font-weight-bold mb-2">Order Status</MudText>
-                                    <MudText Color="Color.Success" Typo="Typo.body2">
-                                        <span class="mud-chip mud-chip-text mud-chip-color-success mud-chip-size-small px-2 py-1">Processing</span>
-                                    </MudText>
-                                </MudItem>
-                                
-                                <MudItem xs="12" md="4">
-                                    <MudText Typo="Typo.subtitle1" Class="font-weight-bold mb-2">Payment Method</MudText>
-                                    <MudText Typo="Typo.body2">@PaymentMethod</MudText>
-                                </MudItem>
-                                
-                                <MudItem xs="12" md="4">
-                                    <MudText Typo="Typo.subtitle1" Class="font-weight-bold mb-2">Estimated Delivery</MudText>
-                                    <MudText Typo="Typo.body2">3-5 business days</MudText>
-                                </MudItem>
-                            </MudGrid>
-                        </MudCardContent>
-                    </MudCard>
-                </MudItem>
-
-                @if (OrderItems != null && OrderItems.Any())
-                {
-                    <MudItem xs="12">
-                        <MudText Typo="Typo.h6" Class="mb-4">Order Summary</MudText>
-                        <MudPaper Class="pa-0" Elevation="0">
-                            <MudTable Items="@OrderItems" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="0" Dense="true">
-                                <HeaderContent>
-                                    <MudTh>Product</MudTh>
-                                    <MudTh>Quantity</MudTh>
-                                    <MudTh>Price</MudTh>
-                                </HeaderContent>
-                                <RowTemplate>
-                                    <MudTd DataLabel="Product">
-                                        <div class="d-flex align-center">
-                                            @if (!string.IsNullOrEmpty(context.ImageUrl))
-                                            {
-                                                <MudAvatar Size="Size.Medium" Class="mr-2">
-                                                    <MudImage Src="@context.ImageUrl" Alt="@context.ProductName" />
-                                                </MudAvatar>
-                                            }
-                                            <div>
-                                                <MudText Typo="Typo.body2">@context.ProductName</MudText>
-                                            </div>
-                                        </div>
-                                    </MudTd>
-                                    <MudTd DataLabel="Quantity">@context.Quantity</MudTd>
-                                    <MudTd DataLabel="Price">@FormatPrice(context.Price)</MudTd>
-                                </RowTemplate>
-                            </MudTable>
-                        </MudPaper>
-                        
-                        <MudDivider Class="my-4" />
-                        
-                        <div class="d-flex justify-end">
-                            <div style="width: 250px;">
-                                <div class="d-flex justify-space-between mb-2">
-                                    <MudText Typo="Typo.body1">Subtotal:</MudText>
-                                    <MudText Typo="Typo.body1">@FormatPrice(Subtotal)</MudText>
-                                </div>
-                                <div class="d-flex justify-space-between mb-2">
-                                    <MudText Typo="Typo.body1">Shipping:</MudText>
-                                    <MudText Typo="Typo.body1">@FormatPrice(ShippingFee)</MudText>
-                                </div>
-                                <MudDivider Class="my-2" />
-                                <div class="d-flex justify-space-between font-weight-bold">
-                                    <MudText Typo="Typo.h6">Total:</MudText>
-                                    <MudText Typo="Typo.h6" Color="Color.Primary">@FormatPrice(Total)</MudText>
-                                </div>
-                            </div>
-                        </div>
-                    </MudItem>
-                }
-            </MudGrid>
-            
-            <div class="d-flex justify-center gap-2 mt-6">
-                <MudButton Variant="Variant.Filled"
-                           Color="Color.Primary"
-                           Size="Size.Large"
-                           Href="/my-orders"
-                           StartIcon="@Icons.Material.Filled.Assignment">
-                    My Orders
-                </MudButton>
-                
-                <MudButton Variant="Variant.Outlined"
-                           Color="Color.Secondary"
-                           Size="Size.Large"
-                           Href="/"
-                           StartIcon="@Icons.Material.Filled.Home">
-                    Back to Home
-                </MudButton>
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+        @if (IsLoading)
+        {
+            <div class="flex justify-center items-center p-12">
+                <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
             </div>
-        </div>
-    </MudPaper>
+        }
+        else
+        {
+            <div class="p-6 md:p-8">
+                <div class="text-center mb-8">
+                    <div class="flex justify-center mb-4">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" />
+                    </div>
+                    <h1 class="text-2xl font-bold text-gray-800">Order Successfully Placed!</h1>
+                    <p class="text-gray-600 mt-2">Your order has been received and is being processed.</p>
+                    <p class="text-gray-600 mt-1">Order ID: <span class="font-semibold">@OrderId</span></p>
+                </div>
+
+                <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-3">Order Summary</h2>
+                    
+                    <div class="overflow-x-auto">
+                        <MudTable Items="@OrderItems" Hover="true" Class="mt-2">
+                            <HeaderContent>
+                                <MudTh>Product</MudTh>
+                                <MudTh>Price</MudTh>
+                                <MudTh>Quantity</MudTh>
+                                <MudTh>Total</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>
+                                    <div class="flex items-center py-2">
+                                        @if (!string.IsNullOrEmpty(context.ImageUrl))
+                                        {
+                                            <img src="@context.ImageUrl" alt="@context.BlindBoxName" class="w-16 h-16 object-cover rounded-md mr-4" />
+                                            <div class="flex flex-col">
+                                                <div class="font-medium text-gray-800">@context.BlindBoxName</div>
+                                                <div class="text-xs text-gray-500">(BlindBoxId: @context.BlindBoxId)</div>
+                                                <div class="text-xs text-gray-500">(Image: @context.ImageUrl)</div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="w-16 h-16 bg-gray-100 rounded-md flex items-center justify-center mr-4">
+                                                <MudIcon Icon="@Icons.Material.Filled.Spa" Size="Size.Large" Color="Color.Secondary" />
+                                            </div>
+                                            <div class="flex flex-col">
+                                                <div class="font-medium text-gray-800">@context.BlindBoxName</div>
+                                                <div class="text-xs text-gray-500">(BlindBoxId: @context.BlindBoxId)</div>
+                                                <div class="text-xs text-gray-500">(No Image)</div>
+                                            </div>
+                                        }
+                                    </div>
+                                </MudTd>
+                                <MudTd>@FormatPrice(context.Price)</MudTd>
+                                <MudTd>@context.Quantity</MudTd>
+                                <MudTd>@FormatPrice(context.Price * context.Quantity)</MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    </div>
+
+                    <div class="mt-4 border-t pt-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Subtotal:</span>
+                            <span class="font-semibold">@FormatPrice(Subtotal)</span>
+                        </div>
+                        <div class="flex justify-between items-center mt-2">
+                            <span class="text-gray-600">Shipping:</span>
+                            <span class="font-semibold">@FormatPrice(ShippingFee)</span>
+                        </div>
+                        <div class="flex justify-between items-center mt-3 text-lg">
+                            <span class="font-bold text-gray-800">Total:</span>
+                            <span class="font-bold text-primary">@FormatPrice(Total)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-3">Payment Method</h2>
+                    <p class="text-gray-600">@PaymentMethod</p>
+                </div>
+
+                @if (Order != null)
+                {
+                    <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                        <h2 class="text-lg font-semibold text-gray-800 mb-3">Shipping Address</h2>
+                        <p class="text-gray-600">@Order.Address</p>
+                        <p class="text-gray-600">@Order.Wards, @Order.Province</p>
+                    </div>
+                }
+
+                <div class="flex flex-col sm:flex-row justify-center gap-4 mt-8">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ViewOrderDetails" StartIcon="@Icons.Material.Filled.LocalShipping">
+                        Track Your Order
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href="/" StartIcon="@Icons.Material.Filled.ShoppingCart">
+                        Continue Shopping
+                    </MudButton>
+                </div>
+            </div>
+        }
+    </div>
 </div> 

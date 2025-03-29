@@ -4,13 +4,20 @@
 @using Microsoft.AspNetCore.Identity
 @using BlindBoxShop.Entities.Models
 @using Microsoft.AspNetCore.Authorization
+@using BlindBoxShop.Service.Contract
+@using Microsoft.JSInterop
+@using BlindBoxShop.Shared.Extension
+@using BlindBoxShop.Application.Components.Layout
 @layout BlindBoxShop.Application.Components.Layout.MainLayout
 @attribute [AllowAnonymous]
 
 @inject SignInManager<User> SignInManager
+@inject UserManager<User> UserManager
 @inject ILogger<Login> Logger
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
+@inject IServiceManager ServiceManager
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Đăng nhập - BoxBox</PageTitle>
 
@@ -18,7 +25,7 @@
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-0 px-0">
     <MudPaper Elevation="0" Class="page-header" Style="background-color: var(--mud-palette-secondary);">
         <MudText Typo="Typo.h3" Class="font-weight-bold mb-2">Đăng nhập</MudText>
-        <MudText Typo="Typo.body1">Đăng nhập để tiếp tục mua sắm</MudText>
+        <MudText Typo="Typo.body1">Đăng nhập để tiếp tục mua sắm và quản lý đơn hàng của bạn</MudText>
     </MudPaper>
 </MudContainer>
 
@@ -26,10 +33,10 @@
     <MudCard Elevation="3" Class="rounded-lg pa-7">
         @if (!string.IsNullOrEmpty(errorMessage))
         {
-            <MudAlert Severity="Severity.Error" Class="mb-4" Variant="Variant.Filled">@errorMessage</MudAlert>
+            <MudAlert Severity="Severity.Error" Class="mb-4" Variant="Variant.Filled" Dense="true">@errorMessage</MudAlert>
         }
         
-        <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4 font-weight-bold">Sign in to your account</MudText>
+        <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4 font-weight-bold">Đăng nhập tài khoản</MudText>
         
         <EditForm Model="Input" OnSubmit="LoginUser">
             <DataAnnotationsValidator />
@@ -42,22 +49,25 @@
                           Adornment="Adornment.Start"
                           AdornmentIcon="@Icons.Material.Filled.Email"
                           Required="true"
-                          RequiredError="Email is required"
+                          RequiredError="Vui lòng nhập email"
                           FullWidth="true" />
                           
-            <MudTextField Label="Password"
+            <MudTextField Label="Mật khẩu"
                           @bind-Value="Input.Password"
                           For="@(() => Input.Password)"
                           Variant="Variant.Outlined"
-                          InputType="InputType.Password"
-                          Class="mb-4"
                           Adornment="Adornment.Start"
                           AdornmentIcon="@Icons.Material.Filled.Lock"
+                          AdornmentAriaLabel="Show Password"
+                          InputType="@(_showPassword ? InputType.Text : InputType.Password)"
+                          EndAdornment="Adornment.End"
+                          EndAdornmentIcon="@(_showPassword ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                          OnEndAdornmentClick="TogglePasswordVisibility"
                           Required="true"
-                          RequiredError="Password is required"
+                          RequiredError="Vui lòng nhập mật khẩu"
                           FullWidth="true" />
                           
-            <MudCheckBox @bind-Checked="Input.RememberMe" Label="Remember me" Color="Color.Primary" Class="mb-4" T="bool" />
+            <MudCheckBox @bind-Checked="Input.RememberMe" Label="Ghi nhớ đăng nhập" Color="Color.Primary" Class="mb-4" T="bool" />
             
             <div class="d-flex flex-column gap-2 mb-4">
                 <MudButton ButtonType="ButtonType.Submit"
@@ -65,8 +75,17 @@
                            Color="Color.Primary"
                            Size="Size.Large"
                            StartIcon="@Icons.Material.Filled.Login"
-                           FullWidth="true">
-                    Sign In
+                           FullWidth="true"
+                           Disabled="@_isProcessing">
+                    @if (_isProcessing)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                        <MudText Class="ms-2">Đang xử lý...</MudText>
+                    }
+                    else
+                    {
+                        <MudText>Đăng nhập</MudText>
+                    }
                 </MudButton>
                 
                 <MudButton Href="/account/register"
@@ -75,61 +94,127 @@
                            Size="Size.Medium"
                            Class="mt-2"
                            FullWidth="true">
-                    Create new account
+                    Tạo tài khoản mới
                 </MudButton>
             </div>
             
             <div class="d-flex flex-column align-center">
-                <MudLink Href="/account/forgotpassword" Color="Color.Primary">Forgot password?</MudLink>
+                <MudLink Href="/account/forgotpassword" Color="Color.Primary">Quên mật khẩu?</MudLink>
             </div>
         </EditForm>
+        
+        <MudDivider Class="my-4" />
+        
+        <MudText Typo="Typo.subtitle1" Align="Align.Center" Class="mb-3">Đăng nhập với</MudText>
+        <div class="d-flex justify-center gap-2">
+            <MudButton Variant="Variant.Outlined" 
+                      StartIcon="@Icons.Custom.Brands.Google" 
+                      Color="Color.Error"
+                      OnClick="@(() => ProcessExternalLogin("Google"))">
+                Google
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" 
+                      StartIcon="@Icons.Custom.Brands.Facebook" 
+                      Color="Color.Info"
+                      OnClick="@(() => ProcessExternalLogin("Facebook"))">
+                Facebook
+            </MudButton>
+        </div>
     </MudCard>
 </MudContainer>
 
 @code {
     private string? errorMessage;
+    private bool _isProcessing = false;
+    private bool _showPassword = false;
     
     private InputModel Input { get; set; } = new();
     
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
     
+    protected override void OnInitialized()
+    {
+        // Sanitize ReturnUrl to avoid Base64 encoding/decoding issues
+        if (!string.IsNullOrEmpty(ReturnUrl) && !ReturnUrl.StartsWith("/"))
+        {
+            ReturnUrl = "/";
+        }
+    }
+    
+    private void TogglePasswordVisibility()
+    {
+        _showPassword = !_showPassword;
+    }
+    
+    private async Task ProcessExternalLogin(string provider)
+    {
+        // Use form POST method to pass parameters safely without encoding/decoding
+        NavigationManager.NavigateTo($"/Account/PerformExternalLogin?provider={provider}&returnUrl={ReturnUrl ?? "/"}", forceLoad: true);
+    }
+    
     private async Task LoginUser(EditContext context)
     {
         if (context.Validate())
         {
-            // This doesn't count login failures towards account lockout
-            // To enable password failures to trigger account lockout, set lockoutOnFailure: true
-            var result = await SignInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
-            if (result.Succeeded)
+            try
             {
-                Logger.LogInformation("User logged in.");
-                Snackbar.Add("Login successful", Severity.Success);
-                NavigationManager.NavigateTo(ReturnUrl ?? "/");
+                _isProcessing = true;
+                errorMessage = null;
+                
+                // Sử dụng AuthService để đăng nhập đơn giản
+                using var authService = ServiceManager.AuthService;
+                var result = await authService.LoginAsync(Input.Email, Input.Password);
+                
+                if (result.IsSuccess)
+                {
+                    // Lưu thông tin người dùng vào localStorage
+                    var userInfo = result.GetValue<UserLoginResult>();
+                    await JSRuntime.InvokeVoidAsync("localStorage.setItem", "user_id", userInfo.UserId.ToString());
+                    await JSRuntime.InvokeVoidAsync("localStorage.setItem", "user_email", userInfo.Email);
+                    await JSRuntime.InvokeVoidAsync("localStorage.setItem", "user_name", $"{userInfo.FirstName} {userInfo.LastName}");
+                    await JSRuntime.InvokeVoidAsync("localStorage.setItem", "user_roles", string.Join(",", userInfo.Roles));
+                    
+                    Logger.LogInformation("Người dùng đã đăng nhập thành công.");
+                    Snackbar.Add("Đăng nhập thành công!", Severity.Success);
+                    
+                    // Cập nhật trạng thái đăng nhập trong MainLayout
+                    if (MainLayout.Instance != null)
+                    {
+                        await MainLayout.Instance.NotifyUserLogin();
+                    }
+                    
+                    // Điều hướng về trang chủ hoặc returnUrl
+                    NavigationManager.NavigateTo(ReturnUrl?.StartsWith("/") == true ? ReturnUrl : "/");
+                }
+                else
+                {
+                    errorMessage = result.Errors?.FirstOrDefault()?.Description ?? "Đăng nhập không thành công.";
+                }
             }
-            else if (result.IsLockedOut)
+            catch (Exception ex)
             {
-                Logger.LogWarning("User account locked out.");
-                errorMessage = "Account locked out. Please try again later.";
+                Logger.LogError(ex, "Lỗi khi đăng nhập");
+                errorMessage = "Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại sau.";
             }
-            else
+            finally
             {
-                errorMessage = "Invalid login attempt.";
+                _isProcessing = false;
             }
         }
     }
     
     private class InputModel
     {
-        [Required(ErrorMessage = "Email is required")]
-        [EmailAddress(ErrorMessage = "Invalid email format")]
+        [Required(ErrorMessage = "Vui lòng nhập email")]
+        [EmailAddress(ErrorMessage = "Email không hợp lệ")]
         public string Email { get; set; } = "";
         
-        [Required(ErrorMessage = "Password is required")]
+        [Required(ErrorMessage = "Vui lòng nhập mật khẩu")]
         [DataType(DataType.Password)]
         public string Password { get; set; } = "";
         
-        [Display(Name = "Remember me?")]
-        public bool RememberMe { get; set; }
+        [Display(Name = "Ghi nhớ đăng nhập?")]
+        public bool RememberMe { get; set; } = true;
     }
 }

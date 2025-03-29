@@ -1,9 +1,12 @@
 using BlindBoxShop.Entities.Models;
+using BlindBoxShop.Service.Contract;
 using BlindBoxShop.Shared.DataTransferObject.Order;
 using BlindBoxShop.Shared.Enum;
+using BlindBoxShop.Shared.Features;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.JSInterop;
 using MudBlazor;
 using System;
 using System.ComponentModel.DataAnnotations;
@@ -15,8 +18,6 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
     {
         private User _user;
         private ProfileModel _profileModel = new();
-        private string _username;
-        private string _email;
         private int _activeTab = 0;
         private List<OrderDto> _orders;
         private bool _loading = true;
@@ -28,12 +29,18 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
         public string FullName { get; set; }
         public string Email { get; set; }
         public string PhoneWithCode { get; set; }
+        
+        // Address related properties
+        public string Address { get; set; }
+        public string Province { get; set; }
+        public string District { get; set; }
+        public string Ward { get; set; }
 
         [Inject]
         private UserManager<User> UserManager { get; set; }
 
         [Inject]
-        private IdentityUserAccessor UserAccessor { get; set; }
+        private IServiceManager ServiceManager { get; set; }
 
         [Inject]
         private IDialogService DialogService { get; set; }
@@ -43,6 +50,9 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
 
         [Inject]
         private NavigationManager NavigationManager { get; set; }
+        
+        [Inject]
+        private IJSRuntime JSRuntime { get; set; }
 
         [CascadingParameter]
         private HttpContext HttpContext { get; set; } = default!;
@@ -57,31 +67,72 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
         {
             try
             {
-                _user = await UserAccessor.GetRequiredUserAsync(HttpContext);
-                _username = await UserManager.GetUserNameAsync(_user);
-                _email = await UserManager.GetEmailAsync(_user);
-
-                _profileModel = new ProfileModel
+                _loading = true;
+                
+                // Get the current user ID from localStorage
+                var userId = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "user_id");
+                
+                if (string.IsNullOrEmpty(userId))
                 {
-                    FirstName = _user.FirstName,
-                    LastName = _user.LastName,
-                    PhoneNumber = _user.PhoneNumber,
-                    Address = _user.Address,
-                    Province = _user.Provinces,
-                    District = _user.District,
-                    Ward = _user.Wards
-                };
+                    Snackbar.Add("Không tìm thấy thông tin đăng nhập, vui lòng đăng nhập lại", Severity.Warning);
+                    NavigationManager.NavigateTo("/account/login");
+                    return;
+                }
 
-                // Populate form fields
-                Username = _user.UserName;
-                Phone = _user.PhoneNumber;
-                FullName = $"{_user.FirstName} {_user.LastName}";
-                Email = _user.Email;
-                PhoneWithCode = _user.PhoneNumber;
+                try
+                {
+                    // Use the user service to get user info
+                    var userObj = await ServiceManager.UserService.GetUserByIdAsync(Guid.Parse(userId), false);
+                    _user = userObj as User;
+                    
+                    if (_user == null)
+                    {
+                        Snackbar.Add("Không tìm thấy thông tin người dùng", Severity.Error);
+                        NavigationManager.NavigateTo("/account/login");
+                        return;
+                    }
+
+                    // Initialize profile model
+                    _profileModel = new ProfileModel
+                    {
+                        FirstName = _user.FirstName,
+                        LastName = _user.LastName,
+                        PhoneNumber = _user.PhoneNumber,
+                        // Try to get address info from user object if available
+                        Address = _user.Address,
+                        Province = _user.Provinces,
+                        District = _user.District,
+                        Ward = _user.Wards
+                    };
+
+                    // Populate form fields
+                    Username = _user.UserName;
+                    Phone = _user.PhoneNumber ?? "";
+                    FullName = $"{_user.FirstName} {_user.LastName}";
+                    Email = _user.Email;
+                    PhoneWithCode = _user.PhoneNumber ?? "";
+                    
+                    // Address related properties
+                    Address = _user.Address ?? "";
+                    Province = _user.Provinces ?? "";
+                    District = _user.District ?? "";
+                    Ward = _user.Wards ?? "";
+                }
+                catch (Exception ex)
+                {
+                    Snackbar.Add($"Lỗi khi lấy thông tin người dùng: {ex.Message}", Severity.Error);
+                    Console.WriteLine($"Error fetching user data: {ex}");
+                    NavigationManager.NavigateTo("/account/login");
+                    return;
+                }
+                
+                _loading = false;
             }
             catch (Exception ex)
             {
-                Snackbar.Add($"Error loading user data: {ex.Message}", Severity.Error);
+                _loading = false;
+                Snackbar.Add($"Lỗi khi tải thông tin: {ex.Message}", Severity.Error);
+                Console.WriteLine($"General error in LoadUserData: {ex}");
             }
         }
 
@@ -90,50 +141,57 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
             try
             {
                 _loading = true;
-                // In a real implementation, you would call your service to get orders
-                // For now, we'll just use dummy data
-                await Task.Delay(500); // Simulate API call
-
-                _orders = GetDummyOrders();
+                
+                // Get user ID from localStorage
+                var userId = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "user_id");
+                
+                if (string.IsNullOrEmpty(userId))
+                {
+                    Snackbar.Add("Không tìm thấy thông tin người dùng để lấy lịch sử đơn hàng", Severity.Warning);
+                    _orders = new List<OrderDto>();
+                    return;
+                }
+                
+                // Create parameter for pagination and sorting
+                var orderParameter = new BlindBoxShop.Shared.Features.OrderParameter
+                {
+                    PageSize = 10,  // Show 10 orders per page
+                    PageNumber = 1, // Start with first page
+                    OrderBy = "CreatedAt desc" // Most recent orders first
+                };
+                
+                // Get orders for the user from database
+                var result = await ServiceManager.OrderService.GetOrdersByUserIdAsync(
+                    Guid.Parse(userId), 
+                    orderParameter, 
+                    false
+                );
+                
+                if (result.IsSuccess)
+                {
+                    _orders = result.Value.ToList();
+                    
+                    if (_orders.Count == 0)
+                    {
+                        Snackbar.Add("Bạn chưa có đơn hàng nào", Severity.Info);
+                    }
+                }
+                else
+                {
+                    Snackbar.Add($"Lỗi khi tải lịch sử đơn hàng: {result.Errors?.FirstOrDefault()?.Description}", Severity.Error);
+                    _orders = new List<OrderDto>();
+                }
             }
             catch (Exception ex)
             {
-                Snackbar.Add($"Error loading order history: {ex.Message}", Severity.Error);
+                Console.WriteLine($"Error loading order history: {ex}");
+                Snackbar.Add($"Lỗi khi tải lịch sử đơn hàng: {ex.Message}", Severity.Error);
+                _orders = new List<OrderDto>();
             }
             finally
             {
                 _loading = false;
             }
-        }
-
-        private async Task SaveProfile()
-        {
-            try
-            {
-                // In a real implementation, you would call your service to update the user profile
-                await Task.Delay(500); // Simulate API call
-
-                // Update the user object with the new values
-                _user.FirstName = _profileModel.FirstName;
-                _user.LastName = _profileModel.LastName;
-                _user.PhoneNumber = _profileModel.PhoneNumber;
-                _user.Address = _profileModel.Address;
-                _user.Provinces = _profileModel.Province;
-                _user.District = _profileModel.District;
-                _user.Wards = _profileModel.Ward;
-
-                Snackbar.Add("Profile updated successfully", Severity.Success);
-            }
-            catch (Exception ex)
-            {
-                Snackbar.Add($"Error saving profile: {ex.Message}", Severity.Error);
-            }
-        }
-
-        private void OpenOrderDetails(Guid orderId)
-        {
-            // In a real implementation, you would open a dialog or navigate to a details page
-            Snackbar.Add($"Viewing details for order {orderId}", Severity.Info);
         }
 
         private string GetUserInitials()
@@ -165,48 +223,46 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
             return $"{price.ToString("N0")} ₫";
         }
 
-        // Dummy data for demonstration purposes - using only valid OrderStatus values
-        private List<OrderDto> GetDummyOrders()
+        private async Task ViewOrderDetails(OrderWithDetailsDto order)
         {
-            return new List<OrderDto>
-            {
-                new OrderDto
-                {
-                    Id = Guid.NewGuid(),
-                    CreatedAt = DateTime.Now.AddDays(-2),
-                    Status = OrderStatus.Pending,
-                    Total = 540000,
-                    Address = "123 Main St",
-                    Province = "Ho Chi Minh"
-                },
-                new OrderDto
-                {
-                    Id = Guid.NewGuid(),
-                    CreatedAt = DateTime.Now.AddDays(-7),
-                    Status = OrderStatus.Pending,
-                    Total = 780000,
-                    Address = "456 Oak St",
-                    Province = "Ha Noi"
-                },
-                new OrderDto
-                {
-                    Id = Guid.NewGuid(),
-                    CreatedAt = DateTime.Now.AddDays(-15),
-                    Status = OrderStatus.Cancelled,
-                    Total = 350000,
-                    Address = "789 Pine St",
-                    Province = "Da Nang"
-                }
+            var parameters = new DialogParameters { ["OrderWithDetails"] = order };
+            var options = new DialogOptions 
+            { 
+                CloseButton = true,
+                MaxWidth = MaxWidth.Medium,
+                FullWidth = true
             };
+            var dialog = await DialogService.ShowAsync<Components.Dialogs.OrderDetailsDialog>("Order Details", parameters, options);
+            var result = await dialog.Result;
         }
 
-        private void SaveChanges()
+        private async Task ViewOrderDetailsByIdAsync(Guid orderId)
         {
             try
             {
-                // In a real implementation, this would update user data
-                // For demo purposes, just show a notification
+                var result = await ServiceManager.OrderService.GetOrderWithDetailsByIdAsync(orderId, false);
                 
+                if (result.IsSuccess)
+                {
+                    var orderWithDetails = result.Value;
+                    await ViewOrderDetails(orderWithDetails);
+                }
+                else
+                {
+                    Snackbar.Add($"Cannot view order details: {result.Errors?.FirstOrDefault()?.Description}", Severity.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error viewing order details: {ex}");
+                Snackbar.Add($"Error loading order details: {ex.Message}", Severity.Error);
+            }
+        }
+
+        private async Task SaveChanges()
+        {
+            try
+            {
                 // Parse full name into first and last name
                 var nameParts = FullName?.Split(' ');
                 if (nameParts?.Length > 0)
@@ -219,10 +275,27 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
                     }
                 }
                 
+                // Update the user profile data
                 _user.Email = Email;
                 _user.PhoneNumber = Phone;
                 
-                Snackbar.Add("Profile updated successfully", Severity.Success);
+                // Update address information directly on user object
+                _user.Address = Address;
+                _user.Provinces = Province;
+                _user.District = District;
+                _user.Wards = Ward;
+                
+                // Save the user to the database
+                var result = await ServiceManager.UserService.UpdateUserAsync(_user.Id, _user);
+                
+                if (result)
+                {
+                    Snackbar.Add("Profile updated successfully", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add("Failed to update profile", Severity.Error);
+                }
             }
             catch (Exception ex)
             {
@@ -238,6 +311,12 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
             FullName = $"{_user.FirstName} {_user.LastName}";
             Email = _user.Email;
             PhoneWithCode = _user.PhoneNumber;
+            
+            // Reset address related properties
+            Address = _user.Address ?? "";
+            Province = _user.Provinces ?? "";
+            District = _user.District ?? "";
+            Ward = _user.Wards ?? "";
             
             Snackbar.Add("Changes cancelled", Severity.Info);
         }

@@ -113,10 +113,10 @@
                         <MudButton Variant="Variant.Filled" Color="Color.Secondary" 
                                   StartIcon="@Icons.Material.Filled.ShoppingCart" 
                                   Size="Size.Large"
-                                  Disabled="@(BlindBox.Status != BlindBoxStatus.Available)"
+                                  Disabled="@(BlindBox.Status != BlindBoxStatus.Available || BlindBox.Probability > 0)"
                                   Class="flex-grow-1" 
                                   OnClick="AddToCart">
-                            Thêm vào giỏ hàng
+                            @(BlindBox.Probability > 0 ? "Online Only" : "Thêm vào giỏ hàng")
                         </MudButton>
                     </div>
                 </MudPaper>

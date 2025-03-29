@@ -1,5 +1,6 @@
-using BlindBoxShop.Entities.Models;
+using BlindBoxShop.Application.Models;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.JSInterop;
 using MudBlazor;
 using System;
@@ -18,11 +19,42 @@ namespace BlindBoxShop.Application.Pages.Cart
 
         private List<CartItem> _cartItems = new List<CartItem>();
         private decimal Subtotal => _cartItems.Sum(item => item.Price * item.Quantity);
-        private decimal ShippingCost => Subtotal > 0 ? 20000 : 0;
+        private decimal ShippingCost => Subtotal > 500000 ? 0 : 20000;
 
         protected override async Task OnInitializedAsync()
         {
             await LoadCartFromLocalStorage();
+            
+            // Xử lý các tham số truy vấn URL
+            var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+            
+            if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("action", out var action))
+            {
+                if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("id", out var idValue) 
+                    && int.TryParse(idValue, out var id))
+                {
+                    switch (action)
+                    {
+                        case "increase":
+                            await IncreaseQuantity(id);
+                            break;
+                        case "decrease":
+                            await DecreaseQuantity(id);
+                            break;
+                        case "remove":
+                            await RemoveItem(id);
+                            break;
+                    }
+                    
+                    // Chuyển hướng đến trang không có tham số để tránh hành động lặp lại khi làm mới trang
+                    NavigationManager.NavigateTo("/cart", false);
+                }
+            }
+        }
+        
+        protected override Task OnAfterRenderAsync(bool firstRender)
+        {
+            return Task.CompletedTask;
         }
 
         private async Task LoadCartFromLocalStorage()
@@ -44,7 +76,7 @@ namespace BlindBoxShop.Application.Pages.Cart
             }
             catch (Exception)
             {
-                Snackbar.Add("Failed to load cart data", Severity.Error);
+                Snackbar.Add("Không thể tải giỏ hàng, vui lòng thử lại", Severity.Error);
                 LoadSampleData(); // Load sample data on error for preview
             }
         }
@@ -56,6 +88,7 @@ namespace BlindBoxShop.Application.Pages.Cart
                 new CartItem
                 {
                     Id = 1,
+                    BlindBoxId = Guid.NewGuid(), // Generate a random Guid for sample data
                     ProductName = "LUCKY EMMA - Emma Secret Forest Masked Ball Blind Box Series",
                     Description = "Blind Box Series",
                     ImageUrl = "/images/shop/emma-forest.jpg",
@@ -65,6 +98,7 @@ namespace BlindBoxShop.Application.Pages.Cart
                 new CartItem
                 {
                     Id = 2,
+                    BlindBoxId = Guid.NewGuid(), // Generate a random Guid for sample data
                     ProductName = "LUCKY EMMA - Alice Fairy Tale Blind Box Series",
                     Description = "Blind Box Series",
                     ImageUrl = "/images/shop/emma-alice.jpg",
@@ -83,7 +117,7 @@ namespace BlindBoxShop.Application.Pages.Cart
             }
             catch (Exception)
             {
-                Snackbar.Add("Failed to update cart", Severity.Error);
+                Snackbar.Add("Không thể cập nhật giỏ hàng", Severity.Error);
             }
         }
 
@@ -94,7 +128,8 @@ namespace BlindBoxShop.Application.Pages.Cart
             {
                 item.Quantity++;
                 await UpdateLocalStorage();
-                Snackbar.Add("Quantity updated", Severity.Success);
+                Snackbar.Add("Đã cập nhật số lượng", Severity.Success);
+                StateHasChanged();
             }
         }
 
@@ -105,7 +140,8 @@ namespace BlindBoxShop.Application.Pages.Cart
             {
                 item.Quantity--;
                 await UpdateLocalStorage();
-                Snackbar.Add("Quantity updated", Severity.Success);
+                Snackbar.Add("Đã cập nhật số lượng", Severity.Success);
+                StateHasChanged();
             }
         }
 
@@ -116,7 +152,8 @@ namespace BlindBoxShop.Application.Pages.Cart
             {
                 _cartItems.Remove(item);
                 await UpdateLocalStorage();
-                Snackbar.Add("Item removed from cart", Severity.Success);
+                Snackbar.Add("Đã xóa sản phẩm khỏi giỏ hàng", Severity.Success);
+                StateHasChanged();
             }
         }
 
@@ -124,15 +161,19 @@ namespace BlindBoxShop.Application.Pages.Cart
         {
             return $"{price:N0}₫";
         }
-    }
-
-    public class CartItem
-    {
-        public int Id { get; set; }
-        public string ProductName { get; set; }
-        public string Description { get; set; }
-        public string ImageUrl { get; set; }
-        public decimal Price { get; set; }
-        public int Quantity { get; set; }
+        
+        private async Task GoToCheckout()
+        {
+            try
+            {
+                // Trực tiếp chuyển hướng đến trang checkout không dùng JavaScript phức tạp
+                await JSRuntime.InvokeVoidAsync("blazorExtensions.navigateTo", "/checkout");
+            }
+            catch
+            {
+                // Nếu cách trên không hoạt động, sử dụng NavigationManager
+                NavigationManager.NavigateTo("/checkout", true);
+            }
+        }
     }
 } 

@@ -23,6 +23,7 @@
         IVoucherService VoucherService { get; }
 
         IReplyService ReplyService { get; }
-
+        
+        IAuthService AuthService { get; }
     }
 }

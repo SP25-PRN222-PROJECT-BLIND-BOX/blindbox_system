@@ -26,5 +26,7 @@ namespace BlindBoxShop.Repository.Contract
         IReplyRepository Replies { get; }
 
         IOrderRepository Order { get; }
+        
+        IBlindBoxItemRepository BlindBoxItem { get; }
     }
 }

@@ -41,7 +41,12 @@ namespace BlindBoxShop.Repository.Configuration
             entity.HasMany(e => e.BlindBoxPriceHistories)
                 .WithOne(e => e.BlindBox)
                 .HasForeignKey(e => e.BlindBoxId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.BlindBoxItems)
+                .WithOne(e => e.BlindBox)
+                .HasForeignKey(e => e.BlindBoxId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
 
         protected override void SeedData(EntityTypeBuilder<BlindBox> entity)

@@ -27,5 +27,7 @@
         IAuthService AuthService { get; }
         
         IVNPayService VNPayService { get; }
+
+        IBlindBoxItemService BlindBoxItemService { get; }
     }
 }

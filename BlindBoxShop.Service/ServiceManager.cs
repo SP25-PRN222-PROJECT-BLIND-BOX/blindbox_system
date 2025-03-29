@@ -46,5 +46,7 @@ namespace BlindBoxShop.Service
             _repositoryManager, 
             _mapper, 
             _loggerFactory.CreateLogger<VNPayService>());
+
+        public IBlindBoxItemService BlindBoxItemService => new BlindBoxItemService(_repositoryManager, _mapper);
     }
 }

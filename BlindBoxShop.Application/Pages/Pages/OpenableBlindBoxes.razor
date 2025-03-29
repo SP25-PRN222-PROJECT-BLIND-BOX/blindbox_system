@@ -115,7 +115,7 @@
                                     Alt="@box.Name" Class="w-full h-full object-cover mud-transition transform duration-500 mud-hover:scale-110" />
                             
                             <div class="position-absolute d-flex flex-column gap-1" style="top: 4px; right: 4px;">
-                                <MudChip T="string" Color="Color.Info" Size="Size.Small" 
+                                <MudChip T="string" Color="Color.Secondary" Size="Size.Small" 
                                         Class="px-2 font-weight-bold text-capitalize">
                                     <MudIcon Icon="@Icons.Material.Filled.Public" Size="Size.Small" Class="mr-1" />
                                     Online
@@ -125,13 +125,21 @@
                                     @GetRarityText(box.Rarity)
                                 </MudChip>
                             </div>
+                            
+                            <div class="position-absolute bottom-0 left-0 right-0 py-1 px-2" 
+                                 style="background-color: rgba(103, 58, 183, 0.7);">
+                                <div class="d-flex align-center">
+                                    <MudIcon Icon="@Icons.Material.Filled.Casino" Color="Color.Surface" Size="Size.Small" Class="mr-1" />
+                                    <MudText Typo="Typo.caption" Color="Color.Surface">Try Your Luck Online</MudText>
+                                </div>
+                            </div>
                         </div>
                         <div class="pa-4 d-flex flex-column flex-grow-1">
                             <MudText Typo="Typo.h6" Class="mb-1 text-truncate font-weight-bold">@box.Name</MudText>
                             
                             <!-- Probability Indicator -->
                             <div class="d-flex align-center mb-2">
-                                <MudText Typo="Typo.caption" Color="Color.Primary" Class="mr-2">Probability:</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Primary" Class="mr-2">Secret Item:</MudText>
                                 <MudProgressLinear Color="@GetProbabilityColor(box.Probability)" 
                                                   Value="@Math.Min(box.Probability * 5, 100)" 
                                                   Class="flex-grow-1 mud-elevation-1 rounded-pill" 
@@ -151,10 +159,10 @@
                                 <MudSpacer />
                                 <MudButton Variant="Variant.Filled" 
                                           Color="Color.Secondary" 
-                                          StartIcon="@Icons.Material.Filled.ShoppingCart" 
+                                          StartIcon="@Icons.Material.Filled.Casino" 
                                           Class="text-transform-none"
-                                          OnClick="@((e) => { AddToCartWithoutPropagation(box, e); })">
-                                    Buy Now
+                                          Href="@($"/blindbox/{box.Id}")">
+                                    Try Your Luck
                                 </MudButton>
                             </div>
                         </div>

@@ -1,4 +1,6 @@
 using BlindBoxShop.Shared.Enum;
+using System.Collections.Generic;
+using System;
 
 namespace BlindBoxShop.Shared.DataTransferObject.BlindBox
 {
@@ -19,5 +21,6 @@ namespace BlindBoxShop.Shared.DataTransferObject.BlindBox
         public string MainImageUrl { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public List<BlindBoxItemDto> Items { get; set; } = new List<BlindBoxItemDto>();
     }
 } 

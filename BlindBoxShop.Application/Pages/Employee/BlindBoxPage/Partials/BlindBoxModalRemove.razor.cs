@@ -26,19 +26,26 @@ namespace BlindBoxShop.Application.Pages.Employee.BlindBoxPage.Partials
         {
             if (BlindBoxDto != null)
             {
-                using var blindBoxService = ServiceManager!.BlindBoxService;
-                var result = await blindBoxService.DeleteBlindBoxAsync(BlindBoxDto.Id);
+                try
+                {
+                    var blindBoxService = ServiceManager!.BlindBoxService;
+                    var result = await blindBoxService.DeleteBlindBoxAsync(BlindBoxDto.Id, false);
 
-                if (result.IsSuccess)
-                {
-                    MudDialog!.Close(DialogResult.Ok(true));
-                    ShowSnackbar($"BlindBox '{BlindBoxDto.Name}' has been deleted successfully.", Severity.Success);
+                    if (result.IsSuccess)
+                    {
+                        MudDialog!.Close(DialogResult.Ok(true));
+                        ShowSnackbar($"BlindBox '{BlindBoxDto.Name}' has been deleted successfully.", Severity.Success);
+                    }
+                    else
+                    {
+                        var errorsMessage = result.Errors!.Select(e => e.Description).ToList();
+                        var errorMessage = string.Join(", ", errorsMessage).Trim();
+                        ShowSnackbar(errorMessage, Severity.Error);
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    var errorsMessage = result.Errors!.Select(e => e.Description).ToList();
-                    var errorMessage = string.Join(", ", errorsMessage).Trim();
-                    ShowSnackbar(errorMessage, Severity.Error);
+                    ShowSnackbar(ex.Message, Severity.Error);
                 }
             }
         }

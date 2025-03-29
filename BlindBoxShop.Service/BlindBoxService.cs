@@ -17,6 +17,7 @@ namespace BlindBoxShop.Service
     public class BlindBoxService : BaseService, IBlindBoxService
     {
         private readonly IBlindBoxRepository _blindBoxRepository;
+
         public BlindBoxService(IRepositoryManager repositoryManager, IMapper mapper) : base(repositoryManager, mapper)
         {
             _blindBoxRepository = repositoryManager.BlindBox;
@@ -57,11 +58,11 @@ namespace BlindBoxShop.Service
             }
         }
 
-        public async Task<Result<bool>> DeleteBlindBoxAsync(Guid blindBoxId)
+        public async Task<Result<bool>> DeleteBlindBoxAsync(Guid blindBoxId, bool trackChanges)
         {
             try
             {
-                var blindBox = await _blindBoxRepository.FindById(blindBoxId, true);
+                var blindBox = await _blindBoxRepository.FindById(blindBoxId, trackChanges);
                 if (blindBox == null)
                     return Result<bool>.Failure(BlindBoxErrors.GetBlindBoxNotFoundError(blindBoxId));
 
@@ -98,6 +99,37 @@ namespace BlindBoxShop.Service
                 var latestPrice = priceHistories.OrderByDescending(p => p.CreatedAt).FirstOrDefault();
                 if (latestPrice != null)
                     blindBoxDto.CurrentPrice = latestPrice.Price;
+                    
+                // If this is an online BlindBox (Probability > 0), get its items
+                if (blindBox.Probability > 0)
+                {
+                    // Get BlindBoxItems related to this BlindBox
+                    var items = await _repositoryManager.BlindBoxItem
+                        .FindByCondition(item => item.BlindBoxId == blindBoxId, trackChanges)
+                        .ToListAsync();
+                        
+                    if (items.Any())
+                    {
+                        // Map items to DTOs
+                        var itemDtos = new List<BlindBoxItemDto>();
+                        foreach (var item in items)
+                        {
+                            var itemDto = new BlindBoxItemDto
+                            {
+                                Id = item.Id,
+                                BlindBoxId = item.BlindBoxId,
+                                Name = item.Name,
+                                Description = item.Description,
+                                Rarity = (int)item.Rarity,
+                                ImageUrl = item.ImageUrl,
+                                IsSecret = item.IsSecret,
+                                CreatedAt = item.CreatedAt
+                            };
+                            itemDtos.Add(itemDto);
+                        }
+                        blindBoxDto.Items = itemDtos;
+                    }
+                }
 
                 return Result<BlindBoxDto>.Success(blindBoxDto);
             }
@@ -192,40 +224,35 @@ namespace BlindBoxShop.Service
             }
         }
 
-        public async Task<Result<BlindBoxDto>> UpdateBlindBoxAsync(Guid blindBoxId, BlindBoxForUpdate blindBoxForUpdate)
+        public async Task<Result<BlindBoxDto>> UpdateBlindBoxAsync(Guid blindBoxId, BlindBoxForUpdate blindBoxForUpdate, bool trackChanges)
         {
             try
             {
-                var blindBox = await _blindBoxRepository.FindById(blindBoxId, true);
+                var blindBox = await _blindBoxRepository.FindById(blindBoxId, trackChanges);
                 if (blindBox == null)
                     return Result<BlindBoxDto>.Failure(BlindBoxErrors.GetBlindBoxNotFoundError(blindBoxId));
 
                 _mapper.Map(blindBoxForUpdate, blindBox);
-                
-                // Check if price changed, if so create a new price history
-                var currentPriceHistories = _repositoryManager.BlindBoxPriceHistory
-                    .FindByCondition(ph => ph.BlindBoxId == blindBoxId, true)
-                    .ToList();
-
-                var latestPrice = currentPriceHistories.OrderByDescending(p => p.CreatedAt).FirstOrDefault();
-                if (latestPrice != null && latestPrice.Price != blindBoxForUpdate.Price)
-                {
-                    var blindBoxPriceHistory = new BlindBoxPriceHistory
-                    {
-                        BlindBoxId = blindBox.Id,
-                        DefaultPrice = latestPrice.DefaultPrice,
-                        Price = blindBoxForUpdate.Price,
-                        CreatedAt = DateTime.UtcNow
-                    };
-
-                    _repositoryManager.BlindBoxPriceHistory.Create(blindBoxPriceHistory);
-                    await _repositoryManager.BlindBoxPriceHistory.SaveAsync();
-                }
-
                 blindBox.UpdatedAt = DateTime.UtcNow;
+                
+                _blindBoxRepository.Update(blindBox);
                 await _blindBoxRepository.SaveAsync();
 
                 var blindBoxDto = _mapper.Map<BlindBoxDto>(blindBox);
+
+                // Create a new price history entry with the updated price
+                var blindBoxPriceHistory = new BlindBoxPriceHistory
+                {
+                    BlindBoxId = blindBox.Id,
+                    DefaultPrice = blindBoxForUpdate.Price,
+                    Price = blindBoxForUpdate.Price,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _repositoryManager.BlindBoxPriceHistory.Create(blindBoxPriceHistory);
+                await _repositoryManager.BlindBoxPriceHistory.SaveAsync();
+
+                // Set the current price in the DTO
                 blindBoxDto.CurrentPrice = blindBoxForUpdate.Price;
 
                 return Result<BlindBoxDto>.Success(blindBoxDto);
@@ -270,6 +297,60 @@ namespace BlindBoxShop.Service
                 return Result<IEnumerable<BlindBoxDto>>.Failure(new ErrorResult
                 {
                     Code = "GetBlindBoxesByPackageIdError",
+                    Description = ex.Message
+                });
+            }
+        }
+        
+        public async Task<Result<bool>> ResetBlindBoxProbabilityAsync(Guid blindBoxId)
+        {
+            try
+            {
+                var blindBox = await _blindBoxRepository.FindById(blindBoxId, true);
+                if (blindBox == null)
+                    return Result<bool>.Failure(BlindBoxErrors.GetBlindBoxNotFoundError(blindBoxId));
+
+                // Reset the probability to a default value (e.g., 0.0)
+                blindBox.Probability = 0.0f;
+                blindBox.UpdatedAt = DateTime.UtcNow;
+                
+                _blindBoxRepository.Update(blindBox);
+                await _blindBoxRepository.SaveAsync();
+
+                return Result<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                return Result<bool>.Failure(new ErrorResult
+                {
+                    Code = "ResetBlindBoxProbabilityError",
+                    Description = ex.Message
+                });
+            }
+        }
+        
+        public async Task<Result<bool>> IncrementBlindBoxProbabilityAsync(Guid blindBoxId)
+        {
+            try
+            {
+                var blindBox = await _blindBoxRepository.FindById(blindBoxId, true);
+                if (blindBox == null)
+                    return Result<bool>.Failure(BlindBoxErrors.GetBlindBoxNotFoundError(blindBoxId));
+
+                // Increment the probability by a fixed amount (e.g., 0.1)
+                blindBox.Probability += 0.1f;
+                blindBox.UpdatedAt = DateTime.UtcNow;
+                
+                _blindBoxRepository.Update(blindBox);
+                await _blindBoxRepository.SaveAsync();
+
+                return Result<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                return Result<bool>.Failure(new ErrorResult
+                {
+                    Code = "IncrementBlindBoxProbabilityError",
                     Description = ex.Message
                 });
             }

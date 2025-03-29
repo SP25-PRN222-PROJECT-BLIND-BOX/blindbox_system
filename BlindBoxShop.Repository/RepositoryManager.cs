@@ -111,6 +111,15 @@ namespace BlindBoxShop.Repository
                 return new ReplyRepository(context);
             }
         }
+        
+        public IBlindBoxItemRepository BlindBoxItem
+        {
+            get
+            {
+                var context = _dbContextFactory.CreateDbContext();
+                return new BlindBoxItemRepository(context);
+            }
+        }
 
         public async Task ExecuteInTransactionAsync(Func<RepositoryContext, Task> operation)
         {

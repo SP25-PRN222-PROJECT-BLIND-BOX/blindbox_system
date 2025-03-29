@@ -60,15 +60,24 @@
                                         Class="px-2 font-weight-bold text-capitalize">
                                     @box.Rarity.ToString()
                                 </MudChip>
+                                @if (box.Probability > 0)
+                                {
+                                    <MudChip T="string" Color="Color.Secondary" Size="Size.Small" 
+                                            Class="px-2 font-weight-bold">
+                                        <MudIcon Icon="@Icons.Material.Filled.Public" Size="Size.Small" Class="mr-1" />
+                                        Online
+                                    </MudChip>
+                                }
                             </div>
                             
                             @if (box.Probability > 0)
                             {
-                                <div class="position-absolute" style="bottom: 4px; left: 4px; right: 4px;">
-                                    <MudChip T="string" Color="Color.Info" Size="Size.Small" Class="w-100 font-weight-bold">
-                                        <MudIcon Icon="@Icons.Material.Filled.Public" Size="Size.Small" Class="mr-1" />
-                                        Open Online Available
-                                    </MudChip>
+                                <div class="position-absolute bottom-0 left-0 right-0 py-1 px-2" 
+                                     style="background-color: rgba(103, 58, 183, 0.7);">
+                                    <div class="d-flex align-center">
+                                        <MudIcon Icon="@Icons.Material.Filled.Casino" Color="Color.Surface" Size="Size.Small" Class="mr-1" />
+                                        <MudText Typo="Typo.caption" Color="Color.Surface">Try Your Luck Online</MudText>
+                                    </div>
                                 </div>
                             }
                         </div>
@@ -93,13 +102,24 @@
                                         Href="@($"/blindbox/{box.Id}")"
                                         Class="flex-grow-0 px-2 text-transform-none">Details</MudButton>
                                 <MudSpacer />
-                                <MudButton Variant="Variant.Filled" Color="Color.Secondary" 
-                                          StartIcon="@Icons.Material.Filled.ShoppingCart"
-                                          OnClick="@(() => AddToCart(box))"
-                                          Disabled="@(box.Probability > 0)"
-                                          Class="text-transform-none">
-                                    @(box.Probability > 0 ? "Online Only" : "Add to Cart")
-                                </MudButton>
+                                @if (box.Probability > 0)
+                                {
+                                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" 
+                                              StartIcon="@Icons.Material.Filled.Casino"
+                                              Href="@($"/blindbox/{box.Id}")"
+                                              Class="text-transform-none">
+                                        Try Your Luck
+                                    </MudButton>
+                                }
+                                else
+                                {
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                                              StartIcon="@Icons.Material.Filled.ShoppingCart"
+                                              OnClick="@(() => AddToCart(box))"
+                                              Class="text-transform-none">
+                                        Add to Cart
+                                    </MudButton>
+                                }
                             </div>
                         </div>
                     </MudPaper>

@@ -12,8 +12,10 @@ namespace BlindBoxShop.Service.Contract
         Task<Result<IEnumerable<BlindBoxDto>>> GetBlindBoxesAsync(BlindBoxParameter blindBoxParameter, bool trackChanges);
         Task<Result<BlindBoxDto>> GetBlindBoxByIdAsync(Guid blindBoxId, bool trackChanges);
         Task<Result<BlindBoxDto>> CreateBlindBoxAsync(BlindBoxForCreate blindBoxForCreate);
-        Task<Result<BlindBoxDto>> UpdateBlindBoxAsync(Guid blindBoxId, BlindBoxForUpdate blindBoxForUpdate);
-        Task<Result<bool>> DeleteBlindBoxAsync(Guid blindBoxId);
+        Task<Result<BlindBoxDto>> UpdateBlindBoxAsync(Guid blindBoxId, BlindBoxForUpdate blindBoxForUpdate, bool trackChanges);
+        Task<Result<bool>> DeleteBlindBoxAsync(Guid blindBoxId, bool trackChanges);
         Task<Result<IEnumerable<BlindBoxDto>>> GetBlindBoxesByPackageIdAsync(Guid packageId, bool trackChanges);
+        Task<Result<bool>> ResetBlindBoxProbabilityAsync(Guid blindBoxId);
+        Task<Result<bool>> IncrementBlindBoxProbabilityAsync(Guid blindBoxId);
     }
 }

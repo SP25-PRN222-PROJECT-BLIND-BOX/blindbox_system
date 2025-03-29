@@ -145,12 +145,12 @@ namespace BlindBoxShop.Application.Pages.Employee.BlindBoxPage.Partials
             var blindBoxForUpdate = Mapper!.Map<BlindBoxForUpdate>(editedItem);
             if (blindBoxForUpdate is null)
             {
-                ShowSnackbar($"Edit BlindBox with name {editedItem.Name} failed.", Severity.Warning);
+                ShowSnackbar("EditBlindBoxError", Severity.Error);
                 return;
             }
             
-            using var blindBoxService = ServiceManager!.BlindBoxService;
-            var result = await blindBoxService.UpdateBlindBoxAsync(editedItem.Id, blindBoxForUpdate);
+            var blindBoxService = ServiceManager!.BlindBoxService;
+            var result = await blindBoxService.UpdateBlindBoxAsync(editedItem.Id, blindBoxForUpdate, false);
             
             if (result.IsSuccess)
             {

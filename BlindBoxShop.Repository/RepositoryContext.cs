@@ -29,6 +29,7 @@ namespace BlindBoxShop.Repository
             builder.ApplyConfiguration(new BlindBoxConfiguration());
             builder.ApplyConfiguration(new BlindBoxImageConfiguration());
             builder.ApplyConfiguration(new BlindBoxPriceHistoryConfiguration());
+            builder.ApplyConfiguration(new BlindBoxItemConfiguration());
             builder.ApplyConfiguration(new CustomerReviewsConfiguration());
             builder.ApplyConfiguration(new OrderConfiguration());
             builder.ApplyConfiguration(new OrderDetailConfiguration());
@@ -40,6 +41,7 @@ namespace BlindBoxShop.Repository
         public virtual DbSet<BlindBoxCategory> BlindBoxCategories { get; set; }
         public virtual DbSet<BlindBoxImage> BlindBoxImages { get; set; }
         public virtual DbSet<BlindBoxPriceHistory> BlindBoxPriceHistories { get; set; }
+        public virtual DbSet<BlindBoxItem> BlindBoxItems { get; set; }
         public virtual DbSet<CustomerReviews> CustomerReviews { get; set; }
         public virtual DbSet<Order> Orders { get; set; }
         public virtual DbSet<OrderDetail> OrderDetails { get; set; }

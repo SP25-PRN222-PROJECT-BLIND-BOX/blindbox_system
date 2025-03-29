@@ -22,12 +22,11 @@
 	<ItemGroup>
 		<ProjectReference Include="..\BlindBoxShop.Repository\BlindBoxShop.Repository.csproj" />
 		<ProjectReference Include="..\BlindBoxShop.Service\BlindBoxShop.Service.csproj" />
-		<ProjectReference Include="..\BlindBoxShop.Shared.Services\BlindBoxShop.Shared.Services.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Interceptor\" />
-	  <Folder Include="Pages\Pages\Home\Partial\" />
+		<Folder Include="Interceptor\" />
+		<Folder Include="Pages\Pages\Home\Partial\" />
 	</ItemGroup>
 
 </Project>

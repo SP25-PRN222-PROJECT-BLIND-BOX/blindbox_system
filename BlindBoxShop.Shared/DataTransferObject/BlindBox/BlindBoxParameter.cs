@@ -9,10 +9,12 @@ namespace BlindBoxShop.Shared.DataTransferObject.BlindBox
         public Guid? PackageId { get; set; }
         public int? Rarity { get; set; }
         public int? Status { get; set; }
+        public bool BestSeller { get; set; }
+
 
         public BlindBoxParameter()
         {
             OrderBy = "CreatedAt desc";
         }
     }
-} 
+}

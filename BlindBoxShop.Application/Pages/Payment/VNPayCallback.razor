@@ -1,0 +1,97 @@
+@page "/payment/vnpay-callback"
+@using BlindBoxShop.Shared.DataTransferObject.VNPay
+@using Microsoft.AspNetCore.WebUtilities
+@using System.Collections.Specialized
+@layout BlindBoxShop.Application.Components.Layout.MainLayout
+
+@inject IServiceManager ServiceManager
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Xử lý thanh toán - BoxBox</PageTitle>
+
+<div class="container mx-auto py-10 px-4">
+    <div class="max-w-md mx-auto bg-white rounded-lg shadow-lg p-8 text-center">
+        <div class="flex flex-col items-center justify-center space-y-4">
+            <MudProgressCircular Size="Size.Large" Indeterminate="true" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">Đang xử lý thanh toán...</MudText>
+            <MudText Typo="Typo.body2" Class="text-gray-500">Vui lòng không đóng trang này</MudText>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool _isFirstRender = true;
+    private VNPayRequest _vnpayRequest;
+
+    protected override void OnInitialized()
+    {
+        // Parse query parameters from URL - only prepare the data, don't call JS here
+        var uri = new Uri(NavigationManager.Uri);
+        var queryParams = QueryHelpers.ParseQuery(uri.Query);
+        
+        // Create VNPayRequest object from query parameters
+        _vnpayRequest = new VNPayRequest
+        {
+            VnpAmount = queryParams.TryGetValue("vnp_Amount", out var amount) ? amount.ToString() : string.Empty,
+            VnpBankCode = queryParams.TryGetValue("vnp_BankCode", out var bankCode) ? bankCode.ToString() : string.Empty,
+            VnpBankTranNo = queryParams.TryGetValue("vnp_BankTranNo", out var bankTranNo) ? bankTranNo.ToString() : string.Empty,
+            VnpCardType = queryParams.TryGetValue("vnp_CardType", out var cardType) ? cardType.ToString() : string.Empty,
+            VnpOrderInfo = queryParams.TryGetValue("vnp_OrderInfo", out var orderInfo) ? orderInfo.ToString() : string.Empty,
+            VnpPayDate = queryParams.TryGetValue("vnp_PayDate", out var payDate) ? payDate.ToString() : string.Empty,
+            VnpResponseCode = queryParams.TryGetValue("vnp_ResponseCode", out var responseCode) ? responseCode.ToString() : string.Empty,
+            VnpSecureHash = queryParams.TryGetValue("vnp_SecureHash", out var secureHash) ? secureHash.ToString() : string.Empty,
+            VnpTmnCode = queryParams.TryGetValue("vnp_TmnCode", out var tmnCode) ? tmnCode.ToString() : string.Empty,
+            VnpTransactionNo = queryParams.TryGetValue("vnp_TransactionNo", out var transactionNo) ? transactionNo.ToString() : string.Empty,
+            VnpTransactionStatus = queryParams.TryGetValue("vnp_TransactionStatus", out var transactionStatus) ? transactionStatus.ToString() : string.Empty,
+            VnpTxnRef = queryParams.TryGetValue("vnp_TxnRef", out var txnRef) ? txnRef.ToString() : string.Empty
+        };
+    }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await ProcessPaymentCallbackAsync();
+            _isFirstRender = false;
+        }
+    }
+    
+    private async Task ProcessPaymentCallbackAsync()
+    {
+        try
+        {
+            // Process payment callback
+            var result = await ServiceManager.VNPayService.ProcessPaymentCallbackAsync(_vnpayRequest);
+            
+            if (result.IsSuccess && result.Value != null)
+            {
+                var response = result.Value;
+                
+                // Check if payment was successful
+                if (response.IsSuccessful)
+                {
+                    // Clear cart after successful payment
+                    await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "blindbox_cart");
+                }
+                
+                // Chuyển hướng đến URL kết quả tương ứng (thành công hoặc thất bại)
+                NavigationManager.NavigateTo(response.RedirectUrl, true);
+            }
+            else
+            {
+                // Chuyển hướng đến trang thất bại trong trường hợp có lỗi xử lý
+                var errorMessage = result.Errors?.FirstOrDefault()?.Description ?? "Đã xảy ra lỗi khi xử lý thanh toán.";
+                await JSRuntime.InvokeVoidAsync("localStorage.setItem", "payment_error", errorMessage);
+                NavigationManager.NavigateTo("/order-failed", true);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Chuyển hướng đến trang thất bại trong trường hợp có lỗi
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "payment_error", $"Lỗi xử lý thanh toán: {ex.Message}");
+            NavigationManager.NavigateTo("/order-failed", true);
+        }
+    }
+} 

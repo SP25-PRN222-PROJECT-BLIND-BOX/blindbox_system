@@ -25,5 +25,7 @@
         IReplyService ReplyService { get; }
         
         IAuthService AuthService { get; }
+        
+        IVNPayService VNPayService { get; }
     }
 }

@@ -451,30 +451,50 @@ namespace BlindBoxShop.Application.Pages.Pages
                     ? _blindBoxImages[blindBox.Id] 
                     : (!string.IsNullOrEmpty(blindBox.MainImageUrl) ? blindBox.MainImageUrl : "/images/box-placeholder.jpg");
                 
-                // Tạo đối tượng CartItem
-                var cartItem = new
-                {
-                    Id = new Random().Next(10000, 99999),
-                    BlindBoxId = blindBox.Id,
-                    ProductName = blindBox.Name,
-                    Description = blindBox.Description,
-                    ImageUrl = imageUrl,
-                    Price = blindBox.CurrentPrice,
-                    Quantity = 1
-                };
-                
                 // Lấy giỏ hàng hiện tại từ localStorage
                 var cartJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "blindbox_cart");
-                List<object> cartItems = new List<object>();
+                List<Dictionary<string, object>> cartItems = new List<Dictionary<string, object>>();
                 
                 if (!string.IsNullOrEmpty(cartJson))
                 {
                     // Deserialize giỏ hàng
-                    cartItems = JsonSerializer.Deserialize<List<object>>(cartJson);
+                    cartItems = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(cartJson) ?? new List<Dictionary<string, object>>();
                 }
                 
-                // Thêm sản phẩm mới vào giỏ hàng
-                cartItems.Add(cartItem);
+                // Kiểm tra xem sản phẩm đã tồn tại trong giỏ hàng chưa
+                bool itemExists = false;
+                foreach (var item in cartItems)
+                {
+                    if (item.TryGetValue("BlindBoxId", out var blindBoxIdObj) && 
+                        blindBoxIdObj.ToString() == blindBox.Id.ToString())
+                    {
+                        // Nếu đã tồn tại, tăng số lượng lên 1
+                        if (item.TryGetValue("Quantity", out var quantityObj) && 
+                            int.TryParse(quantityObj.ToString(), out int currentQuantity))
+                        {
+                            item["Quantity"] = currentQuantity + 1;
+                            itemExists = true;
+                            break;
+                        }
+                    }
+                }
+                
+                // Nếu sản phẩm chưa tồn tại, thêm mới vào giỏ hàng
+                if (!itemExists)
+                {
+                    var newItem = new Dictionary<string, object>
+                    {
+                        ["Id"] = new Random().Next(10000, 99999),
+                        ["BlindBoxId"] = blindBox.Id,
+                        ["ProductName"] = blindBox.Name,
+                        ["Description"] = blindBox.Description,
+                        ["ImageUrl"] = imageUrl,
+                        ["Price"] = blindBox.CurrentPrice,
+                        ["Quantity"] = 1
+                    };
+                    
+                    cartItems.Add(newItem);
+                }
                 
                 // Lưu giỏ hàng vào localStorage
                 await JSRuntime.InvokeVoidAsync("localStorage.setItem", "blindbox_cart", 

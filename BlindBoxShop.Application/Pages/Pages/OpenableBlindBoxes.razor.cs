@@ -305,8 +305,8 @@ namespace BlindBoxShop.Application.Pages.Pages
         {
             try
             {
-                // Simple implementation that doesn't require special cart service
-                Snackbar.Add($"Đã thêm \"{blindBox.Name}\" vào giỏ hàng!", Severity.Success);
+                // Openable blindboxes can't be added to cart - show appropriate message
+                Snackbar.Add("Sản phẩm này chỉ có thể mở trực tuyến, không thể thêm vào giỏ hàng", Severity.Warning);
                 await Task.CompletedTask;
             }
             catch (Exception ex)

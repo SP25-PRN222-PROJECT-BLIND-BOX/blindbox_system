@@ -38,7 +38,7 @@
         
         <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4 font-weight-bold">Đăng nhập tài khoản</MudText>
         
-        <EditForm Model="Input" OnSubmit="LoginUser">
+        <EditForm Model="@Input" OnSubmit="@LoginUser" FormName="loginForm">
             <DataAnnotationsValidator />
             
             <MudTextField Label="Email"

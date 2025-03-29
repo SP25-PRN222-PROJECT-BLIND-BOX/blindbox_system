@@ -14,5 +14,6 @@ namespace BlindBoxShop.Service.Contract
         Task<Result<BlindBoxDto>> CreateBlindBoxAsync(BlindBoxForCreate blindBoxForCreate);
         Task<Result<BlindBoxDto>> UpdateBlindBoxAsync(Guid blindBoxId, BlindBoxForUpdate blindBoxForUpdate);
         Task<Result<bool>> DeleteBlindBoxAsync(Guid blindBoxId);
+        Task<Result<IEnumerable<BlindBoxDto>>> GetBlindBoxesByPackageIdAsync(Guid packageId, bool trackChanges);
     }
 }

@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using MudBlazor;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -9,91 +8,64 @@ namespace BlindBoxShop.Application.Pages
 {
     public partial class OrderFailed : ComponentBase
     {
+        [Inject] private IJSRuntime JSRuntime { get; set; }
+        [Inject] private NavigationManager NavigationManager { get; set; }
+
         [Parameter]
-        [SupplyParameterFromQuery(Name = "error")]
-        public string ErrorCode { get; set; }
-        
-        private string ErrorMessage { get; set; } = "Your order could not be processed. Please try again or contact our support team for assistance.";
-        private List<string> PossibleCauses { get; set; } = new List<string>();
-        
-        [Inject]
-        private IJSRuntime JSRuntime { get; set; }
-        
-        [Inject]
-        private NavigationManager NavigationManager { get; set; }
-        
-        protected override void OnInitialized()
+        public string Id { get; set; }
+
+        [Parameter]
+        [SupplyParameterFromQuery(Name = "id")]
+        public string QueryId { get; set; }
+
+        public string ErrorMessage { get; set; } = "There was a problem processing your payment. Your order could not be completed.";
+        public List<string> PossibleCauses { get; set; } = new List<string>();
+
+        protected override async Task OnInitializedAsync()
         {
-            // Set default causes
+            try
+            {
+                // If Id is not set from route but is available in query, use that
+                if (string.IsNullOrEmpty(Id) && !string.IsNullOrEmpty(QueryId))
+                {
+                    Id = QueryId;
+                }
+
+                // Get error message from localStorage if available
+                var errorFromStorage = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "payment_error");
+                if (!string.IsNullOrEmpty(errorFromStorage))
+                {
+                    ErrorMessage = errorFromStorage;
+                    await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "payment_error");
+                }
+
+                // Set possible causes based on the error message
+                SetPossibleCauses();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error initializing OrderFailed page: {ex.Message}");
+            }
+        }
+
+        private void SetPossibleCauses()
+        {
             PossibleCauses = new List<string>
             {
-                "Network connection issue",
-                "Invalid payment information",
-                "Products out of stock",
-                "System error"
+                "Thông tin thanh toán không chính xác hoặc không đầy đủ",
+                "Không thể kết nối đến cổng thanh toán",
+                "Tài khoản hoặc thẻ của bạn không đủ số dư",
+                "Giao dịch bị từ chối bởi ngân hàng hoặc nhà cung cấp dịch vụ thanh toán"
             };
-            
-            // Determine error message based on error code
-            switch (ErrorCode)
+
+            // Add specific causes based on error message
+            if (ErrorMessage.Contains("VNPay", StringComparison.OrdinalIgnoreCase))
             {
-                case "payment":
-                    ErrorMessage = "Payment failed. Please check your payment information and try again.";
-                    PossibleCauses = new List<string>
-                    {
-                        "Invalid card details",
-                        "Insufficient funds",
-                        "Payment gateway error",
-                        "Card expired"
-                    };
-                    break;
-                    
-                case "stock":
-                    ErrorMessage = "One or more products in your cart are currently not available.";
-                    PossibleCauses = new List<string>
-                    {
-                        "Product sold out",
-                        "Product temporarily unavailable",
-                        "Limited edition item no longer available",
-                        "Product removed from the store"
-                    };
-                    break;
-                    
-                case "address":
-                    ErrorMessage = "Invalid address information. Please check your shipping details.";
-                    PossibleCauses = new List<string>
-                    {
-                        "Incomplete address",
-                        "Invalid postal code",
-                        "We don't ship to your location",
-                        "Address verification failed"
-                    };
-                    break;
-                    
-                case "network":
-                    ErrorMessage = "Network connection error. Please check your internet connection and try again.";
-                    PossibleCauses = new List<string>
-                    {
-                        "Unstable internet connection",
-                        "Request timeout",
-                        "Server connection error",
-                        "API service unavailable"
-                    };
-                    break;
-                    
-                case "timeout":
-                    ErrorMessage = "Request has timed out. Please try again later.";
-                    PossibleCauses = new List<string>
-                    {
-                        "Server busy",
-                        "Network latency",
-                        "Process taking too long",
-                        "Payment processing timeout"
-                    };
-                    break;
-                    
-                default:
-                    // Keep default message and causes
-                    break;
+                PossibleCauses.Add("Kết nối với cổng thanh toán VNPay không thành công");
+            }
+            else if (ErrorMessage.Contains("timeout", StringComparison.OrdinalIgnoreCase))
+            {
+                PossibleCauses.Add("Giao dịch bị hết thời gian chờ");
             }
         }
     }

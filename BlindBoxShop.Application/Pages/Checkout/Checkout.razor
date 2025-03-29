@@ -108,22 +108,41 @@
                     <!-- Payment Methods -->
                     <div class="md:col-span-2">
                         <div class="bg-white rounded-lg shadow-sm p-6">
-                            <h3 class="text-lg font-medium mb-4">Phương thức thanh toán</h3>
-                            
-                            <MudRadioGroup @bind-SelectedOption="_checkoutInfo.PaymentMethod" T="string">
-                                <MudRadio Option="@("Cash on Delivery")" Color="Color.Primary" T="string">
-                                    <div class="flex items-center">
-                                        <MudIcon Icon="@Icons.Material.Filled.MonetizationOn" Class="mr-2 text-cyan-600" />
-                                        <span>Thanh toán khi nhận hàng</span>
+                            <div class="mb-6">
+                                <h3 class="text-lg font-semibold mb-4">Phương thức thanh toán</h3>
+                                
+                                <div class="flex flex-col space-y-3">
+                                    <div class="@(GetPaymentMethodClass("Cash on Delivery")) p-3 border rounded-lg" @onclick="@(() => SelectPaymentMethod("Cash on Delivery"))">
+                                        <div class="flex items-center">
+                                            <MudIcon Icon="@Icons.Material.Filled.MonetizationOn" Class="mr-2 text-cyan-600" />
+                                            <span class="flex-grow">Thanh toán khi nhận hàng</span>
+                                            @if (_checkoutInfo.PaymentMethod == "Cash on Delivery")
+                                            {
+                                                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" />
+                                            }
+                                        </div>
                                     </div>
-                                </MudRadio>
-                                <MudRadio Option="@("VNPay")" Color="Color.Primary" Class="mt-4" T="string">
-                                    <div class="flex items-center">
-                                        <MudIcon Icon="@Icons.Material.Filled.Payment" Class="mr-2 text-cyan-600" />
-                                        <span>VNPay</span>
+                                    
+                                    <div class="@(GetPaymentMethodClass("VNPay")) p-3 border rounded-lg" @onclick="@(() => SelectPaymentMethod("VNPay"))">
+                                        <div class="flex items-center">
+                                            <MudIcon Icon="@Icons.Material.Filled.Payment" Class="mr-2 text-cyan-600" />
+                                            <span class="flex-grow">VNPay</span>
+                                            @if (_checkoutInfo.PaymentMethod == "VNPay")
+                                            {
+                                                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" />
+                                            }
+                                        </div>
                                     </div>
-                                </MudRadio>
-                            </MudRadioGroup>
+                                </div>
+
+                                <!-- Debug info section -->
+                                @* <div class="mt-4 p-3 bg-gray-50 rounded-lg">
+                                    <p class="font-medium">Đã chọn: <span class="text-cyan-700">@_checkoutInfo.PaymentMethod</span></p>
+                                    <MudButton OnClick="@SavePaymentMethod" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" Class="mt-2">
+                                        Cập nhật phương thức thanh toán
+                                    </MudButton>
+                                </div> *@
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -148,8 +167,6 @@
                                     <img src="@context.ImageUrl" alt="@context.ProductName" class="w-16 h-16 object-cover mr-3 rounded" />
                                     <div class="flex flex-col">
                                         <div class="font-medium">@context.ProductName</div>
-                                        <div class="text-xs text-gray-500">(Image URL: @context.ImageUrl)</div>
-                                        <div class="text-xs text-gray-500">ID: @context.Id, BlindBoxId: @context.BlindBoxId</div>
                                     </div>
                                 </div>
                             </MudTd>

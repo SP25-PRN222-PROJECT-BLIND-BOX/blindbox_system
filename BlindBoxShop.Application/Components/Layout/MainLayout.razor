@@ -82,7 +82,7 @@
         </MudButton>
     }
     
-    <MudBadge Content="@_cartItemCount" Color="Color.Secondary" Overlap="true" Class="mx-2" Visible="@(_cartItemCount > 0)">
+    <MudBadge Color="Color.Secondary" Content="@_cartItemCount" Overlap="true" Origin="Origin.TopRight" Bordered="true">
         <MudIconButton Href="/cart" Icon="@Icons.Material.Filled.ShoppingCart" Color="Color.Inherit" />
     </MudBadge>
 </MudAppBar>

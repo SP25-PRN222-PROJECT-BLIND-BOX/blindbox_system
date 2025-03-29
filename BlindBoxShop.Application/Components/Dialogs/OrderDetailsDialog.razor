@@ -2,6 +2,17 @@
 @using BlindBoxShop.Shared.DataTransferObject.OrderDetail
 @using BlindBoxShop.Shared.Enum
 @using MudBlazor
+@using System.Threading.Tasks
+@using System
+@using System.Linq
+@using BlindBoxShop.Service.Contract
+@using BlindBoxShop.Application.Components.Dialogs
+
+@inject ISnackbar Snackbar
+@inject IServiceManager ServiceManager
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inject IDialogService DialogService
 
 <MudDialog>
     <DialogContent>
@@ -85,11 +96,42 @@
                 
                 <MudText Typo="Typo.subtitle1" Class="mb-2">Payment Method</MudText>
                 <MudText Typo="Typo.body2">@OrderWithDetails.Order.PaymentMethod.ToString()</MudText>
+                
+                @if (OrderWithDetails.Order.Status == OrderStatus.AwaitingPayment)
+                {
+                    <MudAlert Severity="Severity.Warning" Class="mt-4" Icon="@Icons.Material.Filled.Payment">
+                        Đơn hàng này đang chờ thanh toán. Vui lòng hoàn tất quá trình thanh toán để đơn hàng của bạn được xử lý.
+                    </MudAlert>
+                }
             </div>
         }
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Cancel" Color="Color.Primary" Variant="Variant.Filled">Close</MudButton>
+        <div class="w-full flex justify-between items-center px-4">
+            <div>
+                @if (OrderWithDetails != null && (OrderWithDetails.Order.Status == OrderStatus.AwaitingPayment || OrderWithDetails.Order.Status == OrderStatus.Processing))
+                {
+                    <MudButton OnClick="CancelOrder" Color="Color.Error" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Cancel">
+                        Hủy đơn hàng
+                    </MudButton>
+                }
+            </div>
+            <div class="flex gap-2">
+                @if (OrderWithDetails != null && OrderWithDetails.Order.Status == OrderStatus.AwaitingPayment)
+                {
+                    @if (OrderWithDetails.Order.PaymentMethod == PaymentMethod.VnPay)
+                    {
+                        <MudButton OnClick="ProceedPayment" Color="Color.Success" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Payment">
+                            Thanh toán lại
+                        </MudButton>
+                        <MudButton OnClick="ChangeToCoD" Color="Color.Info" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.SwapHoriz">
+                            Đổi sang CoD
+                        </MudButton>
+                    }
+                }
+                <MudButton OnClick="Cancel" Color="Color.Primary" Variant="Variant.Text">Đóng</MudButton>
+            </div>
+        </div>
     </DialogActions>
 </MudDialog>
 
@@ -102,11 +144,147 @@
     
     private void Cancel() => MudDialog.Cancel();
     
+    private async Task CancelOrder()
+    {
+        if (OrderWithDetails?.Order?.Id == null) return;
+        
+        var parameters = new DialogParameters
+        {
+            ["ContentText"] = "Bạn có chắc chắn muốn hủy đơn hàng này không?",
+            ["ButtonText"] = "Đồng ý",
+            ["CancelText"] = "Hủy",
+            ["Color"] = Color.Error
+        };
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = await DialogService.ShowMessageBox(
+            "Xác nhận hủy đơn hàng",
+            "Bạn có chắc chắn muốn hủy đơn hàng này không?",
+            yesText: "Đồng ý",
+            cancelText: "Hủy",
+            options: new DialogOptions { MaxWidth = MaxWidth.ExtraSmall }
+        );
+        
+        if (dialog == true)
+        {
+            try
+            {
+                var cancelResult = await ServiceManager.OrderService.CancelOrderAsync(OrderWithDetails.Order.Id);
+                
+                if (cancelResult.IsSuccess)
+                {
+                    Snackbar.Add("Đơn hàng đã được hủy thành công", Severity.Success);
+                    // Đóng dialog hiện tại và trả về kết quả đã cập nhật để refresh danh sách
+                    MudDialog.Close(DialogResult.Ok(true));
+                }
+                else
+                {
+                    var errorMsg = cancelResult.Errors?.FirstOrDefault()?.Description ?? "Không thể hủy đơn hàng";
+                    Snackbar.Add(errorMsg, Severity.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Lỗi: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+    
+    private async Task ProceedPayment()
+    {
+        if (OrderWithDetails?.Order?.Id == null) return;
+        
+        try
+        {
+            // Lấy User ID từ localStorage
+            var userId = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "user_id");
+            
+            if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
+            {
+                Snackbar.Add("Không tìm thấy thông tin người dùng, vui lòng đăng nhập lại", Severity.Warning);
+                return;
+            }
+            
+            // Gọi service để lấy URL thanh toán VNPay
+            var baseUrl = NavigationManager.BaseUri.TrimEnd('/');
+            var paymentResult = await ServiceManager.VNPayService.GetPaymentUrlAsync(OrderWithDetails.Order.Id, userGuid, baseUrl);
+            
+            if (paymentResult.IsSuccess && !string.IsNullOrEmpty(paymentResult.Value))
+            {
+                // Đóng dialog
+                MudDialog.Close();
+                
+                // Chuyển hướng đến trang thanh toán VNPay
+                NavigationManager.NavigateTo(paymentResult.Value);
+            }
+            else
+            {
+                var errorMsg = paymentResult.Errors?.FirstOrDefault()?.Description ?? "Không thể tạo URL thanh toán";
+                Snackbar.Add(errorMsg, Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Lỗi: {ex.Message}", Severity.Error);
+        }
+    }
+    
+    private async Task ChangeToCoD()
+    {
+        if (OrderWithDetails?.Order?.Id == null) return;
+        
+        var parameters = new DialogParameters
+        {
+            ["ContentText"] = "Bạn có chắc chắn muốn đổi sang thanh toán khi nhận hàng (CoD) không?",
+            ["ButtonText"] = "Đồng ý",
+            ["CancelText"] = "Hủy",
+            ["Color"] = Color.Primary
+        };
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = await DialogService.ShowMessageBox(
+            "Xác nhận đổi phương thức thanh toán",
+            "Bạn có chắc chắn muốn đổi sang thanh toán khi nhận hàng (CoD) không?",
+            yesText: "Đồng ý",
+            cancelText: "Hủy",
+            options: new DialogOptions { MaxWidth = MaxWidth.ExtraSmall }
+        );
+        
+        if (dialog == true)
+        {
+            try
+            {
+                var changeResult = await ServiceManager.OrderService.ChangePaymentMethodAsync(
+                    OrderWithDetails.Order.Id, 
+                    PaymentMethod.Cash
+                );
+                
+                if (changeResult.IsSuccess)
+                {
+                    Snackbar.Add("Đã đổi sang thanh toán khi nhận hàng thành công", Severity.Success);
+                    // Đóng dialog hiện tại và trả về kết quả đã cập nhật để refresh danh sách
+                    MudDialog.Close(DialogResult.Ok(true));
+                }
+                else
+                {
+                    var errorMsg = changeResult.Errors?.FirstOrDefault()?.Description ?? "Không thể đổi phương thức thanh toán";
+                    Snackbar.Add(errorMsg, Severity.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Lỗi: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+    
     private Color GetOrderStatusColor(OrderStatus status)
     {
         return status switch
         {
-            OrderStatus.Pending => Color.Warning,
+            OrderStatus.Processing => Color.Info,
+            OrderStatus.AwaitingPayment => Color.Warning,
+            OrderStatus.Delivered => Color.Success,
             OrderStatus.Cancelled => Color.Error,
             _ => Color.Default
         };

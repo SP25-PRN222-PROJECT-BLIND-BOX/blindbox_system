@@ -240,6 +240,41 @@ namespace BlindBoxShop.Service
             }
         }
 
+        public async Task<Result<IEnumerable<BlindBoxDto>>> GetBlindBoxesByPackageIdAsync(Guid packageId, bool trackChanges)
+        {
+            try
+            {
+                // Create a query for blindboxes that belong to the specified package
+                var blindBoxes = _blindBoxRepository
+                    .FindByCondition(bb => bb.PackageId == packageId, trackChanges);
+                
+                var blindBoxList = await blindBoxes.ToListAsync();
+                var blindBoxDtos = _mapper.Map<IEnumerable<BlindBoxDto>>(blindBoxList);
+                
+                // Get current prices for each blindbox
+                foreach (var dto in blindBoxDtos)
+                {
+                    var priceHistories = _repositoryManager.BlindBoxPriceHistory
+                        .FindByCondition(ph => ph.BlindBoxId == dto.Id, trackChanges)
+                        .ToList();
+
+                    var latestPrice = priceHistories.OrderByDescending(p => p.CreatedAt).FirstOrDefault();
+                    if (latestPrice != null)
+                        dto.CurrentPrice = latestPrice.Price;
+                }
+                
+                return Result<IEnumerable<BlindBoxDto>>.Success(blindBoxDtos);
+            }
+            catch (Exception ex)
+            {
+                return Result<IEnumerable<BlindBoxDto>>.Failure(new ErrorResult
+                {
+                    Code = "GetBlindBoxesByPackageIdError",
+                    Description = ex.Message
+                });
+            }
+        }
+
         public void Dispose()
         {
             _blindBoxRepository.Dispose();

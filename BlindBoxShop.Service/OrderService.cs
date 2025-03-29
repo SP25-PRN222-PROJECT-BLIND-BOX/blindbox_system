@@ -358,5 +358,50 @@ namespace BlindBoxShop.Service
             _orderRepository.Dispose();
             GC.SuppressFinalize(this);
         }
+
+        public async Task<Result<bool>> ChangePaymentMethodAsync(Guid orderId, PaymentMethod newPaymentMethod)
+        {
+            try
+            {
+                var checkIfExistResult = await GetAndCheckIfOrderExistByIdAsync(orderId, trackChanges: true);
+                if (!checkIfExistResult.IsSuccess)
+                    return Result<bool>.Failure(checkIfExistResult.Errors);
+
+                var orderEntity = checkIfExistResult.GetValue<Order>();
+
+                // Only allow changing payment method for awaiting payment orders
+                if (orderEntity.Status != OrderStatus.AwaitingPayment)
+                {
+                    return Result<bool>.Failure(new ErrorResult 
+                    { 
+                        Code = "InvalidOrderStatus",
+                        Description = "Payment method can only be changed for orders awaiting payment."
+                    });
+                }
+                
+                // Change payment method
+                orderEntity.PaymentMethod = newPaymentMethod;
+                
+                // If changing to COD, update status to Processing
+                if (newPaymentMethod == PaymentMethod.Cash)
+                {
+                    orderEntity.Status = OrderStatus.Processing;
+                }
+                
+                _orderRepository.Update(orderEntity);
+                await _orderRepository.SaveAsync();
+                
+                return Result<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error changing payment method for order {orderId}: {ex.Message}");
+                return Result<bool>.Failure(new ErrorResult 
+                { 
+                    Code = "ChangePaymentMethodError",
+                    Description = $"Failed to change payment method: {ex.Message}"
+                });
+            }
+        }
     }
 }

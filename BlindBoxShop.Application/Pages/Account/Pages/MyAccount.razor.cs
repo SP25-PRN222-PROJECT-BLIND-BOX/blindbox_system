@@ -11,6 +11,7 @@ using MudBlazor;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace BlindBoxShop.Application.Pages.Account.Pages
 {
@@ -57,10 +58,32 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
         [CascadingParameter]
         private HttpContext HttpContext { get; set; } = default!;
 
+        [Parameter]
+        [SupplyParameterFromQuery(Name = "tab")]
+        public string TabParam { get; set; }
+
         protected override async Task OnInitializedAsync()
         {
-            await LoadUserData();
-            await LoadOrderHistory();
+            try
+            {
+                _loading = true;
+                
+                // Xử lý tham số tab từ URL
+                if (!string.IsNullOrEmpty(TabParam) && int.TryParse(TabParam, out int tabIndex))
+                {
+                    _activeTab = tabIndex;
+                }
+                
+                await LoadUserData();
+                await LoadOrderHistory();
+                
+                _loading = false;
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error loading account data: {ex.Message}", Severity.Error);
+                _loading = false;
+            }
         }
 
         private async Task LoadUserData()
@@ -238,24 +261,40 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
 
         private async Task ViewOrderDetailsByIdAsync(Guid orderId)
         {
-            try
+            try 
             {
+                // Fetch order details
                 var result = await ServiceManager.OrderService.GetOrderWithDetailsByIdAsync(orderId, false);
                 
-                if (result.IsSuccess)
+                if (result.IsSuccess && result.Value != null)
                 {
-                    var orderWithDetails = result.Value;
-                    await ViewOrderDetails(orderWithDetails);
+                    // Show order details dialog
+                    var parameters = new DialogParameters { ["OrderWithDetails"] = result.Value };
+                    var options = new DialogOptions 
+                    { 
+                        CloseButton = true,
+                        MaxWidth = MaxWidth.Medium,
+                        FullWidth = true
+                    };
+                    
+                    var dialog = await DialogService.ShowAsync<Components.Dialogs.OrderDetailsDialog>("Chi tiết đơn hàng", parameters, options);
+                    var dialogResult = await dialog.Result;
+                    
+                    // If dialog result is Ok, refresh order history
+                    if (!dialogResult.Canceled)
+                    {
+                        await LoadOrderHistory();
+                    }
                 }
                 else
                 {
-                    Snackbar.Add($"Cannot view order details: {result.Errors?.FirstOrDefault()?.Description}", Severity.Error);
+                    var errorMsg = result.Errors?.FirstOrDefault()?.Description ?? "Không thể tải thông tin đơn hàng";
+                    Snackbar.Add(errorMsg, Severity.Error);
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error viewing order details: {ex}");
-                Snackbar.Add($"Error loading order details: {ex.Message}", Severity.Error);
+                Snackbar.Add($"Lỗi: {ex.Message}", Severity.Error);
             }
         }
 

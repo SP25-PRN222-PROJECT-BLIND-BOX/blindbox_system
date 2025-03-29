@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using BlindBoxShop.Repository.Contract;
 using BlindBoxShop.Service.Contract;
+using Microsoft.Extensions.Logging;
 
 namespace BlindBoxShop.Service
 {
@@ -8,12 +9,13 @@ namespace BlindBoxShop.Service
     {
         private readonly IRepositoryManager _repositoryManager;
         private readonly IMapper _mapper;
+        private readonly ILoggerFactory _loggerFactory;
 
-
-        public ServiceManager(IRepositoryManager repositoryManager, IMapper mapper)
+        public ServiceManager(IRepositoryManager repositoryManager, IMapper mapper, ILoggerFactory loggerFactory)
         {
             _repositoryManager = repositoryManager;
             _mapper = mapper;
+            _loggerFactory = loggerFactory;
         }
 
         public IUserService UserService => new UserService(_repositoryManager, _mapper);
@@ -39,5 +41,10 @@ namespace BlindBoxShop.Service
         public IReplyService ReplyService => new ReplyService(_repositoryManager, _mapper);
         
         public IAuthService AuthService => new AuthService(_repositoryManager, _mapper);
+        
+        public IVNPayService VNPayService => new VNPayService(
+            _repositoryManager, 
+            _mapper, 
+            _loggerFactory.CreateLogger<VNPayService>());
     }
 }

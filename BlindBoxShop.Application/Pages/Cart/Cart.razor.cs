@@ -20,6 +20,7 @@ namespace BlindBoxShop.Application.Pages.Cart
         private List<CartItem> _cartItems = new List<CartItem>();
         private decimal Subtotal => _cartItems.Sum(item => item.Price * item.Quantity);
         private decimal ShippingCost => Subtotal > 500000 ? 0 : 20000;
+        private int _uniqueItemCount => _cartItems.Select(item => item.BlindBoxId).Distinct().Count();
 
         protected override async Task OnInitializedAsync()
         {

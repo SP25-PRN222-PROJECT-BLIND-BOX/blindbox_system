@@ -10,6 +10,7 @@ using BlindBoxShop.Application.Models;
 using BlindBoxShop.Service.Contract;
 using BlindBoxShop.Shared.Enum;
 using BlindBoxShop.Shared.DataTransferObject.OrderDetail;
+using BlindBoxShop.Shared.DataTransferObject.Order;
 
 namespace BlindBoxShop.Application.Pages.Checkout
 {
@@ -52,6 +53,12 @@ namespace BlindBoxShop.Application.Pages.Checkout
             
             // Load checkout info (address, payment method, etc.)
             await LoadCheckoutInfoFromLocalStorage();
+            
+            // Đảm bảo phương thức thanh toán luôn có giá trị mặc định
+            if (string.IsNullOrEmpty(_checkoutInfo.PaymentMethod))
+            {
+                _checkoutInfo.PaymentMethod = "Cash on Delivery";
+            }
             
             // Get user info to auto-fill address fields
             await GetUserInfo();
@@ -161,60 +168,6 @@ namespace BlindBoxShop.Application.Pages.Checkout
                    !string.IsNullOrWhiteSpace(_checkoutInfo.PaymentMethod);
         }
 
-        private async Task PlaceOrder()
-        {
-            if (!IsFormValid())
-            {
-                Snackbar.Add("Vui lòng điền đầy đủ thông tin yêu cầu", Severity.Warning);
-                return;
-            }
-
-            try
-            {
-                await SaveCheckoutInfoToLocalStorage();
-                
-                // Giả lập xử lý đơn hàng
-                Snackbar.Add("Đang xử lý đơn hàng...", Severity.Info);
-                
-                // Tạo đối tượng đơn hàng
-                var order = new
-                {
-                    CustomerName = $"{_checkoutInfo.FirstName} {_checkoutInfo.LastName}",
-                    Address = $"{_checkoutInfo.Address}, {_checkoutInfo.Ward}, {_checkoutInfo.District}, {_checkoutInfo.Province}",
-                    Phone = _checkoutInfo.Phone,
-                    Email = _checkoutInfo.Email,
-                    PaymentMethod = _checkoutInfo.PaymentMethod,
-                    OrderDate = DateTime.Now,
-                    Subtotal = Subtotal,
-                    ShippingCost = ShippingCost,
-                    Total = Subtotal + ShippingCost,
-                    Items = _cartItems
-                };
-                
-                // Trong ứng dụng thực tế, bạn sẽ gửi đơn hàng đến API
-                // Giả lập đơn hàng thành công và xóa giỏ hàng
-                
-                // Tạo random OrderId (trong thực tế sẽ nhận từ server)
-                var orderId = DateTime.Now.ToString("yyyyMMddHHmmss") + new Random().Next(1000, 9999).ToString();
-                
-                // Xóa giỏ hàng (Không xóa ở đây vì sẽ được xử lý trong trang thành công)
-                // await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "blindbox_cart");
-                
-                // Chuyển hướng đến trang xác nhận đơn hàng
-                Snackbar.Add("Đặt hàng thành công!", Severity.Success);
-                NavigationManager.NavigateTo($"/order-success/{orderId}");
-                
-                // Giả lập một số trường hợp lỗi (chỉ để demo)
-                // Hiện tại luôn thành công, nhưng trong thực tế có thể thất bại
-                // Nếu thất bại: NavigationManager.NavigateTo("/order-failed?error=payment");
-            }
-            catch (Exception)
-            {
-                Snackbar.Add("Đặt hàng thất bại. Vui lòng thử lại.", Severity.Error);
-                NavigationManager.NavigateTo("/order-failed");
-            }
-        }
-
         private string FormatPrice(decimal price)
         {
             return $"{price:N0}₫";
@@ -274,140 +227,78 @@ namespace BlindBoxShop.Application.Pages.Checkout
             }
         }
 
+        private string GetPaymentMethodClass(string method)
+        {
+            return _checkoutInfo.PaymentMethod == method 
+                ? "bg-cyan-50 border-cyan-500" 
+                : "bg-white hover:bg-gray-50 border-gray-200";
+        }
+
+        private void SelectPaymentMethod(string method)
+        {
+            // Update directly and trigger UI refresh
+            _checkoutInfo.PaymentMethod = method;
+            
+            // Debug log when payment method is changed
+            Console.WriteLine($"Payment method changed to: {method}");
+            
+            // Immediately save to localStorage when selected
+            _ = SaveCheckoutInfoToLocalStorage();
+            
+            StateHasChanged();
+        }
+
+        private async Task SavePaymentMethod()
+        {
+            if (!string.IsNullOrEmpty(_checkoutInfo.PaymentMethod))
+            {
+                await SaveCheckoutInfoToLocalStorage();
+                Snackbar.Add($"Phương thức thanh toán đã được cập nhật: {_checkoutInfo.PaymentMethod}", Severity.Success);
+                
+                // Debug: print current payment method
+                Console.WriteLine($"Current payment method: {_checkoutInfo.PaymentMethod}");
+                await JSRuntime.InvokeVoidAsync("console.log", "Current payment method: " + _checkoutInfo.PaymentMethod);
+            }
+        }
+        
         private async Task ProcessPayment()
         {
             try
             {
-                if (!IsFormValid())
-                {
-                    Snackbar.Add("Vui lòng điền đầy đủ thông tin yêu cầu", Severity.Warning);
-                    return;
-                }
-
                 _isProcessing = true;
                 StateHasChanged();
                 
-                // Get current user ID or create guest ID if not logged in
-                var userId = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "user_id");
+                // Check for valid form
+                if (!IsFormValid())
+                {
+                    Snackbar.Add("Vui lòng điền đầy đủ thông tin giao hàng", Severity.Warning);
+                    _isProcessing = false;
+                    StateHasChanged();
+                    return;
+                }
                 
-                // Create Order when payment method is Cash on Delivery
+                // Make another confirmation of payment method
+                Console.WriteLine($"FINAL PAYMENT METHOD SELECTED: {_checkoutInfo.PaymentMethod}");
+                await JSRuntime.InvokeVoidAsync("console.log", "PAYMENT METHOD SELECTED: " + _checkoutInfo.PaymentMethod);
+                
+                // Save checkout info to localStorage for future use
+                await SaveCheckoutInfoToLocalStorage();
+                
+                // Use the helper method based on payment method
                 if (_checkoutInfo.PaymentMethod == "Cash on Delivery")
                 {
-                    // Create an OrderForCreationDto
-                    var orderForCreation = new BlindBoxShop.Shared.DataTransferObject.Order.OrderForCreationDto
-                    {
-                        UserId = !string.IsNullOrEmpty(userId) ? Guid.Parse(userId) : Guid.Empty,
-                        Status = BlindBoxShop.Shared.Enum.OrderStatus.Pending,
-                        PaymentMethod = BlindBoxShop.Shared.Enum.PaymentMethod.Cash,
-                        Address = _checkoutInfo.Address,
-                        Province = _checkoutInfo.Province,
-                        Wards = _checkoutInfo.Ward,
-                        SubTotal = Subtotal,
-                        Total = Subtotal + ShippingCost
-                    };
-                    
-                    // Call OrderService to create the order
-                    var orderResult = await ServiceManager.OrderService.CreateOrderAsync(orderForCreation);
-                    
-                    if (orderResult.IsSuccess && orderResult.Value != null)
-                    {
-                        var orderId = orderResult.Value.Id;
-                        
-                        try
-                        {
-                            // Tạo danh sách OrderDetailForCreationDto cho từng sản phẩm trong giỏ hàng
-                            var orderDetailsForCreation = new List<OrderDetailForCreationDto>();
-                            
-                            foreach (var item in _cartItems)
-                            {
-                                if (item.BlindBoxId != Guid.Empty)
-                                {
-                                    // Tạo đối tượng OrderDetailForCreationDto
-                                    var orderDetailDto = new OrderDetailForCreationDto
-                                    {
-                                        OrderId = orderId,
-                                        BlindBoxId = item.BlindBoxId,
-                                        Quantity = item.Quantity,
-                                        Price = item.Price
-                                    };
-                                    
-                                    orderDetailsForCreation.Add(orderDetailDto);
-                                }
-                            }
-                            
-                            // Gọi service để tạo chi tiết đơn hàng
-                            if (orderDetailsForCreation.Any())
-                            {
-                                var orderDetailsResult = await ServiceManager.OrderDetailService.CreateBatchOrderDetailsAsync(orderDetailsForCreation);
-                                
-                                if (!orderDetailsResult.IsSuccess)
-                                {
-                                    // Ghi log lỗi nhưng vẫn tiếp tục - đơn hàng đã được tạo thành công
-                                    Console.WriteLine($"Lỗi khi tạo chi tiết đơn hàng: {(orderDetailsResult.Errors != null && orderDetailsResult.Errors.Any() ? string.Join(", ", orderDetailsResult.Errors.Select(e => e.Description)) : "Unknown error")}");
-                                }
-                            }
-                            
-                            // Vẫn lưu thông tin vào localStorage để hiển thị trong trang thành công
-                            List<OrderDetailData> orderDetails = _cartItems.Select(item => new OrderDetailData
-                            {
-                                OrderId = orderId,
-                                BlindBoxId = item.BlindBoxId,
-                                Quantity = item.Quantity,
-                                Price = item.Price,
-                                BlindBoxName = item.ProductName
-                            }).ToList();
-                            
-                            var orderDetailsJson = JsonSerializer.Serialize(orderDetails);
-                            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "order_details_" + orderId, orderDetailsJson);
-                            
-                            // Clear the cart after successful order creation
-                            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "blindbox_cart");
-                            
-                            Snackbar.Add("Đặt hàng thành công!", Severity.Success);
-                            
-                            // Redirect to order success page with the order ID
-                            NavigationManager.NavigateTo($"/order-success/{orderId}");
-                        }
-                        catch (Exception ex)
-                        {
-                            // Ghi log lỗi nhưng vẫn tiếp tục - đơn hàng đã được tạo thành công
-                            Console.WriteLine($"Lỗi khi tạo chi tiết đơn hàng: {ex.Message}");
-                            Snackbar.Add("Đơn hàng đã được tạo nhưng có lỗi khi lưu chi tiết đơn hàng.", Severity.Warning);
-                            NavigationManager.NavigateTo($"/order-success/{orderId}");
-                        }
-                    }
-                    else
-                    {
-                        // Handle order creation failure
-                        var errorMessage = orderResult.Errors != null && orderResult.Errors.Any() 
-                            ? string.Join(", ", orderResult.Errors.Select(e => e.Description))
-                            : "Đã xảy ra lỗi khi tạo đơn hàng. Vui lòng thử lại.";
-                            
-                        Snackbar.Add(errorMessage, Severity.Error);
-                        _isProcessing = false;
-                        StateHasChanged();
-                    }
+                    await ProcessCashOnDeliveryPayment();
                 }
-                // For other payment methods (VNPay)
                 else if (_checkoutInfo.PaymentMethod == "VNPay")
                 {
-                    // Simulate payment processing
-                    await Task.Delay(1500);
-                    
-                    // In a real application, you would redirect to the payment gateway
-                    // For demonstration, we'll create a mock order ID
-                    string orderId = Guid.NewGuid().ToString();
-                    
-                    // If this is an openable blindbox, redirect to open page
-                    if (_isDirectPurchase && _isOpenableBlindBox)
-                    {
-                        NavigationManager.NavigateTo($"/open-blindbox/{BlindBoxId}?orderId={orderId}");
-                    }
-                    else
-                    {
-                        // Regular checkout - redirect to order success page
-                        NavigationManager.NavigateTo($"/order-success/{orderId}");
-                    }
+                    await ProcessVNPayPayment();
+                }
+                else
+                {
+                    Console.WriteLine($"Invalid payment method: {_checkoutInfo.PaymentMethod}");
+                    Snackbar.Add($"Phương thức thanh toán không hợp lệ: {_checkoutInfo.PaymentMethod}", Severity.Error);
+                    _isProcessing = false;
+                    StateHasChanged();
                 }
             }
             catch (Exception ex)
@@ -416,6 +307,133 @@ namespace BlindBoxShop.Application.Pages.Checkout
                 _isProcessing = false;
                 StateHasChanged();
             }
+        }
+        
+        private async Task ProcessCashOnDeliveryPayment()
+        {
+            // Create order with the CreateOrder helper method
+            var order = await CreateOrder("Processing");
+            
+            if (order != null)
+            {
+                // Save order details to localStorage for order success page
+                List<OrderDetailData> orderDetails = _cartItems.Select(item => new OrderDetailData
+                {
+                    OrderId = order.Id,
+                    BlindBoxId = item.BlindBoxId,
+                    Quantity = item.Quantity,
+                    Price = item.Price,
+                    BlindBoxName = item.ProductName
+                }).ToList();
+                
+                var orderDetailsJson = JsonSerializer.Serialize(orderDetails);
+                await JSRuntime.InvokeVoidAsync("localStorage.setItem", "order_details_" + order.Id, orderDetailsJson);
+                
+                // Clear the cart
+                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "blindbox_cart");
+                
+                Snackbar.Add("Đặt hàng thành công!", Severity.Success);
+                
+                // Redirect to order success page
+                NavigationManager.NavigateTo($"/order-success/{order.Id}");
+            }
+            else
+            {
+                _isProcessing = false;
+                StateHasChanged();
+            }
+        }
+        
+        private async Task ProcessVNPayPayment()
+        {
+            // Create order with the CreateOrder helper method
+            var order = await CreateOrder("Pending");
+            
+            if (order != null)
+            {
+                try
+                {
+                    // Get current user ID
+                    var userId = await GetUserIdAsync();
+                    
+                    // Get VNPay payment URL
+                    var baseUrl = NavigationManager.BaseUri.TrimEnd('/');
+                    var paymentResult = await ServiceManager.VNPayService.GetPaymentUrlAsync(order.Id, userId, baseUrl);
+                    
+                    if (paymentResult.IsSuccess && !string.IsNullOrEmpty(paymentResult.Value))
+                    {
+                        // Log URL để debug
+                        Console.WriteLine($"Redirecting to VNPay URL: {paymentResult.Value}");
+                        
+                        // Clear cart before redirect
+                        await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "blindbox_cart");
+                        
+                        // Lưu thông tin đơn hàng vào localStorage để xử lý khi trở về
+                        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "pending_order_id", order.Id.ToString());
+                        
+                        // Hiển thị thông báo cho người dùng
+                        Snackbar.Add("Đang chuyển đến cổng thanh toán VNPay...", Severity.Info);
+                        
+                        // Chuyển hướng đến trang thanh toán VNPay trong cùng cửa sổ thay vì mở cửa sổ mới
+                        NavigationManager.NavigateTo(paymentResult.Value);
+                        
+                        // Không cần thiết lập _isProcessing = false vì chúng ta đang chuyển hướng
+                    }
+                    else
+                    {
+                        var errorMessage = paymentResult.Errors != null && paymentResult.Errors.Any() 
+                            ? string.Join(", ", paymentResult.Errors.Select(e => e.Description))
+                            : "Đã xảy ra lỗi khi tạo URL thanh toán. Vui lòng thử lại.";
+                            
+                        // Hiển thị thông báo lỗi cho người dùng
+                        Snackbar.Add(errorMessage, Severity.Error);
+                        
+                        // Không chuyển hướng đến trang thất bại, chỉ hiện thông báo lỗi
+                        _isProcessing = false;
+                        StateHasChanged();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Lỗi khi xử lý thanh toán VNPay: {ex.Message}");
+                    
+                    // Hiển thị thông báo lỗi cho người dùng
+                    Snackbar.Add($"Lỗi khi xử lý thanh toán: {ex.Message}", Severity.Error);
+                    
+                    // Không chuyển hướng đến trang thất bại, chỉ hiện thông báo lỗi
+                    _isProcessing = false;
+                    StateHasChanged();
+                }
+            }
+            else
+            {
+                // Hiển thị thông báo lỗi cho người dùng
+                Snackbar.Add("Không thể tạo đơn hàng. Vui lòng thử lại.", Severity.Error);
+                
+                // Không chuyển hướng đến trang thất bại, chỉ hiện thông báo lỗi
+                _isProcessing = false;
+                StateHasChanged();
+            }
+        }
+
+        // Helper method to get the current user ID
+        private async Task<Guid> GetUserIdAsync()
+        {
+            try
+            {
+                var userIdStr = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "user_id");
+                if (!string.IsNullOrEmpty(userIdStr) && Guid.TryParse(userIdStr, out var userId))
+                {
+                    return userId;
+                }
+            }
+            catch (Exception)
+            {
+                // Fallback to anonymous user
+            }
+            
+            // Return a default guest ID or anonymous user ID
+            return Guid.Parse("00000000-0000-0000-0000-000000000001"); // Guest user ID
         }
 
         private async Task GetUserInfo()
@@ -472,6 +490,93 @@ namespace BlindBoxShop.Application.Pages.Checkout
             {
                 Console.WriteLine($"Error retrieving user info: {ex.Message}");
                 // Don't show error to user as this is just a convenience feature
+            }
+        }
+
+        // Helper method to create an order with the specified status
+        private async Task<OrderDto> CreateOrder(string status)
+        {
+            try
+            {
+                // Create order object with proper status
+                var orderStatus = status == "Pending" 
+                    ? BlindBoxShop.Shared.Enum.OrderStatus.AwaitingPayment 
+                    : BlindBoxShop.Shared.Enum.OrderStatus.Processing;
+                    
+                var paymentMethod = _checkoutInfo.PaymentMethod == "VNPay" 
+                    ? BlindBoxShop.Shared.Enum.PaymentMethod.VnPay 
+                    : BlindBoxShop.Shared.Enum.PaymentMethod.Cash;
+                    
+                var orderForCreation = new OrderForCreationDto
+                {
+                    UserId = await GetUserIdAsync(),
+                    Status = orderStatus,
+                    PaymentMethod = paymentMethod,
+                    Address = $"{_checkoutInfo.FirstName} {_checkoutInfo.LastName}, {_checkoutInfo.Phone}, {_checkoutInfo.Address}",
+                    Province = _checkoutInfo.Province,
+                    Wards = _checkoutInfo.Ward,
+                    SubTotal = Subtotal,
+                    Total = Subtotal + ShippingCost
+                };
+                
+                // Call OrderService to create the order
+                var orderResult = await ServiceManager.OrderService.CreateOrderAsync(orderForCreation);
+                
+                if (orderResult.IsSuccess && orderResult.Value != null)
+                {
+                    var orderId = orderResult.Value.Id;
+                    
+                    // Create order details for each cart item
+                    var orderDetailsForCreation = new List<OrderDetailForCreationDto>();
+                    
+                    foreach (var item in _cartItems)
+                    {
+                        if (item.BlindBoxId != Guid.Empty)
+                        {
+                            var orderDetailDto = new OrderDetailForCreationDto
+                            {
+                                OrderId = orderId,
+                                BlindBoxId = item.BlindBoxId,
+                                Quantity = item.Quantity,
+                                Price = item.Price
+                            };
+                            
+                            orderDetailsForCreation.Add(orderDetailDto);
+                        }
+                    }
+                    
+                    // Create order details
+                    if (orderDetailsForCreation.Any())
+                    {
+                        var orderDetailsResult = await ServiceManager.OrderDetailService.CreateBatchOrderDetailsAsync(orderDetailsForCreation);
+                        
+                        if (!orderDetailsResult.IsSuccess)
+                        {
+                            Console.WriteLine($"Error creating order details: {(orderDetailsResult.Errors != null && orderDetailsResult.Errors.Any() ? string.Join(", ", orderDetailsResult.Errors.Select(e => e.Description)) : "Unknown error")}");
+                            Snackbar.Add("Order created but there was an error saving order details.", Severity.Warning);
+                        }
+                    }
+                    
+                    return orderResult.Value;
+                }
+                else
+                {
+                    // Handle order creation failure
+                    var errorMessage = orderResult.Errors != null && orderResult.Errors.Any() 
+                        ? string.Join(", ", orderResult.Errors.Select(e => e.Description))
+                        : "An error occurred while creating your order. Please try again.";
+                        
+                    Snackbar.Add(errorMessage, Severity.Error);
+                    
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error creating order: {ex.Message}");
+                Snackbar.Add($"Error creating order: {ex.Message}", Severity.Error);
+                
+                return null;
             }
         }
     }

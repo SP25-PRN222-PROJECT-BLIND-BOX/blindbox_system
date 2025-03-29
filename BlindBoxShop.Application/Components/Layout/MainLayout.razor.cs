@@ -104,34 +104,78 @@ namespace BlindBoxShop.Application.Components.Layout
             try
             {
                 var cartJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "blindbox_cart");
+                Console.WriteLine($"Cart JSON: {(cartJson?.Length > 100 ? cartJson?.Substring(0, 100) + "..." : cartJson)}");
                 
                 if (!string.IsNullOrEmpty(cartJson))
                 {
-                    var cartItems = JsonSerializer.Deserialize<List<CartItem>>(cartJson);
-                    
-                    if (cartItems != null)
+                    try
                     {
-                        var totalCount = cartItems.Sum(item => item.Quantity);
-                        
-                        // Chỉ cập nhật UI nếu số lượng sản phẩm thay đổi
-                        if (_cartItemCount != totalCount)
+                        // Attempt to deserialize as List<CartItem>
+                        var cartItems = JsonSerializer.Deserialize<List<CartItem>>(cartJson);
+                        if (cartItems != null)
                         {
-                            _cartItemCount = totalCount;
-                            StateHasChanged();
+                            var uniqueCount = cartItems.Select(item => item.BlindBoxId).Distinct().Count();
+                            Console.WriteLine($"Cart count (CartItem): {uniqueCount}");
+                            if (_cartItemCount != uniqueCount)
+                            {
+                                _cartItemCount = uniqueCount;
+                                StateHasChanged();
+                            }
+                            return;
                         }
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        _cartItemCount = 0;
+                        Console.WriteLine($"Error parsing as CartItem: {ex.Message}");
+                        // If the above fails, try with Dictionary format (which might be used in new cart implementation)
+                        try
+                        {
+                            var cartItems = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(cartJson);
+                            if (cartItems != null)
+                            {
+                                // Count distinct items by BlindBoxId
+                                var uniqueIds = new HashSet<string>();
+                                foreach (var item in cartItems)
+                                {
+                                    if (item.TryGetValue("BlindBoxId", out var id) && id != null)
+                                    {
+                                        uniqueIds.Add(id.ToString());
+                                    }
+                                }
+                                
+                                var uniqueCount = uniqueIds.Count;
+                                Console.WriteLine($"Cart count (Dictionary): {uniqueCount}");
+                                if (_cartItemCount != uniqueCount)
+                                {
+                                    _cartItemCount = uniqueCount;
+                                    StateHasChanged();
+                                }
+                                return;
+                            }
+                        }
+                        catch (Exception dictEx)
+                        {
+                            Console.WriteLine($"Error parsing as Dictionary: {dictEx.Message}");
+                            // If both fail, set count to 0
+                            if (_cartItemCount != 0)
+                            {
+                                _cartItemCount = 0;
+                                StateHasChanged();
+                            }
+                        }
                     }
                 }
-                else
+                else if (_cartItemCount != 0)
                 {
                     _cartItemCount = 0;
+                    StateHasChanged();
                 }
+
+                Console.WriteLine($"Final cart count: {_cartItemCount}");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine($"Error updating cart count: {ex.Message}");
                 _cartItemCount = 0;
             }
         }

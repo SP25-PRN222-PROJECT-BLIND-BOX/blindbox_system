@@ -257,7 +257,7 @@ namespace BlindBoxShop.Application.Pages
         {
             if (Guid.TryParse(OrderId, out Guid orderId))
             {
-                NavigationManager.NavigateTo($"/account/order-detail/{orderId}");
+                NavigationManager.NavigateTo($"/my-account?tab=1");
             }
         }
     }

@@ -1,16 +1,13 @@
 ﻿using AutoMapper;
+
 using BlindBoxShop.Entities.Models;
 using BlindBoxShop.Repository.Contract;
 using BlindBoxShop.Service.Contract;
 using BlindBoxShop.Shared.Constant.ErrorConstant;
 using BlindBoxShop.Shared.DataTransferObject.BlindBox;
-using BlindBoxShop.Shared.Extension;
 using BlindBoxShop.Shared.ResultModel;
+
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace BlindBoxShop.Service
 {
@@ -99,7 +96,7 @@ namespace BlindBoxShop.Service
                 var latestPrice = priceHistories.OrderByDescending(p => p.CreatedAt).FirstOrDefault();
                 if (latestPrice != null)
                     blindBoxDto.CurrentPrice = latestPrice.Price;
-                    
+
                 // If this is an online BlindBox (Probability > 0), get its items
                 if (blindBox.Probability > 0)
                 {
@@ -107,7 +104,7 @@ namespace BlindBoxShop.Service
                     var items = await _repositoryManager.BlindBoxItem
                         .FindByCondition(item => item.BlindBoxId == blindBoxId, trackChanges)
                         .ToListAsync();
-                        
+
                     if (items.Any())
                     {
                         // Map items to DTOs
@@ -148,7 +145,7 @@ namespace BlindBoxShop.Service
             try
             {
                 var blindBoxes = _blindBoxRepository.FindAll(trackChanges);
-                
+
                 // Apply filtering by category if specified
                 if (blindBoxParameter.CategoryId.HasValue)
                 {
@@ -158,8 +155,8 @@ namespace BlindBoxShop.Service
                 // Apply search by name if specified
                 if (!string.IsNullOrWhiteSpace(blindBoxParameter.SearchByName))
                 {
-                    blindBoxes = blindBoxes.Where(bb => 
-                        bb.Name.Contains(blindBoxParameter.SearchByName, StringComparison.OrdinalIgnoreCase) || 
+                    blindBoxes = blindBoxes.Where(bb =>
+                        bb.Name.Contains(blindBoxParameter.SearchByName, StringComparison.OrdinalIgnoreCase) ||
                         bb.Description.Contains(blindBoxParameter.SearchByName, StringComparison.OrdinalIgnoreCase));
                 }
 
@@ -211,7 +208,6 @@ namespace BlindBoxShop.Service
                     if (latestPrice != null)
                         dto.CurrentPrice = latestPrice.Price;
                 }
-
                 return Result<IEnumerable<BlindBoxDto>>.Success(blindBoxDtos);
             }
             catch (Exception ex)
@@ -234,7 +230,7 @@ namespace BlindBoxShop.Service
 
                 _mapper.Map(blindBoxForUpdate, blindBox);
                 blindBox.UpdatedAt = DateTime.UtcNow;
-                
+
                 _blindBoxRepository.Update(blindBox);
                 await _blindBoxRepository.SaveAsync();
 
@@ -274,10 +270,10 @@ namespace BlindBoxShop.Service
                 // Create a query for blindboxes that belong to the specified package
                 var blindBoxes = _blindBoxRepository
                     .FindByCondition(bb => bb.PackageId == packageId, trackChanges);
-                
+
                 var blindBoxList = await blindBoxes.ToListAsync();
                 var blindBoxDtos = _mapper.Map<IEnumerable<BlindBoxDto>>(blindBoxList);
-                
+
                 // Get current prices for each blindbox
                 foreach (var dto in blindBoxDtos)
                 {
@@ -289,7 +285,7 @@ namespace BlindBoxShop.Service
                     if (latestPrice != null)
                         dto.CurrentPrice = latestPrice.Price;
                 }
-                
+
                 return Result<IEnumerable<BlindBoxDto>>.Success(blindBoxDtos);
             }
             catch (Exception ex)
@@ -301,7 +297,7 @@ namespace BlindBoxShop.Service
                 });
             }
         }
-        
+
         public async Task<Result<bool>> ResetBlindBoxProbabilityAsync(Guid blindBoxId)
         {
             try
@@ -313,7 +309,7 @@ namespace BlindBoxShop.Service
                 // Reset the probability to a default value (e.g., 0.0)
                 blindBox.Probability = 0.0f;
                 blindBox.UpdatedAt = DateTime.UtcNow;
-                
+
                 _blindBoxRepository.Update(blindBox);
                 await _blindBoxRepository.SaveAsync();
 
@@ -328,7 +324,7 @@ namespace BlindBoxShop.Service
                 });
             }
         }
-        
+
         public async Task<Result<bool>> IncrementBlindBoxProbabilityAsync(Guid blindBoxId)
         {
             try
@@ -340,7 +336,7 @@ namespace BlindBoxShop.Service
                 // Increment the probability by a fixed amount (e.g., 0.1)
                 blindBox.Probability += 0.1f;
                 blindBox.UpdatedAt = DateTime.UtcNow;
-                
+
                 _blindBoxRepository.Update(blindBox);
                 await _blindBoxRepository.SaveAsync();
 

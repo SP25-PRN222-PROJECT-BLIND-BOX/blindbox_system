@@ -1,10 +1,10 @@
 ﻿using BlindBoxShop.Entities.Models;
 using BlindBoxShop.Repository.Configuration;
 using BlindBoxShop.Shared.Extensions;
+
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
-using System.Reflection.Emit;
 
 namespace BlindBoxShop.Repository
 {
@@ -88,22 +88,24 @@ namespace BlindBoxShop.Repository
 
         private void HandleTimestampsForAddedEntities(EntityEntry entry)
         {
+            var now = DateTime.UtcNow.SEAsiaStandardTime();
             if (entry.Entity is IBaseEntity baseEntity)
             {
-                baseEntity.CreatedAt = DateTime.UtcNow.SEAsiaStandardTime();
+                baseEntity.CreatedAt = now;
             }
 
             if (entry.Entity is IBaseEntityWithUpdatedAt baseEntityWithUpdatedAt)
             {
-                baseEntityWithUpdatedAt.UpdatedAt = DateTime.UtcNow.SEAsiaStandardTime();
+                baseEntityWithUpdatedAt.UpdatedAt = now;
             }
         }
 
         private void HandleTimestampsForModifiedEntities(EntityEntry entry)
         {
+            var now = DateTime.UtcNow.SEAsiaStandardTime();
             if (entry.Entity is IBaseEntityWithUpdatedAt baseEntityWithUpdatedAt)
             {
-                baseEntityWithUpdatedAt.UpdatedAt = DateTime.UtcNow.SEAsiaStandardTime();
+                baseEntityWithUpdatedAt.UpdatedAt = now;
             }
         }
     }

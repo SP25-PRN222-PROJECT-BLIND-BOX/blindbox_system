@@ -44,6 +44,48 @@ namespace BlindBoxShop.Service
             }
         }
 
+        public async Task<Result<IEnumerable<BlindBoxImageDto>>> CreateBlindBoxImagesAsync(IEnumerable<BlindBoxImageDto> blindBoxImageDtos)
+        {
+            try
+            {
+                if (blindBoxImageDtos == null || !blindBoxImageDtos.Any())
+                {
+                    return Result<IEnumerable<BlindBoxImageDto>>.Failure(new ErrorResult
+                    {
+                        Code = "BlindBoxImage.Create.InvalidData",
+                        Description = "Danh sách ảnh không hợp lệ hoặc rỗng."
+                    });
+                }
+
+               
+                var blindBoxImages = blindBoxImageDtos.Select(dto => new BlindBoxImage
+                {
+                    Id = Guid.NewGuid(),
+                    BlindBoxId = dto.BlindBoxId,
+                    ImageUrl = dto.ImageUrl,
+                    CreatedAt = DateTime.UtcNow
+                }).ToList();
+
+                
+                await _blindBoxImageRepository.CreateRangeAsync(blindBoxImages);
+                await _blindBoxImageRepository.SaveAsync();
+
+                
+                var resultDtos = _mapper.Map<IEnumerable<BlindBoxImageDto>>(blindBoxImages);
+                return Result<IEnumerable<BlindBoxImageDto>>.Success(resultDtos);
+            }
+            catch (Exception ex)
+            {
+                return Result<IEnumerable<BlindBoxImageDto>>.Failure(new ErrorResult
+                {
+                    Code = "BlindBoxImage.Create.Failed",
+                    Description = ex.Message
+                });
+            }
+        }
+
+
+
         public void Dispose()
         {
             _blindBoxImageRepository.Dispose();

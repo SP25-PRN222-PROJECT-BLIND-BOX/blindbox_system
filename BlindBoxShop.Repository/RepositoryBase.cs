@@ -55,6 +55,12 @@ namespace BlindBoxShop.Repository
             .Set<T>()
             .AddRangeAsync(entity);
 
+        public virtual void CreateRange(IEnumerable<T> entities) =>
+            RepositoryContext.Set<T>().AddRange(entities);
+
+        public virtual async Task CreateRangeAsync(IEnumerable<T> entities) =>
+            await RepositoryContext.Set<T>().AddRangeAsync(entities);
+
         public virtual void Update(T entity) =>
             RepositoryContext
             .Set<T>()

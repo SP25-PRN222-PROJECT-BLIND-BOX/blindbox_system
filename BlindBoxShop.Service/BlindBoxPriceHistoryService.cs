@@ -74,6 +74,41 @@ namespace BlindBoxShop.Service
             }
         }
 
+        // Create
+        public async Task<Result<BlindBoxPriceHistoryDto>> CreateAsync(BlindBoxPriceHistoryDto blindBoxPriceHistoryDto)
+        {
+            try
+            {
+                if (blindBoxPriceHistoryDto == null)
+                {
+                    return Result<BlindBoxPriceHistoryDto>.Failure(new ErrorResult
+                    {
+                        Code = "BlindBoxPriceHistory.Create.InvalidData",
+                        Description = "Dữ liệu lịch sử giá không hợp lệ."
+                    });
+                }
+
+                var blindBoxPriceHistory = _mapper.Map<BlindBoxPriceHistory>(blindBoxPriceHistoryDto);
+                blindBoxPriceHistory.Id = Guid.NewGuid();
+                blindBoxPriceHistory.CreatedAt = DateTime.UtcNow;
+
+                await _blindBoxPriceHistoryRepository.CreateAsync(blindBoxPriceHistory);
+                await _blindBoxPriceHistoryRepository.SaveAsync();
+
+                var resultDto = _mapper.Map<BlindBoxPriceHistoryDto>(blindBoxPriceHistory);
+                return Result<BlindBoxPriceHistoryDto>.Success(resultDto);
+            }
+            catch (Exception ex)
+            {
+                return Result<BlindBoxPriceHistoryDto>.Failure(new ErrorResult
+                {
+                    Code = "BlindBoxPriceHistory.Create.Failed",
+                    Description = ex.Message
+                });
+            }
+        }
+
+        
 
         public void Dispose()
         {

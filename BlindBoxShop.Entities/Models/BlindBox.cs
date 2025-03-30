@@ -36,6 +36,8 @@ namespace BlindBoxShop.Entities.Models
         public virtual ICollection<BlindBoxImage>? BlindBoxImages { get; set; }
 
         public virtual ICollection<BlindBoxPriceHistory>? BlindBoxPriceHistories { get; set; }
+
+        public virtual ICollection<BlindBoxItem>? BlindBoxItems { get; set; }
     }
 
 }

@@ -1,9 +1,184 @@
-﻿@using BlindBoxShop.Service.Contract
+@using BlindBoxShop.Service.Contract
+@using BlindBoxShop.Shared.Enum
 @page "/"
 
-<PageTitle>Home</PageTitle>
+<PageTitle>BlindBox Shop - Mystery Awaits</PageTitle>
 
-<h1>Hello, world!</h1>
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="px-2 px-sm-4 mt-4">
+    <!-- Hero Banner Section -->
+    <MudPaper Elevation="0" Class="position-relative overflow-hidden rounded-xl mb-8" Style="height: 500px;">
+        <MudImage Src="https://vending-cdn.kootoro.com/torov-cms/upload/image/1723016271998-L%C3%BD%20gi%E1%BA%A3i%20xu%20h%C6%B0%E1%BB%9Bng%20%C4%91%E1%BB%93%20ch%C6%A1i%20blind%20box%20%C4%91%C6%B0%E1%BB%A3c%20gi%E1%BB%9Bi%20tr%E1%BA%BB%20s%C4%83n%20%C4%91%C3%B3n.jpg" 
+                Alt="BlindBox Hero" Class="object-cover w-100 h-100" Style="filter: brightness(0.7);" />
+        <div class="position-absolute" style="top: 0; left: 0; right: 0; bottom: 0; background-image: linear-gradient(to right, rgba(0,72,72,0.5), rgba(0,139,139,0.5));">
+            <div class="d-flex flex-column align-center justify-center text-center h-100 p-4">
+                <MudText Typo="Typo.h2" Color="Color.Surface" Class="font-weight-bold mb-2 text-shadow">Discover the Mystery Box Experience</MudText>
+                <MudText Typo="Typo.h5" Color="Color.Surface" Class="mb-6 text-shadow">Unbox Excitement with Our Limited Edition Collections</MudText>
+                <MudButton Href="/shop" Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Large" 
+                        Class="px-8 py-3 mud-elevation-4 text-transform-none font-weight-bold"
+                        Style="border-radius: 50rem;">Shop Now</MudButton>
+            </div>
+        </div>
+    </MudPaper>
 
-Welcome to your new app.
+    <!-- New Arrivals Section -->
+    <div class="d-flex justify-space-between align-center mb-4 mt-8">
+        <MudText Typo="Typo.h4" Class="section-title">New Products</MudText>
+        <MudButton Href="/shop" Variant="Variant.Text" Color="Color.Secondary" EndIcon="@Icons.Material.Filled.ArrowForward" 
+                  Class="text-transform-none">View All</MudButton>
+    </div>
+    
+    @if (_isLoading)
+    {
+        <div class="d-flex justify-center my-6">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        </div>
+    }
+    else
+    {
+        <MudGrid Class="mb-10" Spacing="3">
+            @foreach (var box in _newArrivals)
+            {
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Elevation="3" Class="pa-0 h-100 d-flex flex-column rounded-lg overflow-hidden"
+                             Style="transition: all 0.3s ease-in-out; box-shadow: var(--mud-elevation-3);">
+                        <div class="position-relative overflow-hidden" style="height: 240px; cursor: pointer;" 
+                            @onclick="@(() => NavigateToProductDetail(box.Id))">
+                            <MudImage Src="@((_blindBoxImages.ContainsKey(box.Id) ? _blindBoxImages[box.Id] : 
+                                    (!string.IsNullOrEmpty(box.MainImageUrl) ? box.MainImageUrl : "/images/box-placeholder.jpg")))" 
+                                    Alt="@box.Name" Class="w-100 h-100 object-cover" 
+                                    Style="transition: transform 0.5s ease-in-out;" />
+                            
+                            <div class="position-absolute d-flex flex-column gap-1" style="top: 4px; right: 4px;">
+                                @if (IsNewProduct(box.CreatedAt))
+                                {
+                                    <MudChip T="string" Color="Color.Error" Size="Size.Small" 
+                                            Class="px-2 font-weight-bold text-uppercase">
+                                        NEW
+                                    </MudChip>
+                                }
+                                <MudChip T="string" Color="@GetRarityColor(box.Rarity)" Size="Size.Small" 
+                                        Class="px-2 font-weight-bold text-capitalize">
+                                    @box.Rarity.ToString()
+                                </MudChip>
+                                @if (box.Probability > 0)
+                                {
+                                    <MudChip T="string" Color="Color.Secondary" Size="Size.Small" 
+                                            Class="px-2 font-weight-bold">
+                                        <MudIcon Icon="@Icons.Material.Filled.Public" Size="Size.Small" Class="mr-1" />
+                                        Online
+                                    </MudChip>
+                                }
+                            </div>
+                            
+                            @if (box.Probability > 0)
+                            {
+                                <div class="position-absolute bottom-0 left-0 right-0 py-1 px-2" 
+                                     style="background-color: rgba(103, 58, 183, 0.7);">
+                                    <div class="d-flex align-center">
+                                        <MudIcon Icon="@Icons.Material.Filled.Casino" Color="Color.Surface" Size="Size.Small" Class="mr-1" />
+                                        <MudText Typo="Typo.caption" Color="Color.Surface">Try Your Luck Online</MudText>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="pa-4 d-flex flex-column flex-grow-1">
+                            <MudText Typo="Typo.h6" Class="mb-2 text-truncate font-weight-bold" 
+                                    Style="cursor: pointer;" @onclick="@(() => NavigateToProductDetail(box.Id))">
+                                @box.Name
+                            </MudText>
+                            <div class="d-flex align-center mb-2">
+                                <MudRating ReadOnly="true" SelectedValue="@((int)box.TotalRatingStar)" />
+                                <MudText Typo="Typo.caption" Class="ml-1">(@box.TotalRatingStar)</MudText>
+                            </div>
+                            <MudText Typo="Typo.body2" Class="mb-3 flex-grow-1" 
+                                    Style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                @box.Description
+                            </MudText>
+                            <MudText Typo="Typo.h6" Color="Color.Primary" Class="font-weight-bold mb-3">@FormatPrice(box.CurrentPrice)</MudText>
+                            <div class="d-flex">
+                                <MudButton Variant="Variant.Text" 
+                                        Color="Color.Primary" 
+                                        StartIcon="@Icons.Material.Filled.Visibility" 
+                                        Href="@($"/blindbox/{box.Id}")"
+                                        Class="flex-grow-0 px-2 text-transform-none">Details</MudButton>
+                                <MudSpacer />
+                                @if (box.Probability > 0)
+                                {
+                                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" 
+                                              StartIcon="@Icons.Material.Filled.Casino"
+                                              Href="@($"/blindbox/{box.Id}")"
+                                              Class="text-transform-none">
+                                        Try Your Luck
+                                    </MudButton>
+                                }
+                                else
+                                {
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                                              StartIcon="@Icons.Material.Filled.ShoppingCart"
+                                              OnClick="@(() => AddToCart(box))"
+                                              Class="text-transform-none">
+                                        Add to Cart
+                                    </MudButton>
+                                }
+                            </div>
+                        </div>
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+    
+    <!-- Testimonials Section -->
+    <MudText Typo="Typo.h4" Class="mb-6 section-title">Customer Reviews</MudText>
+    
+    @if (_isLoading)
+    {
+        <div class="d-flex justify-center my-6">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        </div>
+    }
+    else
+    {
+        <MudPaper Elevation="0" Class="mb-10 pa-0 overflow-hidden" Style="background-color: rgba(72, 209, 204, 0.05); border-radius: 16px;">
+            <MudCarousel TData="TestimonialDto" AutoCycle="true" ShowArrows="true" ShowBullets="true" EnableSwipeGesture="true" 
+                       Style="height: 320px;">
+                <ItemTemplate Context="testimonial">
+                    <MudPaper Elevation="0" Class="py-8 px-4 mx-2 h-100 d-flex flex-column align-center justify-center text-center" 
+                            Style="background-color: transparent;">
+                        <MudAvatar Size="Size.Large" Image="@testimonial.AvatarUrl" Class="mb-4 mud-elevation-4" 
+                                Style="height: 80px; width: 80px;" />
+                        <MudRating ReadOnly="true" SelectedValue="@testimonial.Rating" Class="mb-4" />
+                        <MudText Typo="Typo.h6" Class="mb-1 font-weight-bold">@testimonial.Name</MudText>
+                        <MudText Typo="Typo.caption" Class="mb-4 text-secondary">@testimonial.Date.ToString("MMMM dd, yyyy")</MudText>
+                        <MudText Typo="Typo.body1" Class="font-italic px-md-16">"@testimonial.Comment"</MudText>
+                    </MudPaper>
+                </ItemTemplate>
+            </MudCarousel>
+        </MudPaper>
+    }
 
+    <!-- Newsletter Section -->
+    <MudPaper Elevation="3" Class="mb-8 rounded-xl overflow-hidden" Style="background: linear-gradient(135deg, #008b8b 0%, #48d1cc 100%);">
+        <div class="px-6 py-8 d-flex flex-column flex-md-row align-center justify-space-between">
+            <div class="mb-4 mb-md-0 mr-md-8 flex-grow-1">
+                <MudText Typo="Typo.h4" Color="Color.Surface" Class="font-weight-bold mb-2">Stay Updated</MudText>
+                <MudText Typo="Typo.body1" Color="Color.Surface" Style="opacity: 0.9;">
+                    Subscribe to get notified about new releases and exclusive promotions
+                </MudText>
+            </div>
+            <div class="d-flex flex-column flex-sm-row flex-grow-1 flex-md-grow-0" style="max-width: 500px;">
+                <MudTextField T="string" Placeholder="Your Email" Variant="Variant.Outlined" 
+                             Class="bg-white/10 mb-2 mb-sm-0 flex-grow-1" 
+                             Style="backdrop-filter: blur(5px);" />
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Large" 
+                          Class="text-transform-none font-weight-bold">Subscribe</MudButton>
+            </div>
+        </div>
+    </MudPaper>
+</MudContainer>
+
+<style>
+    .text-shadow {
+        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+</style> 

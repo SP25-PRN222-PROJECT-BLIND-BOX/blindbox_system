@@ -18,6 +18,15 @@
     <Routes @rendermode="InteractiveServer" />
     <script src="_framework/blazor.web.js"></script>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <script src="~/js/cart.js"></script>
+    <script>
+        // Fix any JavaScript related issues
+        window.blazorExtensions = {
+            navigateTo: function (url) {
+                window.location.href = url;
+            }
+        };
+    </script>
 </body>
 
 </html>

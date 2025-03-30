@@ -1,0 +1,384 @@
+@page "/payment/vnpay-callback"
+@page "/payment/blindbox-gacha/payment-return"
+@page "/payment/order-return"
+@using BlindBoxShop.Shared.DataTransferObject.VNPay
+@using Microsoft.AspNetCore.WebUtilities
+@using System.Collections.Specialized
+@layout BlindBoxShop.Application.Components.Layout.MainLayout
+
+@inject IServiceManager ServiceManager
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Processing Payment - BoxBox</PageTitle>
+
+<div class="container mx-auto py-10 px-4">
+    <div class="max-w-md mx-auto bg-white rounded-lg shadow-lg p-8 text-center">
+        <div class="flex flex-col items-center justify-center space-y-4">
+            <MudProgressCircular Size="Size.Large" Indeterminate="true" Color="Color.Primary" />
+            <MudText Typo="Typo.h6" Class="text-black">Processing payment...</MudText>
+            <MudText Typo="Typo.body2" Class="text-black">Please do not close this page</MudText>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool _isFirstRender = true;
+    private VNPayRequest _vnpayRequest;
+    private PaymentType _paymentType = PaymentType.Unknown;
+
+    private enum PaymentType
+    {
+        Unknown,
+        BlindBoxGacha,
+        Checkout,
+        OrderDetails
+    }
+
+    protected override void OnInitialized()
+    {
+        // Parse query parameters from URL - only prepare the data, don't call JS here
+        var uri = new Uri(NavigationManager.Uri);
+        var queryParams = QueryHelpers.ParseQuery(uri.Query);
+        
+        // Determine payment type based on URI path
+        if (uri.AbsolutePath.Contains("/blindbox-gacha/payment-return") || uri.AbsolutePath.Contains("/payment/blindbox-gacha"))
+        {
+            _paymentType = PaymentType.BlindBoxGacha;
+            Console.WriteLine("Detected BlindBoxGacha payment return");
+        }
+        else if (uri.AbsolutePath.Contains("/order-return"))
+        {
+            _paymentType = PaymentType.OrderDetails;
+            Console.WriteLine("Detected Order payment return");
+        }
+        else
+        {
+            // Also check the referring URL as a fallback
+            Console.WriteLine("Could not determine payment type from path, will check localStorage");
+        }
+        
+        // Create VNPayRequest object from query parameters
+        _vnpayRequest = new VNPayRequest
+        {
+            VnpAmount = queryParams.TryGetValue("vnp_Amount", out var amount) ? amount.ToString() : string.Empty,
+            VnpBankCode = queryParams.TryGetValue("vnp_BankCode", out var bankCode) ? bankCode.ToString() : string.Empty,
+            VnpBankTranNo = queryParams.TryGetValue("vnp_BankTranNo", out var bankTranNo) ? bankTranNo.ToString() : string.Empty,
+            VnpCardType = queryParams.TryGetValue("vnp_CardType", out var cardType) ? cardType.ToString() : string.Empty,
+            VnpOrderInfo = queryParams.TryGetValue("vnp_OrderInfo", out var orderInfo) ? orderInfo.ToString() : string.Empty,
+            VnpPayDate = queryParams.TryGetValue("vnp_PayDate", out var payDate) ? payDate.ToString() : string.Empty,
+            VnpResponseCode = queryParams.TryGetValue("vnp_ResponseCode", out var responseCode) ? responseCode.ToString() : string.Empty,
+            VnpSecureHash = queryParams.TryGetValue("vnp_SecureHash", out var secureHash) ? secureHash.ToString() : string.Empty,
+            VnpTmnCode = queryParams.TryGetValue("vnp_TmnCode", out var tmnCode) ? tmnCode.ToString() : string.Empty,
+            VnpTransactionNo = queryParams.TryGetValue("vnp_TransactionNo", out var transactionNo) ? transactionNo.ToString() : string.Empty,
+            VnpTransactionStatus = queryParams.TryGetValue("vnp_TransactionStatus", out var transactionStatus) ? transactionStatus.ToString() : string.Empty,
+            VnpTxnRef = queryParams.TryGetValue("vnp_TxnRef", out var txnRef) ? txnRef.ToString() : string.Empty
+        };
+    }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await ProcessPaymentCallbackAsync();
+            _isFirstRender = false;
+        }
+    }
+    
+    private async Task ProcessPaymentCallbackAsync()
+    {
+        try
+        {
+            // Log full URL for debugging
+            Console.WriteLine($"Processing payment callback URL: {NavigationManager.Uri}");
+            
+            // If we couldn't determine payment type from URL, check localStorage
+            if (_paymentType == PaymentType.Unknown)
+            {
+                var referringUrl = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "payment_referring_url");
+                Console.WriteLine($"Referring URL from localStorage: {referringUrl ?? "Unknown"}");
+                
+                if (referringUrl?.Contains("blindbox-gacha") == true)
+                {
+                    _paymentType = PaymentType.BlindBoxGacha;
+                    Console.WriteLine("Detected BlindBoxGacha payment from localStorage");
+                }
+                else
+                {
+                    // Treat all other payment sources as OrderDetails for consistency
+                    _paymentType = PaymentType.OrderDetails;
+                    Console.WriteLine("Treating payment as OrderDetails based on referring URL");
+                }
+            }
+            
+            Console.WriteLine($"Payment type determined: {_paymentType}");
+            
+            // Debug: Check sessionStorage values before processing
+            var orderPaymentId = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "order_payment_id");
+            var checkoutOrderId = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "checkout_order_id");
+            Console.WriteLine($"SessionStorage - order_payment_id: '{orderPaymentId}', checkout_order_id: '{checkoutOrderId}'");
+            
+            // Process payment with VNPay service (common for all payment types)
+            var result = await ServiceManager.VNPayService.ProcessPaymentCallbackAsync(_vnpayRequest);
+            
+            if (result.IsSuccess && result.Value != null)
+            {
+                var response = result.Value;
+                
+                // Check if payment was successful
+                if (response.IsSuccessful)
+                {
+                    switch (_paymentType)
+                    {
+                        case PaymentType.BlindBoxGacha:
+                            await HandleBlindBoxGachaPaymentSuccess();
+                            break;
+                            
+                        case PaymentType.OrderDetails:
+                        default:
+                            // Handle all non-BlindBoxGacha payments with the same method
+                            await HandleOrderDetailsPaymentSuccess();
+                            break;
+                    }
+                }
+                else
+                {
+                    // Payment failed - handle accordingly based on payment type
+                    Console.WriteLine($"Payment failed with response code: {_vnpayRequest.VnpResponseCode}");
+                    
+                    // Log the error for debugging
+                    var errorMessage = $"Payment failed with code: {_vnpayRequest.VnpResponseCode}";
+                    await JSRuntime.InvokeVoidAsync("localStorage.setItem", "payment_error", errorMessage);
+                    
+                    // Determine where to redirect based on payment type
+                    switch (_paymentType)
+                    {
+                        case PaymentType.BlindBoxGacha:
+                            var blindBoxId = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "gacha_blindbox_id");
+                            if (!string.IsNullOrEmpty(blindBoxId))
+                            {
+                                NavigationManager.NavigateTo($"/blindbox-gacha/{blindBoxId}", true);
+                            }
+                            else
+                            {
+                                NavigationManager.NavigateTo("/shop", true);
+                            }
+                            break;
+                        
+                        case PaymentType.OrderDetails:
+                        default:
+                            // All non-BlindBoxGacha payment failures go to my account
+                            NavigationManager.NavigateTo("/my-account?tab=1", true);
+                            break;
+                    }
+                }
+            }
+            else
+            {
+                // Error processing payment
+                var errorMessage = result.Errors?.FirstOrDefault()?.Description ?? "An error occurred while processing the payment.";
+                await JSRuntime.InvokeVoidAsync("localStorage.setItem", "payment_error", errorMessage);
+                
+                // Determine where to redirect based on payment type
+                switch (_paymentType)
+                {
+                    case PaymentType.BlindBoxGacha:
+                        var blindBoxId = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "gacha_blindbox_id");
+                        if (!string.IsNullOrEmpty(blindBoxId))
+                        {
+                            NavigationManager.NavigateTo($"/blindbox-gacha/{blindBoxId}", true);
+                        }
+                        else
+                        {
+                            NavigationManager.NavigateTo("/shop", true);
+                        }
+                        break;
+                        
+                    case PaymentType.OrderDetails:
+                        NavigationManager.NavigateTo("/my-account?tab=1", true);
+                        break;
+                        
+                    default:
+                        NavigationManager.NavigateTo("/order-failed", true);
+                        break;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception in ProcessPaymentCallbackAsync: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "payment_error", $"Payment processing error: {ex.Message}");
+            
+            // Default error path
+            NavigationManager.NavigateTo("/order-failed", true);
+        }
+    }
+    
+    private async Task HandleBlindBoxGachaPaymentSuccess()
+    {
+        try
+        {
+            // Get the BlindBox ID and temp order ID
+            var blindBoxId = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "gacha_blindbox_id");
+            var tempOrderId = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "gacha_order_id");
+            
+            // Update order status to "Processing" after payment success
+            if (!string.IsNullOrEmpty(tempOrderId) && Guid.TryParse(tempOrderId, out Guid orderId))
+            {
+                try
+                {
+                    // Update the order status from "AwaitingPayment" to "Processing"
+                    var updateResult = await ServiceManager.OrderService.UpdateOrderStatusAsync(
+                        orderId, 
+                        "Processing", 
+                        "Payment completed successfully"
+                    );
+                    
+                    if (updateResult.IsSuccess)
+                    {
+                        Console.WriteLine($"Updated order {orderId} status to Processing");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Failed to update order status: {string.Join(", ", updateResult.Errors.Select(e => e.Description))}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error updating order status: {ex.Message}");
+                }
+            }
+
+            // Set the payment as successful
+            await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "gacha_payment_success", "true");
+                                
+            // Redirect to the gacha page with appropriate parameters
+            if (!string.IsNullOrEmpty(blindBoxId))
+            {
+                // Add VNPay parameters to help the gacha page know payment was successful
+                var redirectUrl = $"/blindbox-gacha/{blindBoxId}?vnp_ResponseCode={_vnpayRequest.VnpResponseCode}&vnp_TxnRef={_vnpayRequest.VnpTxnRef}";
+                Console.WriteLine($"Redirecting to BlindBox gacha: {redirectUrl}");
+                NavigationManager.NavigateTo(redirectUrl, true);
+            }
+            else
+            {
+                // Fallback if no blindBoxId is available
+                NavigationManager.NavigateTo("/blindbox-gacha?vnp_ResponseCode=00", true);
+            }
+        }
+        catch (Exception ex) 
+        {
+            Console.WriteLine($"Error in HandleBlindBoxGachaPaymentSuccess: {ex.Message}");
+            NavigationManager.NavigateTo("/blindbox-gacha", true);
+        }
+    }
+    
+    private async Task HandleOrderDetailsPaymentSuccess()
+    {
+        try
+        {
+            // Get the return URL if specified
+            var query = QueryHelpers.ParseQuery(new Uri(NavigationManager.Uri).Query);
+            string returnUrl = query.TryGetValue("return_url", out var url) ? url.ToString() : "/my-account?tab=1";
+            
+            // Get the order ID - first try sessionStorage
+            var orderId = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "order_payment_id");
+            Console.WriteLine($"Initial order_payment_id from sessionStorage: '{orderId}'");
+            
+            // If order_payment_id is empty in sessionStorage, try localStorage
+            if (string.IsNullOrEmpty(orderId))
+            {
+                orderId = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "order_payment_id");
+                Console.WriteLine($"Fallback order_payment_id from localStorage: '{orderId}'");
+            }
+            
+            // If still empty, try checkout_order_id in both storage types
+            if (string.IsNullOrEmpty(orderId))
+            {
+                orderId = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "checkout_order_id");
+                Console.WriteLine($"Fallback checkout_order_id from sessionStorage: '{orderId}'");
+                
+                if (string.IsNullOrEmpty(orderId))
+                {
+                    orderId = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "checkout_order_id");
+                    Console.WriteLine($"Fallback checkout_order_id from localStorage: '{orderId}'");
+                }
+            }
+            
+            // Try to extract order ID from URL as a last resort
+            if (string.IsNullOrEmpty(orderId) && !string.IsNullOrEmpty(_vnpayRequest.VnpOrderInfo))
+            {
+                orderId = _vnpayRequest.VnpOrderInfo;
+                Console.WriteLine($"Last resort orderId from VnpOrderInfo: '{orderId}'");
+            }
+            
+            Console.WriteLine($"Final order payment success for order: '{orderId}'");
+            
+            // Update order status to "Processing" after payment success
+            if (!string.IsNullOrEmpty(orderId) && Guid.TryParse(orderId, out Guid orderGuid))
+            {
+                try
+                {
+                    // Update the order status from "AwaitingPayment" to "Processing"
+                    var updateResult = await ServiceManager.OrderService.UpdateOrderStatusAsync(
+                        orderGuid, 
+                        "Processing", 
+                        "Payment completed successfully"
+                    );
+                    
+                    if (updateResult.IsSuccess)
+                    {
+                        Console.WriteLine($"Updated order {orderGuid} status to Processing");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Failed to update order status: {string.Join(", ", updateResult.Errors.Select(e => e.Description))}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error updating order status: {ex.Message}");
+                }
+            }
+            
+            // Clear storage after use
+            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "order_payment_id");
+            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "checkout_order_id");
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "order_payment_id");
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "checkout_order_id");
+            
+            // Clear cart after successful payment
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "blindbox_cart");
+            
+            // First priority: Redirect to order success with order ID if available
+            if (!string.IsNullOrEmpty(orderId))
+            {
+                Console.WriteLine($"Redirecting to order success page with ID: {orderId}");
+                
+                // Save order ID to sessionStorage for the OrderSuccess page to use
+                await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "success_order_id", orderId);
+                
+                // Redirect to order success page with ID
+                NavigationManager.NavigateTo($"/order-success/{orderId}", true);
+            }
+            // Second priority: Use the return URL from query parameters if specified
+            else if (!string.IsNullOrEmpty(returnUrl) && returnUrl != "/my-account?tab=1")
+            {
+                Console.WriteLine($"Redirecting to specified return URL: {returnUrl}");
+                NavigationManager.NavigateTo(returnUrl, true);
+            }
+            // Fallback: Redirect to generic order success page
+            else
+            {
+                Console.WriteLine("Redirecting to generic order success page");
+                NavigationManager.NavigateTo("/order-success", true);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in HandleOrderDetailsPaymentSuccess: {ex.Message}");
+            NavigationManager.NavigateTo("/order-success", true);
+        }
+    }
+} 

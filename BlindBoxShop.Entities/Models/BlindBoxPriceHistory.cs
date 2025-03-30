@@ -9,6 +9,10 @@ namespace BlindBoxShop.Entities.Models
         public decimal DefaultPrice { get; set; }
 
         public decimal Price { get; set; }
+        
+        public decimal DefaultProbability { get; set; }
+        
+        public decimal Probability { get; set; }
 
         public virtual BlindBox? BlindBox { get; set; }
 

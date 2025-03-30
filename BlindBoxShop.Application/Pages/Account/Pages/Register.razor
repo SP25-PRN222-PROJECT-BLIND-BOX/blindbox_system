@@ -1,12 +1,13 @@
-﻿@page "/Account/Register"
-
+﻿@page "/account/register"
 @using System.ComponentModel.DataAnnotations
 @using System.Text
 @using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
-@using BlindBoxShop.Entities.Models;
-
+@using BlindBoxShop.Entities.Models
+@using Microsoft.AspNetCore.Authorization
+@layout BlindBoxShop.Application.Components.Layout.MainLayout
+@attribute [AllowAnonymous]
 
 @inject UserManager<User> UserManager
 @inject IUserStore<User> UserStore
@@ -14,111 +15,208 @@
 @inject IEmailSender<User> EmailSender
 @inject ILogger<Register> Logger
 @inject NavigationManager NavigationManager
-@inject IdentityRedirectManager RedirectManager
+@inject ISnackbar Snackbar
 
-<PageTitle>Register</PageTitle>
+<PageTitle>Đăng ký - BoxBox</PageTitle>
 
-<h1>Register</h1>
+<!-- Page Header -->
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-0 px-0">
+    <MudPaper Elevation="0" Class="page-header" Style="background-color: var(--mud-palette-secondary);">
+        <MudText Typo="Typo.h3" Class="font-weight-bold mb-2">Đăng ký tài khoản</MudText>
+        <MudText Typo="Typo.body1">Tạo tài khoản để mua sắm và theo dõi đơn hàng của bạn</MudText>
+    </MudPaper>
+</MudContainer>
 
-<div class="row">
-    <div class="col-md-4">
-        <StatusMessage Message="@Message" />
-        <EditForm Model="Input" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="RegisterUser" FormName="register">
+<MudContainer MaxWidth="MaxWidth.Medium" Class="py-8">
+    <MudCard Elevation="3" Class="rounded-lg pa-7">
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-4" Variant="Variant.Filled">@errorMessage</MudAlert>
+        }
+        
+        <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4 font-weight-bold">Create a new account</MudText>
+        
+        <EditForm Model="Input" OnSubmit="RegisterUser">
             <DataAnnotationsValidator />
-            <h2>Create a new account.</h2>
-            <hr />
-            <ValidationSummary class="text-danger" role="alert" />
-
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.FirstName" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label for="firstname">First name</label>
-                <ValidationMessage For="() => Input.FirstName" class="text-danger" />
+            
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudTextField Label="First Name"
+                               @bind-Value="Input.FirstName"
+                               For="@(() => Input.FirstName)"
+                               Variant="Variant.Outlined"
+                               Class="mb-4"
+                               Required="true"
+                               RequiredError="First name is required"
+                               FullWidth="true" />
+                </MudItem>
+                
+                <MudItem xs="12" sm="6">
+                    <MudTextField Label="Last Name"
+                               @bind-Value="Input.LastName"
+                               For="@(() => Input.LastName)"
+                               Variant="Variant.Outlined"
+                               Class="mb-4"
+                               Required="true"
+                               RequiredError="Last name is required"
+                               FullWidth="true" />
+                </MudItem>
+                
+                <MudItem xs="12">
+                    <MudTextField Label="Email"
+                               @bind-Value="Input.Email"
+                               For="@(() => Input.Email)"
+                               Variant="Variant.Outlined"
+                               Class="mb-4"
+                               Adornment="Adornment.Start"
+                               AdornmentIcon="@Icons.Material.Filled.Email"
+                               Required="true"
+                               RequiredError="Email is required"
+                               FullWidth="true" />
+                </MudItem>
+                
+                <MudItem xs="12" sm="6">
+                    <MudTextField Label="Password"
+                               @bind-Value="Input.Password"
+                               For="@(() => Input.Password)"
+                               Variant="Variant.Outlined"
+                               InputType="InputType.Password"
+                               Class="mb-4"
+                               Adornment="Adornment.Start"
+                               AdornmentIcon="@Icons.Material.Filled.Lock"
+                               Required="true"
+                               RequiredError="Password is required"
+                               FullWidth="true" />
+                </MudItem>
+                
+                <MudItem xs="12" sm="6">
+                    <MudTextField Label="Confirm Password"
+                               @bind-Value="Input.ConfirmPassword"
+                               For="@(() => Input.ConfirmPassword)"
+                               Variant="Variant.Outlined"
+                               InputType="InputType.Password"
+                               Class="mb-4"
+                               Adornment="Adornment.Start"
+                               AdornmentIcon="@Icons.Material.Filled.Lock"
+                               Required="true"
+                               RequiredError="Password confirmation is required"
+                               FullWidth="true" />
+                </MudItem>
+                
+                <MudItem xs="12">
+                    <MudTextField Label="Phone Number"
+                               @bind-Value="Input.PhoneNumber"
+                               For="@(() => Input.PhoneNumber)"
+                               Variant="Variant.Outlined"
+                               Class="mb-4"
+                               Adornment="Adornment.Start"
+                               AdornmentIcon="@Icons.Material.Filled.Phone"
+                               FullWidth="true" />
+                </MudItem>
+                
+                <MudItem xs="12">
+                    <MudTextField Label="Address"
+                               @bind-Value="Input.Address"
+                               For="@(() => Input.Address)"
+                               Variant="Variant.Outlined"
+                               Class="mb-4"
+                               Adornment="Adornment.Start"
+                               AdornmentIcon="@Icons.Material.Filled.Home"
+                               FullWidth="true" />
+                </MudItem>
+            </MudGrid>
+            
+            <div class="d-flex flex-column gap-2 mt-4">
+                <MudButton ButtonType="ButtonType.Submit"
+                         Variant="Variant.Filled"
+                         Color="Color.Primary"
+                         Size="Size.Large"
+                         StartIcon="@Icons.Material.Filled.PersonAdd"
+                         FullWidth="true">
+                    Register
+                </MudButton>
+                
+                <MudButton Href="/account/login"
+                         Variant="Variant.Text"
+                         Color="Color.Secondary"
+                         Size="Size.Medium"
+                         Class="mt-2"
+                         FullWidth="true">
+                    Already have an account? Sign in
+                </MudButton>
             </div>
-
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.LastName" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label for="lastname">Last name</label>
-                <ValidationMessage For="() => Input.LastName" class="text-danger" />
-            </div>
-
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
-                <label for="email">Email</label>
-                <ValidationMessage For="() => Input.Email" class="text-danger" />
-            </div>
-
-            <div class="form-floating mb-3">
-                <InputText type="password" @bind-Value="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label for="password">Password</label>
-                <ValidationMessage For="() => Input.Password" class="text-danger" />
-            </div>
-
-            <div class="form-floating mb-3">
-                <InputText type="password" @bind-Value="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label for="confirm-password">Confirm Password</label>
-                <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger" />
-            </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
         </EditForm>
-    </div>
-    <div class="col-md-6 col-md-offset-2">
-        <section>
-            <h3>Use another service to register.</h3>
-            <hr />
-            <ExternalLoginPicker />
-        </section>
-    </div>
-</div>
+    </MudCard>
+</MudContainer>
 
 @code {
-    private IEnumerable<IdentityError>? identityErrors;
-
-    [SupplyParameterFromForm]
+    private string? errorMessage;
+    
     private InputModel Input { get; set; } = new();
-
+    
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
-
-    private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
-
-    public async Task RegisterUser(EditContext editContext)
+    
+    private async Task RegisterUser(EditContext context)
     {
-        var user = CreateUser();
-        user.FirstName = Input.FirstName;
-        user.LastName = Input.LastName;
-        await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
-        var emailStore = GetEmailStore();
-        await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
-        var result = await UserManager.CreateAsync(user, Input.Password);
-
-        if (!result.Succeeded)
+        if (context.Validate())
         {
-            identityErrors = result.Errors;
-            return;
+            try
+            {
+                // Create the user object
+                var user = CreateUser();
+                
+                // Set user properties
+                user.FirstName = Input.FirstName;
+                user.LastName = Input.LastName;
+                user.PhoneNumber = Input.PhoneNumber;
+                user.Address = Input.Address;
+                user.CreatedAt = DateTime.Now;
+                
+                // Try to create the user account
+                await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
+                var emailStore = GetEmailStore();
+                await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+                var result = await UserManager.CreateAsync(user, Input.Password);
+
+                if (result.Succeeded)
+                {
+                    Logger.LogInformation("User created a new account with password.");
+                    Snackbar.Add("Registration successful!", Severity.Success);
+
+                    // Generate an email confirmation token and create a confirmation link
+                    var userId = await UserManager.GetUserIdAsync(user);
+                    var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
+                    code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+                    var callbackUrl = NavigationManager.GetUriWithQueryParameters(
+                        NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
+                        new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code, ["returnUrl"] = ReturnUrl });
+
+                    await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
+
+                    if (UserManager.Options.SignIn.RequireConfirmedAccount)
+                    {
+                        NavigationManager.NavigateTo($"/account/registerconfirmation?email={Uri.EscapeDataString(Input.Email)}&returnUrl={Uri.EscapeDataString(ReturnUrl ?? "/")}");
+                    }
+                    else
+                    {
+                        await SignInManager.SignInAsync(user, isPersistent: false);
+                        NavigationManager.NavigateTo(ReturnUrl ?? "/");
+                    }
+                }
+                else
+                {
+                    errorMessage = $"Error: {string.Join(", ", result.Errors.Select(e => e.Description))}";
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"An error occurred: {ex.Message}";
+                Logger.LogError(ex, "Error during registration");
+            }
         }
-
-        Logger.LogInformation("User created a new account with password.");
-
-        var userId = await UserManager.GetUserIdAsync(user);
-        var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
-        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-        var callbackUrl = NavigationManager.GetUriWithQueryParameters(
-            NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
-            new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code, ["returnUrl"] = ReturnUrl });
-
-        await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
-
-        if (UserManager.Options.SignIn.RequireConfirmedAccount)
-        {
-            RedirectManager.RedirectTo(
-                "Account/RegisterConfirmation",
-                new() { ["email"] = Input.Email, ["returnUrl"] = ReturnUrl });
-        }
-
-        await SignInManager.SignInAsync(user, isPersistent: false);
-        RedirectManager.RedirectTo(ReturnUrl);
     }
-
+    
     private User CreateUser()
     {
         try
@@ -131,7 +229,7 @@
                 $"Ensure that '{nameof(User)}' is not an abstract class and has a parameterless constructor.");
         }
     }
-
+    
     private IUserEmailStore<User> GetEmailStore()
     {
         if (!UserManager.SupportsUserEmail)
@@ -140,35 +238,41 @@
         }
         return (IUserEmailStore<User>)UserStore;
     }
-
-    private sealed class InputModel
+    
+    private class InputModel
     {
-        [Required]
-        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
-        [DataType(DataType.Text)]
-        [Display(Name = "FirstName")]
+        [Required(ErrorMessage = "First name is required")]
+        [StringLength(100, ErrorMessage = "First name must be between {2} and {1} characters", MinimumLength = 2)]
+        [Display(Name = "First Name")]
         public string FirstName { get; set; } = "";
-
-        [Required]
-        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
-        [DataType(DataType.Text)]
-        [Display(Name = "LastName")]
+        
+        [Required(ErrorMessage = "Last name is required")]
+        [StringLength(100, ErrorMessage = "Last name must be between {2} and {1} characters", MinimumLength = 2)]
+        [Display(Name = "Last Name")]
         public string LastName { get; set; } = "";
-
-        [Required]
-        [EmailAddress]
+        
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email format")]
         [Display(Name = "Email")]
         public string Email { get; set; } = "";
-
-        [Required]
-        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        
+        [Required(ErrorMessage = "Password is required")]
+        [StringLength(100, ErrorMessage = "Password must be at least {2} characters long", MinimumLength = 6)]
         [DataType(DataType.Password)]
         [Display(Name = "Password")]
         public string Password { get; set; } = "";
-
+        
+        [Required(ErrorMessage = "Password confirmation is required")]
         [DataType(DataType.Password)]
         [Display(Name = "Confirm password")]
-        [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
+        [Compare("Password", ErrorMessage = "Passwords do not match")]
         public string ConfirmPassword { get; set; } = "";
+        
+        [Phone(ErrorMessage = "Invalid phone number format")]
+        [Display(Name = "Phone Number")]
+        public string? PhoneNumber { get; set; }
+        
+        [Display(Name = "Address")]
+        public string? Address { get; set; }
     }
 }

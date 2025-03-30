@@ -1,0 +1,138 @@
+@page "/cart"
+@layout BlindBoxShop.Application.Components.Layout.MainLayout
+@using BlindBoxShop.Application.Models
+
+<PageTitle>Giỏ Hàng</PageTitle>
+
+<div class="container mx-auto py-8 px-4">
+    <div class="bg-gradient-to-r from-cyan-600 to-cyan-800 rounded-lg p-6 mb-8 shadow-md">
+        <div class="flex items-center">
+            <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" Color="Color.Default" Class="mr-4 text-white" />
+            <h1 class="text-2xl font-bold text-white">Giỏ Hàng (@_uniqueItemCount sản phẩm)</h1>
+        </div>
+    </div>
+
+    @if (_cartItems.Count == 0)
+    {
+        <div class="bg-white rounded-lg shadow-lg p-10 text-center">
+            <div class="flex justify-center">
+                <MudIcon Icon="@Icons.Material.Outlined.RemoveShoppingCart" Size="Size.Large" Class="text-cyan-500 mb-6" Style="width: 64px; height: 64px;" />
+            </div>
+            <h3 class="text-xl font-medium mb-4 text-cyan-800">Giỏ hàng của bạn đang trống</h3>
+            <p class="text-gray-600 mb-6 max-w-md mx-auto">Có vẻ như bạn chưa thêm sản phẩm nào vào giỏ hàng. Khám phá các BlindBox độc đáo của chúng tôi ngay nào!</p>
+        </div>
+    }
+    else
+    {
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Cart Items Table -->
+            <div class="lg:col-span-8">
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <div class="p-4 bg-cyan-50 border-b border-cyan-100">
+                        <h2 class="text-lg font-semibold text-cyan-800">Chi tiết giỏ hàng</h2>
+                    </div>
+                    <MudTable Items="_cartItems" Hover="true" Breakpoint="Breakpoint.Sm" Class="border-0" T="CartItem" Elevation="0">
+                        <HeaderContent>
+                            <MudTh Class="uppercase text-xs font-medium text-cyan-700">Sản phẩm</MudTh>
+                            <MudTh Class="uppercase text-xs font-medium text-cyan-700 text-right">Đơn giá</MudTh>
+                            <MudTh Class="uppercase text-xs font-medium text-cyan-700 text-center">Số lượng</MudTh>
+                            <MudTh Class="uppercase text-xs font-medium text-cyan-700 text-right">Thành tiền</MudTh>
+                            <MudTh></MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataAttributes="@(new Dictionary<string, object> { { "data-item-id", context.Id } })">
+                                <div class="flex items-center py-2">
+                                    <div class="relative w-20 h-20 mr-4 overflow-hidden rounded-lg shadow-sm bg-gray-50 group product-image-container">
+                                        <img src="@context.ImageUrl" alt="@context.ProductName" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
+                                        <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="font-medium text-cyan-900 hover:text-cyan-600 transition-colors duration-200 truncate">@context.ProductName</div>
+                                        <div class="text-sm text-gray-500 mt-1 line-clamp-1">@context.Description</div>
+                                    </div>
+                                </div>
+                            </MudTd>
+                            <MudTd Class="text-right font-medium text-gray-700">@FormatPrice(context.Price)</MudTd>
+                            <MudTd Class="text-center">
+                                <div class="flex items-center justify-center">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Remove" 
+                                                  Size="Size.Small" 
+                                                  Color="Color.Primary" 
+                                                  Class="rounded-l-full h-8 w-8 min-width-0 p-0" 
+                                                  Disabled="@(context.Quantity <= 1)"
+                                                  OnClick="() => DecreaseQuantity(context.Id)" />
+                                    
+                                    <div class="w-12 h-8 flex items-center justify-center border-t border-b border-cyan-200 bg-white font-medium text-cyan-800">
+                                        @context.Quantity
+                                    </div>
+                                    
+                                    <MudIconButton Icon="@Icons.Material.Filled.Add" 
+                                                  Size="Size.Small" 
+                                                  Color="Color.Primary" 
+                                                  Class="rounded-r-full h-8 w-8 min-width-0 p-0"
+                                                  OnClick="() => IncreaseQuantity(context.Id)" />
+                                </div>
+                            </MudTd>
+                            <MudTd Class="text-right font-semibold text-cyan-800">@FormatPrice(context.Price * context.Quantity)</MudTd>
+                            <MudTd>
+                                <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" 
+                                             Size="Size.Small" 
+                                             Color="Color.Error" 
+                                             Class="hover:bg-red-50 transition-colors duration-200"
+                                             OnClick="() => RemoveItem(context.Id)" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </div>
+                
+                <div class="mt-6 p-4 bg-white rounded-lg shadow-lg">
+                    <MudButton Href="/shop" Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ArrowBack" Class="rounded-full">
+                        Tiếp tục mua sắm
+                    </MudButton>
+                </div>
+            </div>
+
+            <!-- Cart Summary -->
+            <div class="lg:col-span-4">
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden sticky top-5">
+                    <div class="p-4 bg-cyan-50 border-b border-cyan-100">
+                        <h3 class="text-lg font-semibold text-cyan-800">Tổng đơn hàng</h3>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div class="flex justify-between py-3 border-b border-gray-100">
+                            <div class="text-gray-600">Tạm tính:</div>
+                            <div class="font-medium">@FormatPrice(Subtotal)</div>
+                        </div>
+                        <div class="flex justify-between py-3 border-b border-gray-100">
+                            <div class="text-gray-600">Phí vận chuyển:</div>
+                            <div class="font-medium">@FormatPrice(ShippingCost)</div>
+                        </div>
+                        
+                        <div class="flex justify-between py-4 mt-2">
+                            <div class="text-lg font-bold text-cyan-900">Tổng cộng</div>
+                            <div class="text-lg font-bold text-cyan-600">@FormatPrice(Subtotal + ShippingCost)</div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <MudButton Href="/checkout" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ShoppingBag" 
+                                      FullWidth="true" Size="Size.Large" Class="rounded-full py-3 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300">
+                                Tiến hành thanh toán
+                            </MudButton>
+                        </div>
+                        
+                        <div class="mt-6 p-4 bg-cyan-50 rounded-lg">
+                            <div class="flex items-start">
+                                <MudIcon Icon="@Icons.Material.Filled.LocalShipping" Class="mr-3 text-cyan-600 mt-1" />
+                                <div>
+                                    <h4 class="font-medium text-cyan-800">Miễn phí vận chuyển</h4>
+                                    <p class="text-sm text-gray-600 mt-1">Cho đơn hàng trên 500.000₫</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div> 

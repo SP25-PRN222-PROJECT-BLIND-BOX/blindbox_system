@@ -1,0 +1,97 @@
+@page "/order-failed"
+@page "/order-failed/{id:guid}"
+@using BlindBoxShop.Application.Theme
+@using MudBlazor
+@namespace BlindBoxShop.Application.Pages
+
+<div class="w-full py-8 px-4">
+    <MudPaper Elevation="3" Class="max-w-3xl mx-auto rounded-xl overflow-hidden">
+        <div class="bg-error text-black p-6 text-center">
+            <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Color="Color.Error" Size="Size.Large" Class="mb-4" Style="width: 80px; height: 80px;" />
+            <MudText Typo="Typo.h4" Class="font-bold text-black">Đặt hàng thất bại</MudText>
+            <MudText Typo="Typo.subtitle1" Class="text-black">Rất tiếc, đã xảy ra sự cố với đơn hàng của bạn</MudText>
+        </div>
+        
+        <div class="p-6">
+            <MudGrid>
+                <MudItem xs="12" Class="d-flex justify-center">
+                    <MudPaper Class="pa-4 mb-6 w-100" Elevation="0">
+                        <MudText Align="Align.Center" Typo="Typo.body1" Class="mb-4 text-black">
+                            @ErrorMessage
+                        </MudText>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudCard Class="mb-6" Elevation="0">
+                        <MudCardHeader>
+                            <MudText Typo="Typo.h6" Class="text-black">Nguyên nhân có thể</MudText>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudList T="string" Dense="true" Clickable="false">
+                                @foreach (var cause in PossibleCauses)
+                                {
+                                    <MudListItem T="string" Icon="@Icons.Material.Filled.ErrorOutline" IconColor="Color.Error" Class="text-black">
+                                        @cause
+                                    </MudListItem>
+                                }
+                            </MudList>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudCard Class="mb-6" Elevation="0">
+                        <MudCardHeader>
+                            <MudText Typo="Typo.h6" Class="text-black">Bước tiếp theo</MudText>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudList T="string" Dense="true" Clickable="false">
+                                <MudListItem T="string" Icon="@Icons.Material.Filled.Refresh" IconColor="Color.Info" Class="text-black">
+                                    Thử lại với thông tin thanh toán khác
+                                </MudListItem>
+                                <MudListItem T="string" Icon="@Icons.Material.Filled.ContactSupport" IconColor="Color.Info" Class="text-black">
+                                    Liên hệ đội hỗ trợ khách hàng của chúng tôi
+                                </MudListItem>
+                                <MudListItem T="string" Icon="@Icons.Material.Filled.ShoppingCart" IconColor="Color.Info" Class="text-black">
+                                    Kiểm tra lại giỏ hàng và tiến hành thanh toán lại
+                                </MudListItem>
+                            </MudList>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+            
+            <div class="d-flex justify-center flex-wrap gap-2 mt-6">
+                @if (!string.IsNullOrEmpty(Id))
+                {
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               Size="Size.Large"
+                               Href="@($"/my-account?tab=1")"
+                               StartIcon="@Icons.Material.Filled.Visibility">
+                        Theo dõi đơn hàng
+                    </MudButton>
+                }
+                
+                <div class="flex flex-wrap justify-center gap-4 mt-4">
+                    <MudButton Variant="Variant.Filled" 
+                              Color="Color.Primary" 
+                              StartIcon="@Icons.Material.Filled.ShoppingBag"
+                              Href="/"
+                              Class="px-6">
+                        Tiếp tục mua sắm
+                    </MudButton>
+                    
+                    <MudButton Variant="Variant.Outlined" 
+                              Color="Color.Primary" 
+                              StartIcon="@Icons.Material.Filled.Person"
+                              Href="/my-account?tab=1"
+                              Class="px-6">
+                        Xem đơn hàng của tôi
+                    </MudButton>
+                </div>
+            </div>
+        </div>
+    </MudPaper>
+</div> 

@@ -1,0 +1,116 @@
+@using BlindBoxShop.Shared.DataTransferObject.BlindBox
+@using BlindBoxShop.Shared.Enum
+
+<MudTable ServerData="ServerReload" Dense="false" Hover="true" @ref="table" FixedHeader="true" FixedFooter="true" 
+          Height="600px" MultiSelection="true" T="BlindBoxDto"
+          @bind-SelectedItem="_blindBoxDto" 
+          OnRowClick="RowClickEvent"
+          CanCancelEdit="true"
+          SortLabel="Sort By"
+          RowEditPreview="BackupItem"
+          RowEditCancel="ResetItemToOriginalValues"
+          RowEditCommit="ItemHasBeenCommitted"
+          IsEditRowSwitchingBlocked="false"
+          AllowUnsorted="false"
+          ApplyButtonPosition="TableApplyButtonPosition.End" 
+          EditButtonPosition="TableEditButtonPosition.End" 
+          EditTrigger="TableEditTrigger.RowClick">
+    <ToolBarContent>
+        <MudFab StartIcon="@Icons.Material.Filled.Add" DropShadow="true" Size="Size.Small" Label="Add BlindBox" 
+                @onclick="OpenCreateDialogAsync" Class="mr-3" />
+        <MudFab StartIcon="@Icons.Material.Filled.Remove" DropShadow="true" Size="Size.Small" Label="Remove BlindBox" 
+                @onclick="OpenRemoveDialogAsync" Disabled="_disableRemoveBtn" Class="mr-3" />
+                
+        <MudSelect T="Guid?" Label="Category" AnchorOrigin="Origin.BottomCenter" Class="mx-2" Style="min-width: 200px;"
+                   @bind-Value="_blindBoxParameters.CategoryId" HelperText="Filter by category">
+            <MudSelectItem T="Guid?" Value="@((Guid?)null)">All Categories</MudSelectItem>
+            @foreach (var category in _categories)
+            {
+                <MudSelectItem T="Guid?" Value="@category.Id">@category.Name</MudSelectItem>
+            }
+        </MudSelect>
+        
+        <MudSelect T="int?" Label="Rarity" AnchorOrigin="Origin.BottomCenter" Class="mx-2" Style="min-width: 150px;"
+                   @bind-Value="_blindBoxParameters.Rarity" HelperText="Filter by rarity">
+            <MudSelectItem T="int?" Value="@((int?)null)">All Rarities</MudSelectItem>
+            <MudSelectItem T="int?" Value="@((int?)BlindBoxRarity.Common)">Common</MudSelectItem>
+            <MudSelectItem T="int?" Value="@((int?)BlindBoxRarity.Uncommon)">Uncommon</MudSelectItem>
+            <MudSelectItem T="int?" Value="@((int?)BlindBoxRarity.Rare)">Rare</MudSelectItem>
+        </MudSelect>
+        
+        <MudSelect T="int?" Label="Status" AnchorOrigin="Origin.BottomCenter" Class="mx-2" Style="min-width: 150px;"
+                   @bind-Value="_blindBoxParameters.Status" HelperText="Filter by status">
+            <MudSelectItem T="int?" Value="@((int?)null)">All Statuses</MudSelectItem>
+            <MudSelectItem T="int?" Value="@((int?)BlindBoxStatus.Available)">Available</MudSelectItem>
+            <MudSelectItem T="int?" Value="@((int?)BlindBoxStatus.Sold_Out)">Sold Out</MudSelectItem>
+            <MudSelectItem T="int?" Value="@((int?)BlindBoxStatus.Coming_Soon)">Coming Soon</MudSelectItem>
+        </MudSelect>
+        
+        <MudSpacer />
+        <MudTextField T="string"
+                      @bind-value="@searchString"
+                      Placeholder="Search by name"
+                      DebounceInterval="500"
+                      OnDebounceIntervalElapsed="SearchChanged"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      IconSize="Size.Medium"
+                      Class="mt-0 ml-2" />
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh><MudTableSortLabel SortLabel="Name" T="BlindBoxDto">Name</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="CategoryName" T="BlindBoxDto">Category</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="PackageName" T="BlindBoxDto">Package</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="CurrentPrice" T="BlindBoxDto">Price</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="Probability" T="BlindBoxDto">Probability</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="Rarity" T="BlindBoxDto">Rarity</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="Status" T="BlindBoxDto">Status</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="TotalRatingStar" T="BlindBoxDto">Rating</MudTableSortLabel></MudTh>
+        <MudTh style="text-align:center">Image</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Name">@context.Name</MudTd>
+        <MudTd DataLabel="Category">@context.CategoryName</MudTd>
+        <MudTd DataLabel="Package">@context.PackageName</MudTd>
+        <MudTd DataLabel="Price">@FormatPrice(context.CurrentPrice)</MudTd>
+        <MudTd DataLabel="Probability">@context.Probability%</MudTd>
+        <MudTd DataLabel="Rarity">
+            <MudChip T="string" Color="@GetRarityColor(context.Rarity)" Size="Size.Small">
+                @context.Rarity.ToString()
+            </MudChip>
+        </MudTd>
+        <MudTd DataLabel="Status">
+            <MudChip T="string" Color="@GetStatusColor(context.Status)" Size="Size.Small">
+                @context.Status.ToString().Replace("_", " ")
+            </MudChip>
+        </MudTd>
+        <MudTd DataLabel="Rating">
+            <MudRating T="int" SelectedValue="@((int)context.TotalRatingStar)" ReadOnly="true" />
+        </MudTd>
+        <MudTd DataLabel="Image" Style="text-align:center">
+            @if (!string.IsNullOrEmpty(context.MainImageUrl))
+            {
+                <MudAvatar Size="Size.Medium" Square="true" Class="rounded">
+                    <MudImage Src="@context.MainImageUrl" Alt="@context.Name" ObjectFit="ObjectFit.Cover" Width="40" Height="40" />
+                </MudAvatar>
+            }
+            else
+            {
+                <MudIcon Icon="@Icons.Material.Filled.Image" Color="Color.Default" />
+            }
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>No matching records found</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudText>Loading...</MudText>
+    </LoadingContent>
+    <PagerContent>
+        <MudTablePager PageSizeOptions="new int[] { 10, 25, 50 }" />
+    </PagerContent>
+    <EditButtonContent Context="button">
+        <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" Class="pa-0" 
+                      OnClick="@button.ButtonAction" Disabled="@button.ButtonDisabled" />
+    </EditButtonContent>
+</MudTable> 

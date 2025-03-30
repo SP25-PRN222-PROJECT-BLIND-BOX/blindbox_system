@@ -1,0 +1,301 @@
+@page "/my-account"
+@using System;
+@using System.Collections.Generic;
+@using System.Linq;
+@using BlindBoxShop.Entities.Models;
+@using Microsoft.AspNetCore.Identity;
+@using Microsoft.AspNetCore.Components.Authorization;
+@using BlindBoxShop.Shared.DataTransferObject.Order;
+@using BlindBoxShop.Shared.Enum;
+@using MudBlazor.Utilities;
+
+@layout BlindBoxShop.Application.Components.Layout.MainLayout
+
+<PageTitle>My Account</PageTitle>
+
+@if (_loading)
+{
+    <div class="w-full flex justify-center items-center py-12">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    </div>
+}
+else
+{
+    <div class="w-full" style="background-color: var(--mud-palette-primary);">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex items-center">
+                <div class="mr-4">
+                    <MudAvatar Color="Color.Primary" Style="background-color: #23a1aa; height: 60px; width: 60px;">
+                        @GetUserInitials()
+                    </MudAvatar>
+                </div>
+                <div class="text-white">
+                    <h3 class="text-xl font-bold">@(_user?.FirstName) @(_user?.LastName)</h3>
+                    <p class="text-sm opacity-90">@(_user?.Email)</p>
+                    <p class="text-xs opacity-70">Member since @(_user?.CreatedAt.ToString("MMM dd yyyy"))</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-4">
+        <div class="text-2xl font-bold mb-4">My Account</div>
+        
+        <div class="grid grid-cols-12 gap-6">
+            <!-- Main content -->
+            <div class="col-span-12 sm:col-span-11">
+                
+                <MudTabs @bind-ActivePanelIndex="_activeTab" Outlined="true" Position="Position.Top" Rounded="true" ApplyEffectsToContainer="true" Class="mt-2 mb-8">
+                    <MudTabPanel Text="Account Info" Icon="@Icons.Material.Filled.Person">
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <h2 class="text-xl font-bold mb-6">Personal Information</h2>
+                            
+                            <MudGrid>
+                                <MudItem xs="12" md="6">
+                                    <MudTextField @bind-Value="@Username" 
+                                                 Label="Username" 
+                                                 Variant="Variant.Outlined" 
+                                                 Class="mb-4"
+                                                 ReadOnly="true" />
+                                </MudItem>
+                                
+                                <MudItem xs="12" md="6">
+                                    <MudTextField @bind-Value="@Phone" 
+                                                 Label="Phone number" 
+                                                 Variant="Variant.Outlined" 
+                                                 Class="mb-4" />
+                                </MudItem>
+                                
+                                <MudItem xs="12">
+                                    <MudTextField @bind-Value="@FullName" 
+                                                 Label="Full name" 
+                                                 Variant="Variant.Outlined" 
+                                                 Class="mb-4" />
+                                </MudItem>
+                                
+                                <MudItem xs="12">
+                                    <MudTextField @bind-Value="@Email" 
+                                                 Label="Email Address" 
+                                                 Variant="Variant.Outlined"
+                                                 InputType="InputType.Email"
+                                                 Class="mb-4" />
+                                </MudItem>
+                                
+                                <MudItem xs="12">
+                                    <div class="flex flex-row items-center">
+                                        <div class="flag-container flex-none mr-2">
+                                            <MudImage Src="/images/flags/vn.png" Alt="VN" Height="24" Class="rounded" />
+                                        </div>
+                                        <MudTextField @bind-Value="@PhoneWithCode" 
+                                                     Label="Phone number" 
+                                                     Variant="Variant.Outlined"
+                                                     FullWidth="true"
+                                                     Class="flex-grow" />
+                                    </div>
+                                </MudItem>
+                                
+                                <MudItem xs="12">
+                                    <h3 class="text-lg font-semibold mt-4 mb-2 text-cyan-800">Address Information</h3>
+                                </MudItem>
+                                
+                                <MudItem xs="12">
+                                    <MudTextField @bind-Value="@Address" 
+                                                 Label="Street Address" 
+                                                 Variant="Variant.Outlined" 
+                                                 Class="mb-3" />
+                                </MudItem>
+                                
+                                <MudItem xs="12" md="4">
+                                    <MudTextField @bind-Value="@Province" 
+                                                 Label="Province/City" 
+                                                 Variant="Variant.Outlined" 
+                                                 Class="mb-3" />
+                                </MudItem>
+                                
+                                <MudItem xs="12" md="4">
+                                    <MudTextField @bind-Value="@District" 
+                                                 Label="District" 
+                                                 Variant="Variant.Outlined" 
+                                                 Class="mb-3" />
+                                </MudItem>
+                                
+                                <MudItem xs="12" md="4">
+                                    <MudTextField @bind-Value="@Ward" 
+                                                 Label="Ward" 
+                                                 Variant="Variant.Outlined" 
+                                                 Class="mb-3" />
+                                </MudItem>
+                                
+                            </MudGrid>
+                            
+                            <MudText Typo="Typo.body2" Class="my-4 text-gray-600">
+                                In order to access some features of the Service, you will have fill out your account details.
+                            </MudText>
+                            
+                            <div class="flex justify-end gap-3 mt-6">
+                                <MudButton Variant="Variant.Outlined" 
+                                          Color="Color.Primary"
+                                          OnClick="CancelChanges">
+                                    Cancel
+                                </MudButton>
+                                <MudButton Variant="Variant.Filled" 
+                                          Color="Color.Primary"
+                                          Style="background-color: #00919c;"
+                                          OnClick="SaveChanges">
+                                    Save
+                                </MudButton>
+                            </div>
+                        </MudPaper>
+                    </MudTabPanel>
+                    
+                    <MudTabPanel Text="Order History" Icon="@Icons.Material.Filled.Receipt">
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <h2 class="text-xl font-bold mb-6">Your Orders</h2>
+                            
+                            @if (_orders == null || !_orders.Any())
+                            {
+                                <MudText Class="my-4 text-center" Typo="Typo.body1">
+                                    You don't have any orders yet.
+                                </MudText>
+                            }
+                            else
+                            {
+                                <MudTable Items="@_orders" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" 
+                                          LoadingProgressColor="Color.Primary">
+                                    <HeaderContent>
+                                        <MudTh>Order ID</MudTh>
+                                        <MudTh>Date</MudTh>
+                                        <MudTh>Status</MudTh>
+                                        <MudTh>Total</MudTh>
+                                        <MudTh>Actions</MudTh>
+                                    </HeaderContent>
+                                    <RowTemplate>
+                                        <MudTd DataLabel="ID">@context.Id.ToString().Substring(0, 8)</MudTd>
+                                        <MudTd DataLabel="Date">@context.CreatedAt.ToString("dd/MM/yyyy")</MudTd>
+                                        <MudTd DataLabel="Status">
+                                            <MudChip T="string" Size="Size.Small"
+                                                     Color="@GetOrderStatusColor(context.Status)"
+                                                     Class="@($"order-status-{context.Status.ToString().ToLower()}")">
+                                                @context.Status.ToString()
+                                            </MudChip>
+                                        </MudTd>
+                                        <MudTd DataLabel="Total">@FormatPrice(context.Total)</MudTd>
+                                        <MudTd>
+                                            <MudIconButton Icon="@Icons.Material.Filled.Visibility" 
+                                                           Size="Size.Small" 
+                                                           OnClick="async () => await ViewOrderDetailsByIdAsync(context.Id)" 
+                                                           aria-label="view" />
+                                        </MudTd>
+                                    </RowTemplate>
+                                </MudTable>
+                            }
+                        </MudPaper>
+                    </MudTabPanel>
+                </MudTabs>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Image Preview Overlay -->
+<MudOverlay @bind-Visible="_imagePreviewVisible" DarkBackground="true" ZIndex="999" OnClick="CloseImagePreview">
+    <div class="d-flex justify-center align-items-center" style="height: 100vh;" @onclick:preventDefault>
+        <div class="position-relative" style="width: 90%; max-width: 800px; max-height: 90vh; overflow: auto;">
+            <MudCard Class="pa-4 position-relative" Style="background-color: rgba(0,0,0,0.8);">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6" Color="Color.Surface">Image Preview</MudText>
+                    </CardHeaderContent>
+                    <CardHeaderActions>
+                        <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Surface" OnClick="CloseImagePreview" />
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent Class="d-flex flex-column align-center justify-center">
+                    <div class="result-image-container @($"{(_isZoomed ? "zoomed" : "")}")">
+                        <MudImage Src="@_selectedImage" 
+                                 Alt="Image Preview"
+                                 Class="result-image rounded-lg" 
+                                 ObjectFit="ObjectFit.Contain"
+                                 @onclick="ToggleZoom" />
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </div>
+    </div>
+</MudOverlay>
+
+<style>
+    .result-image-container {
+        width: 280px;
+        height: 280px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: transparent;
+        border-radius: 8px;
+        transition: transform 0.3s ease;
+        cursor: zoom-in;
+    }
+    
+    .result-image-container.zoomed {
+        transform: scale(1.5);
+        cursor: zoom-out;
+    }
+    
+    .result-image {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        width: 100%;
+        height: 100%;
+    }
+    
+    .product-image-container {
+        width: 48px;
+        height: 48px;
+        overflow: hidden;
+        border-radius: 4px;
+        position: relative;
+        cursor: pointer;
+    }
+    
+    .product-image-container:hover .image-overlay {
+        opacity: 1;
+    }
+    
+    .image-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0,0,0,0.3);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+    
+    /* Order status styles */
+    .order-status-awaiting-payment {
+        background-color: #ffd700 !important;
+        color: #000 !important;
+    }
+    
+    .order-status-processing {
+        background-color: #4caf50 !important;
+        color: #fff !important;
+    }
+    
+    .order-status-delivered {
+        background-color: #2196f3 !important;
+        color: #fff !important;
+    }
+    
+    .order-status-cancelled {
+        background-color: #f44336 !important;
+        color: #fff !important;
+    }
+</style> 

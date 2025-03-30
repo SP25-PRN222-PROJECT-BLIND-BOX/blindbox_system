@@ -39,7 +39,6 @@ namespace BlindBoxShop.Application.Pages.Employee.VoucherPage.Partials
 
         private bool _disableRemoveBtn = true;
 
-
         private async Task<TableData<VoucherDto>> ServerReload(TableState state, CancellationToken token)
         {
 

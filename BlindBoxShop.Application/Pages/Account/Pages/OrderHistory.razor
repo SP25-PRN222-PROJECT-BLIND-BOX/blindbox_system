@@ -1,0 +1,127 @@
+@page "/my-orders"
+@using System;
+@using System.Collections.Generic;
+@using System.Linq;
+@using BlindBoxShop.Entities.Models;
+@using Microsoft.AspNetCore.Identity;
+@using Microsoft.AspNetCore.Components.Authorization;
+
+@layout BlindBoxShop.Application.Components.Layout.MainLayout
+
+<PageTitle>Order History</PageTitle>
+
+<div class="w-full" style="background-color: var(--mud-palette-primary);">
+    <div class="container mx-auto px-4 py-6">
+        <div class="flex items-center">
+            <div class="mr-4">
+                <MudAvatar Color="Color.Primary" Style="background-color: #23a1aa; height: 60px; width: 60px;">
+                    @GetUserInitials()
+                </MudAvatar>
+            </div>
+            <div class="text-white">
+                <h3 class="text-xl font-bold">@(_user?.FirstName) @(_user?.LastName)</h3>
+                <p class="text-sm opacity-90">@(_user?.Email)</p>
+                <p class="text-xs opacity-70">Member since @(_user?.CreatedAt.ToString("MMM dd yyyy"))</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mx-auto px-4 py-4">
+    <div class="text-2xl font-bold mb-4">My Account</div>
+    
+    <div class="grid grid-cols-12 gap-6">
+        <!-- Simple sidebar with icons -->
+        <div class="col-span-12 sm:col-span-1">
+            <div class="flex flex-row sm:flex-col justify-center sm:justify-start">
+                <a href="/my-account" class="p-3 mx-2 sm:mx-0 mb-0 sm:mb-4 flex justify-center items-center text-gray-600 hover:text-primary">
+                    <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Medium" />
+                </a>
+                <a href="/order-history" class="p-3 mx-2 sm:mx-0 mb-0 sm:mb-4 flex justify-center items-center text-primary border-b-2 sm:border-b-0 sm:border-l-2 border-primary">
+                    <MudIcon Icon="@Icons.Material.Filled.Receipt" Size="Size.Medium" />
+                </a>
+                <a href="/logout" class="p-3 mx-2 sm:mx-0 mb-0 sm:mb-4 flex justify-center items-center text-red-500 hover:text-red-700">
+                    <MudIcon Icon="@Icons.Material.Filled.Logout" Size="Size.Medium" />
+                </a>
+            </div>
+        </div>
+        
+        <!-- Main content -->
+        <div class="col-span-12 sm:col-span-11">
+            <MudPaper Class="pa-4" Elevation="2">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold">Order History</h2>
+                    
+                    <div class="flex flex-col md:flex-row gap-2 mt-2 md:mt-0 w-full md:w-auto">
+                        <MudTextField @bind-Value="_searchString" 
+                                     Placeholder="Search orders..." 
+                                     Adornment="Adornment.Start" 
+                                     AdornmentIcon="@Icons.Material.Filled.Search"
+                                     Class="w-full md:w-64" />
+                                     
+                        <MudSelect T="string" @bind-Value="_selectedStatus" Class="w-full md:w-40" Label="All Status">
+                            <MudSelectItem Value="@("All")">All Status</MudSelectItem>
+                            <MudSelectItem Value="@("New order")">New order</MudSelectItem>
+                            <MudSelectItem Value="@("Inproduction")">In Production</MudSelectItem>
+                            <MudSelectItem Value="@("Shipped")">Shipped</MudSelectItem>
+                            <MudSelectItem Value="@("Cancelled")">Cancelled</MudSelectItem>
+                            <MudSelectItem Value="@("Rejected")">Rejected</MudSelectItem>
+                            <MudSelectItem Value="@("Draft")">Draft</MudSelectItem>
+                        </MudSelect>
+                    </div>
+                </div>
+                
+                @if (_loading)
+                {
+                    <div class="flex justify-center py-8">
+                        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                    </div>
+                }
+                else if (_orders == null || !GetFilteredOrders().Any())
+                {
+                    <MudAlert Severity="Severity.Info" Class="mt-3">No orders found.</MudAlert>
+                }
+                else
+                {
+                    <MudTable Items="@GetFilteredOrders()" Hover Bordered Class="mb-4">
+                        <HeaderContent>
+                            <MudTh>Order ID</MudTh>
+                            <MudTh>Phone Number</MudTh>
+                            <MudTh>Status</MudTh>
+                            <MudTh>Items</MudTh>
+                            <MudTh>Date</MudTh>
+                            <MudTh>Total</MudTh>
+                            <MudTh></MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Order ID">@context.OrderId</MudTd>
+                            <MudTd DataLabel="Phone Number">@context.PhoneNumber</MudTd>
+                            <MudTd DataLabel="Status">
+                                <MudChip Color="@GetStatusColor(context.Status)" Size="Size.Small" T="string" 
+                                        Style="@($"background-color: {GetChipBgColor(context.Status)}; color: white; font-weight: 500;")">
+                                    @context.Status
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Items">@context.ItemCount item(s)</MudTd>
+                            <MudTd DataLabel="Date">@context.OrderDate.ToString("dd/MM/yyyy")</MudTd>
+                            <MudTd DataLabel="Total">@FormatPrice(context.Total)</MudTd>
+                            <MudTd>
+                                <MudButton Variant="Variant.Filled" 
+                                          Color="Color.Primary" 
+                                          Size="Size.Small"
+                                          Class="px-4"
+                                          Style="background-color: #00919c; color: white;"
+                                          OnClick="@(() => ViewOrderDetails(context.OrderId))">
+                                    VIEW
+                                </MudButton>
+                            </MudTd>
+                        </RowTemplate>
+                        <PagerContent>
+                            <MudTablePager PageSizeOptions="new int[] { 5, 10, 25 }" />
+                        </PagerContent>
+                    </MudTable>
+                }
+            </MudPaper>
+        </div>
+    </div>
+</div> 

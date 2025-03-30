@@ -1,0 +1,638 @@
+@using BlindBoxShop.Service.Contract
+@using BlindBoxShop.Shared.DataTransferObject.BlindBox
+@using BlindBoxShop.Shared.Enum
+@using MudBlazor
+@using System.Threading.Tasks
+@using System
+@using System.Linq
+
+@inject ISnackbar Snackbar
+@inject IServiceManager ServiceManager
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inject IDialogService DialogService
+
+<MudDialog>
+    <DialogContent>
+        @if (_isProcessing)
+        {
+            <div class="d-flex flex-column align-center py-8">
+                <MudProgressCircular Color="Color.Secondary" Indeterminate="true" Size="Size.Large" />
+                <MudText Class="mt-4">Processing...</MudText>
+            </div>
+        }
+        else if (_showGachaAnimation)
+        {
+            <div class="d-flex flex-column align-center py-6 px-4">
+                <div class="text-center mb-4">
+                    <MudText Typo="Typo.h5">Opening your BlindBox...</MudText>
+                </div>
+                
+                <div class="position-relative mb-6" style="width: 220px; height: 220px;">
+                    <div class="gacha-animation">
+                        <img src="@_imageUrl" class="animate-box" alt="BlindBox" />
+                    </div>
+                </div>
+                
+                <MudButton Variant="Variant.Outlined" 
+                          Color="Color.Primary" 
+                          Size="Size.Large"
+                          FullWidth="true"
+                          OnClick="FinishAnimation">
+                    Reveal Result
+                </MudButton>
+            </div>
+        }
+        else if (_showResult && _selectedItem != null)
+        {
+            <div class="d-flex flex-column align-center py-6 px-4">
+                <div class="text-center mb-4">
+                    <MudText Typo="Typo.h5" Class="mb-2">🎉 Congratulations, luck is on your side! 🎉</MudText>
+                    <MudText>You've pulled: <span class="font-weight-bold">@_selectedItem.Name</span> @GetEmojiForRarity(_selectedItem.Rarity)</MudText>
+                    <MudText Typo="Typo.body2">Rarity: @GetRarityText(_selectedItem.Rarity)</MudText>
+                </div>
+                
+                <div class="position-relative mb-6" style="width: 220px; height: 220px;">
+                    <MudImage Src="@(_selectedItem.ImageUrl)" 
+                             Alt="@_selectedItem.Name" 
+                             ObjectFit="ObjectFit.Contain" 
+                             Class="w-100 h-100 rounded-lg" 
+                             Style="box-shadow: 0 0 15px rgba(0,0,0,0.2);" />
+                             
+                    <MudChip T="string" Color="@GetRarityColor(_selectedItem.Rarity)" 
+                            Size="Size.Small" 
+                            Class="position-absolute"
+                            Style="top: 8px; right: 8px;">
+                        @GetRarityText(_selectedItem.Rarity)
+                    </MudChip>
+                </div>
+                
+                <MudText Typo="Typo.body2" Class="mb-4 text-center">
+                    @(_selectedItem.Description ?? "A wonderful item from your BlindBox collection!")
+                </MudText>
+                
+                <MudButton Variant="Variant.Filled" 
+                          Color="Color.Primary" 
+                          Size="Size.Large"
+                          FullWidth="true"
+                          OnClick="CloseDialog">
+                    🎁 Claim Your Gift!
+                </MudButton>
+            </div>
+        }
+        else
+        {
+            <div class="pa-4 position-relative">
+                <div class="d-flex justify-center mb-4">
+                    <MudImage Src="@(_imageUrl)" 
+                             Alt="@(BlindBox?.Name)" Width="200" Height="200" ObjectFit="ObjectFit.Contain" />
+                </div>
+                
+                <MudText Typo="Typo.h5" Align="Align.Center" Class="mb-4 font-weight-bold">@BlindBox?.Name</MudText>
+
+                <div class="d-flex flex-column gap-2 mb-4">
+                    <div class="d-flex justify-space-between align-center">
+                        <MudText>Price:</MudText>
+                        <MudText Typo="Typo.h6" Color="Color.Primary" Class="font-weight-bold">
+                            @FormatPrice(BlindBox?.CurrentPrice ?? 0)
+                        </MudText>
+                    </div>
+                    
+                    <div class="d-flex justify-space-between align-center">
+                        <MudText>Shipping fee:</MudText>
+                        <MudText Typo="Typo.body1">@FormatPrice(20000)</MudText>
+                    </div>
+                    
+                    <MudDivider Class="my-2" />
+                    
+                    <div class="d-flex justify-space-between align-center">
+                        <MudText>Total:</MudText>
+                        <MudText Typo="Typo.h6" Color="Color.Primary" Class="font-weight-bold">
+                            @FormatPrice((BlindBox?.CurrentPrice ?? 0) + 20000)
+                        </MudText>
+                    </div>
+                </div>
+                
+                <MudText Typo="Typo.subtitle1" Class="font-weight-medium mt-6 mb-3">Shipping Address</MudText>
+                
+                <div class="d-flex flex-column gap-3">
+                    <div class="d-flex gap-3">
+                        <MudTextField @bind-Value="_firstName" Label="First Name" Variant="Variant.Outlined" FullWidth="true" />
+                        <MudTextField @bind-Value="_lastName" Label="Last Name" Variant="Variant.Outlined" FullWidth="true" />
+                    </div>
+                    
+                    <MudTextField @bind-Value="_address" Label="Address" Variant="Variant.Outlined" />
+                    
+                    <div class="d-flex gap-3">
+                        <MudTextField @bind-Value="_province" Label="Province/City" Variant="Variant.Outlined" FullWidth="true" />
+                        <MudTextField @bind-Value="_ward" Label="District" Variant="Variant.Outlined" FullWidth="true" />
+                    </div>
+                    
+                    <MudTextField @bind-Value="_phone" Label="Phone Number" Variant="Variant.Outlined" />
+                    
+                    <div class="mt-2 d-flex align-center">
+                        <input type="checkbox" id="terms" @bind="@_acceptTerms" style="margin-right: 10px;" />
+                        <label for="terms" style="user-select: none;">I understand that BlindBox results are random and non-refundable</label>
+                    </div>
+                </div>
+            </div>
+        }
+    </DialogContent>
+    
+    <DialogActions>
+        @if (!_showResult && !_isProcessing && !_showGachaAnimation)
+        {
+            <div class="w-full flex justify-between items-center px-4">
+                <div>
+                    <MudButton OnClick="Cancel" Color="Color.Error" Variant="Variant.Text">
+                        Close
+                    </MudButton>
+                </div>
+                <div>
+                    <MudButton Variant="Variant.Filled" 
+                              Color="Color.Primary"
+                              StartIcon="@Icons.Material.Filled.Casino"
+                              OnClick="ProceedToPayment" 
+                              Disabled="@(!_acceptTerms || _isProcessing)">
+                        Try Your Luck
+                    </MudButton>
+                </div>
+            </div>
+        }
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] 
+    public MudBlazor.IMudDialogInstance MudDialog { get; set; }
+    
+    [Parameter] 
+    public BlindBoxDto BlindBox { get; set; }
+    
+    [Parameter]
+    public bool PaymentSuccess { get; set; } = false;
+    
+    [Parameter]
+    public Guid? OrderId { get; set; } = null;
+    
+    private bool _isProcessing = false;
+    private bool _acceptTerms = false;
+    private string _imageUrl = "/images/box-placeholder.jpg";
+    private bool _showResult = false;
+    private bool _showGachaAnimation = false;
+    private BlindBoxItemDto _selectedItem = null;
+    private Guid _tempOrderId = Guid.Empty;
+    
+    // User info fields for order creation
+    private string _firstName = "";
+    private string _lastName = "";
+    private string _address = "";
+    private string _province = "";
+    private string _ward = "";
+    private string _phone = "";
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUserInfoAsync();
+        await LoadImageAsync();
+        
+        // Check if we're returning from successful payment
+        if (PaymentSuccess && OrderId.HasValue)
+        {
+            await HandlePaymentSuccessAsync();
+        }
+        
+        // Add custom animation styles
+        await JSRuntime.InvokeVoidAsync("eval", @"
+            if (!document.getElementById('gacha-animations-style')) {
+                const style = document.createElement('style');
+                style.id = 'gacha-animations-style';
+                style.textContent = `
+                    .animate-box {
+                        width: 100%;
+                        height: 100%;
+                        animation: shake 1.5s ease-in-out, glow 2s ease-in-out;
+                    }
+                    
+                    @keyframes shake {
+                        0%, 100% { transform: translateX(0); }
+                        10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+                        20%, 40%, 60%, 80% { transform: translateX(10px); }
+                    }
+                    
+                    @keyframes glow {
+                        0%, 100% { filter: brightness(100%); }
+                        50% { filter: brightness(150%) drop-shadow(0 0 15px cyan); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        ");
+    }
+    
+    private async Task LoadImageAsync()
+    {
+        if (BlindBox == null)
+        {
+            Console.WriteLine("BlindBox is null in GachaDialog");
+            _imageUrl = "/images/box-placeholder.jpg";
+            return;
+        }
+        
+        Console.WriteLine($"Loading image for BlindBox: {BlindBox.Id} - {BlindBox.Name}");
+        
+        try 
+        {
+            // Priority 1: Use image from BlindBoxImage service
+            if (BlindBox.Id != Guid.Empty)
+            {
+                using var blindBoxImageService = ServiceManager.BlindBoxImageService;
+                var blindBoxImages = await blindBoxImageService.GetBlindBoxImagesByBlindBoxIdAsync(BlindBox.Id);
+                
+                if (blindBoxImages?.Value?.Any() == true)
+                {
+                    var image = blindBoxImages.Value.First();
+                    if (!string.IsNullOrWhiteSpace(image.ImageUrl))
+                    {
+                        // Ensure URL is formatted correctly
+                        var imageUrl = image.ImageUrl.Trim();
+                        if (!imageUrl.StartsWith("http://") && !imageUrl.StartsWith("https://") && !imageUrl.StartsWith("/"))
+                        {
+                            imageUrl = "/" + imageUrl;
+                        }
+                        _imageUrl = imageUrl;
+                        Console.WriteLine($"Set image from BlindBoxImageService: {_imageUrl}");
+                        return;
+                    }
+                }
+            }
+            
+            // Priority 2: Use MainImageUrl from BlindBox
+            if (!string.IsNullOrWhiteSpace(BlindBox.MainImageUrl))
+            {
+                var imageUrl = BlindBox.MainImageUrl.Trim();
+                if (!imageUrl.StartsWith("http://") && !imageUrl.StartsWith("https://") && !imageUrl.StartsWith("/"))
+                {
+                    imageUrl = "/" + imageUrl;
+                }
+                _imageUrl = imageUrl;
+                Console.WriteLine($"Set image from MainImageUrl: {_imageUrl}");
+                return;
+            }
+            
+            // Fallback: Use placeholder image
+            _imageUrl = BlindBox.CategoryName?.ToLower().Contains("physical") == true
+                ? "/images/physical-box-placeholder.jpg" 
+                : "/images/box-placeholder.jpg";
+                
+            Console.WriteLine($"Using placeholder image: {_imageUrl}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading images: {ex.Message}");
+            _imageUrl = "/images/box-placeholder.jpg";
+        }
+    }
+    
+    private async Task LoadUserInfoAsync()
+    {
+        try
+        {
+            // Get the current user ID from localStorage
+            var userId = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "user_id");
+            
+            if (string.IsNullOrEmpty(userId))
+            {
+                Snackbar.Add("Please login to continue", Severity.Warning);
+                return;
+            }
+
+            try
+            {
+                // Use the user service to get user info
+                var userObj = await ServiceManager.UserService.GetUserByIdAsync(Guid.Parse(userId), false);
+                
+                if (userObj != null)
+                {
+                    var user = userObj as BlindBoxShop.Entities.Models.User;
+                    
+                    // Populate form fields with user information
+                    _firstName = user.FirstName ?? "";
+                    _lastName = user.LastName ?? "";
+                    _address = user.Address ?? "";
+                    _province = user.Provinces ?? "";
+                    _ward = user.Wards ?? "";
+                    _phone = user.PhoneNumber ?? "";
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error getting user information: {ex.Message}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+    
+    private void CloseDialog() => MudDialog.Close(DialogResult.Ok(true));
+    
+    private async Task ProceedToPayment()
+    {
+        try
+        {
+            // Validate user inputs
+            if (string.IsNullOrWhiteSpace(_firstName) || string.IsNullOrWhiteSpace(_lastName) ||
+                string.IsNullOrWhiteSpace(_address) || string.IsNullOrWhiteSpace(_province) ||
+                string.IsNullOrWhiteSpace(_ward) || string.IsNullOrWhiteSpace(_phone))
+            {
+                Snackbar.Add("Please fill in all shipping information", Severity.Warning);
+                return;
+            }
+            
+            _isProcessing = true;
+            StateHasChanged();
+            
+            // Get the current user ID from localStorage
+            var userId = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "user_id");
+            
+            if (string.IsNullOrEmpty(userId))
+            {
+                Snackbar.Add("Please login to continue", Severity.Warning);
+                _isProcessing = false;
+                StateHasChanged();
+                return;
+            }
+            
+            var baseUrl = NavigationManager.BaseUri.TrimEnd('/');
+            
+            if (BlindBox != null)
+            {
+                // Create a temporary order (status: Pending)
+                var tempOrder = new BlindBoxShop.Shared.DataTransferObject.Order.OrderForCreationDto
+                {
+                    UserId = Guid.Parse(userId),
+                    Status = OrderStatus.Pending, // Initially pending until payment confirmed
+                    PaymentMethod = PaymentMethod.VnPay,
+                    Address = $"{_firstName} {_lastName}, {_phone}, {_address}",
+                    Province = _province,
+                    Wards = _ward,
+                    SubTotal = BlindBox.CurrentPrice,
+                    Total = BlindBox.CurrentPrice + 20000
+                };
+                
+                var orderResult = await ServiceManager.OrderService.CreateOrderAsync(tempOrder);
+                
+                if (orderResult.IsSuccess && orderResult.Value != null)
+                {
+                    _tempOrderId = orderResult.Value.Id;
+                    
+                    // Store order details in sessionStorage for retrieval post-payment
+                    await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "temp_order_id", _tempOrderId.ToString());
+                    await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "blindbox_id", BlindBox.Id.ToString());
+                    
+                    // Get payment URL for the created order
+                    var paymentResult = await ServiceManager.VNPayService.GetPaymentUrlAsync(
+                        orderResult.Value.Id,
+                        Guid.Parse(userId),
+                        baseUrl + "/payment-return"  // Add a specific return URL for handling payment return
+                    );
+                    
+                    if (paymentResult.IsSuccess && !string.IsNullOrEmpty(paymentResult.Value))
+                    {
+                        // Redirect to payment page
+                        NavigationManager.NavigateTo(paymentResult.Value);
+                    }
+                    else
+                    {
+                        var errorMsg = paymentResult.Errors?.FirstOrDefault()?.Description ?? "Could not create payment URL";
+                        Snackbar.Add(errorMsg, Severity.Error);
+                        _isProcessing = false;
+                        StateHasChanged();
+                    }
+                }
+                else
+                {
+                    var errorMsg = orderResult.Errors?.FirstOrDefault()?.Description ?? "Could not create order";
+                    Snackbar.Add(errorMsg, Severity.Error);
+                    _isProcessing = false;
+                    StateHasChanged();
+                }
+            }
+            else
+            {
+                Snackbar.Add("BlindBox information not found", Severity.Error);
+                _isProcessing = false;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            _isProcessing = false;
+            StateHasChanged();
+        }
+    }
+    
+    private async Task HandlePaymentSuccessAsync()
+    {
+        try
+        {
+            _isProcessing = true;
+            StateHasChanged();
+            
+            // If order ID is passed as parameter, use it, otherwise try to get from session
+            Guid orderId = OrderId ?? Guid.Empty;
+            
+            if (orderId == Guid.Empty)
+            {
+                var tempOrderId = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "temp_order_id");
+                if (!string.IsNullOrEmpty(tempOrderId) && Guid.TryParse(tempOrderId, out Guid parsedId))
+                {
+                    orderId = parsedId;
+                }
+            }
+            
+            if (orderId == Guid.Empty)
+            {
+                Snackbar.Add("Order information not found", Severity.Error);
+                _isProcessing = false;
+                StateHasChanged();
+                return;
+            }
+            
+            // Get order details and update status
+            try
+            {
+                // Update order status to AwaitingPayment -> will be processed in payment handler
+                // Start gacha animation
+                _showGachaAnimation = true;
+                _isProcessing = false;
+                StateHasChanged();
+                
+                // Pre-select the item but don't show it yet (will be revealed after animation)
+                _selectedItem = await RandomSelectItemAsync();
+                
+                if (_selectedItem != null)
+                {
+                    // Create order detail with selected item
+                    var orderDetail = new BlindBoxShop.Shared.DataTransferObject.OrderDetail.OrderDetailForCreationDto
+                    {
+                        OrderId = orderId,
+                        BlindBoxId = BlindBox.Id,
+                        BlindBoxItemId = _selectedItem.Id,
+                        Quantity = 1,
+                        Price = BlindBox.CurrentPrice
+                    };
+                    
+                    await ServiceManager.OrderDetailService.CreateOrderDetailAsync(orderDetail);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error processing order: {ex.Message}");
+                Snackbar.Add("Order not found or payment failed", Severity.Error);
+                _isProcessing = false;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            _isProcessing = false;
+            StateHasChanged();
+        }
+    }
+    
+    private async Task FinishAnimation()
+    {
+        // Complete animation and show result
+        _showGachaAnimation = false;
+        _showResult = true;
+        StateHasChanged();
+        
+        // If item wasn't selected (rare error case), try again
+        if (_selectedItem == null)
+        {
+            _selectedItem = await RandomSelectItemAsync();
+        }
+    }
+    
+    private async Task<BlindBoxItemDto> RandomSelectItemAsync()
+    {
+        if (BlindBox?.Id == null) return null;
+        
+        try
+        {
+            // Get all items for this BlindBox
+            using var blindBoxItemService = ServiceManager.BlindBoxItemService;
+            var itemsResult = await blindBoxItemService.GetItemsByBlindBoxIdAsync(BlindBox.Id, false);
+            
+            if (itemsResult.IsSuccess && itemsResult.Value?.Any() == true)
+            {
+                var items = itemsResult.Value.ToList();
+                var rnd = new Random();
+                var secretRoll = rnd.Next(1, 101);
+                
+                // Check if we get a secret item based on probability
+                if (BlindBox.Probability > 0 && secretRoll <= BlindBox.Probability)
+                {
+                    // Try to get a secret item
+                    var secretItems = items.Where(i => i.IsSecret).ToList();
+                    if (secretItems.Any())
+                    {
+                        return secretItems[rnd.Next(secretItems.Count)];
+                    }
+                }
+                
+                // Get items without secret flag for normal drop
+                var normalItems = items.Where(i => !i.IsSecret).ToList();
+                if (normalItems.Any())
+                {
+                    return normalItems[rnd.Next(normalItems.Count)];
+                }
+                
+                // Fallback to all items if no normal items found
+                return items[rnd.Next(items.Count)];
+            }
+            else
+            {
+                // Fallback to mock item if no items found
+                return CreateMockItem();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error selecting random item: {ex.Message}");
+            return CreateMockItem();
+        }
+    }
+    
+    private BlindBoxItemDto CreateMockItem()
+    {
+        // Create a mock item with random rarity when real items aren't available
+        var rnd = new Random();
+        var rarity = rnd.Next(0, 5); // 0-4 rarity levels
+        var isSecret = rarity >= 3; // Epic and Legendary are secret
+        
+        return new BlindBoxItemDto
+        {
+            Id = Guid.NewGuid(),
+            BlindBoxId = BlindBox?.Id ?? Guid.Empty,
+            Name = $"{GetRarityText(rarity)} {BlindBox?.Name} Collectible",
+            Description = isSecret 
+                ? $"A rare find from the {BlindBox?.Name} collection! You're one of the lucky few to own this."
+                : $"A nice collectible from the {BlindBox?.Name} series.",
+            ImageUrl = !string.IsNullOrEmpty(_imageUrl) ? _imageUrl : "/images/box-placeholder.jpg",
+            Rarity = rarity,
+            IsSecret = isSecret
+        };
+    }
+    
+    private string FormatPrice(decimal price)
+    {
+        return $"{price.ToString("N0")} ₫";
+    }
+    
+    private Color GetRarityColor(int rarity)
+    {
+        return rarity switch
+        {
+            0 => Color.Success,  // Common
+            1 => Color.Info,     // Uncommon
+            2 => Color.Warning,  // Rare
+            3 => Color.Error,    // Epic
+            4 => Color.Secondary, // Legendary
+            _ => Color.Default
+        };
+    }
+    
+    private string GetRarityText(int rarity)
+    {
+        return rarity switch
+        {
+            0 => "Common",
+            1 => "Uncommon",
+            2 => "Rare",
+            3 => "Epic",
+            4 => "Legendary",
+            _ => "Unknown"
+        };
+    }
+    
+    private string GetEmojiForRarity(int rarity)
+    {
+        return rarity switch
+        {
+            0 => "🟢",
+            1 => "🔵",
+            2 => "🟠",
+            3 => "🔴",
+            4 => "🟣",
+            _ => "⚪"
+        };
+    }
+} 

@@ -27,6 +27,11 @@ namespace Microsoft.AspNetCore.Routing
                 [FromForm] string provider,
                 [FromForm] string returnUrl) =>
             {
+                // Validate returnUrl to ensure it's safe and local
+                returnUrl = !string.IsNullOrEmpty(returnUrl) && returnUrl.StartsWith("/") 
+                    ? returnUrl  // Only accept local URLs starting with '/'
+                    : "/";
+
                 IEnumerable<KeyValuePair<string, StringValues>> query = [
                     new("ReturnUrl", returnUrl),
                     new("Action", ExternalLogin.LoginCallbackAction)];

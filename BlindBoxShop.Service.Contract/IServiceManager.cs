@@ -23,6 +23,11 @@
         IVoucherService VoucherService { get; }
 
         IReplyService ReplyService { get; }
+        
+        IAuthService AuthService { get; }
+        
+        IVNPayService VNPayService { get; }
 
+        IBlindBoxItemService BlindBoxItemService { get; }
     }
 }

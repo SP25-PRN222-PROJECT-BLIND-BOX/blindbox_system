@@ -68,7 +68,7 @@ namespace BlindBoxShop.Application.Migrations
 
                     b.HasIndex("PackageId");
 
-                    b.ToTable("BlindBoxes");
+                    b.ToTable("BlindBoxes", (string)null);
                 });
 
             modelBuilder.Entity("BlindBoxShop.Entities.Models.BlindBoxCategory", b =>
@@ -90,7 +90,7 @@ namespace BlindBoxShop.Application.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("BlindBoxCategories");
+                    b.ToTable("BlindBoxCategories", (string)null);
                 });
 
             modelBuilder.Entity("BlindBoxShop.Entities.Models.BlindBoxImage", b =>
@@ -113,7 +113,7 @@ namespace BlindBoxShop.Application.Migrations
 
                     b.HasIndex("BlindBoxId");
 
-                    b.ToTable("BlindBoxImages");
+                    b.ToTable("BlindBoxImages", (string)null);
                 });
 
             modelBuilder.Entity("BlindBoxShop.Entities.Models.BlindBoxPriceHistory", b =>
@@ -138,7 +138,7 @@ namespace BlindBoxShop.Application.Migrations
 
                     b.HasIndex("BlindBoxId");
 
-                    b.ToTable("BlindBoxPriceHistories");
+                    b.ToTable("BlindBoxPriceHistories", (string)null);
                 });
 
             modelBuilder.Entity("BlindBoxShop.Entities.Models.CustomerReviews", b =>
@@ -174,7 +174,7 @@ namespace BlindBoxShop.Application.Migrations
                     b.HasIndex("UserId", "BlindBoxId")
                         .IsUnique();
 
-                    b.ToTable("CustomerReviews");
+                    b.ToTable("CustomerReviews", (string)null);
                 });
 
             modelBuilder.Entity("BlindBoxShop.Entities.Models.Order", b =>
@@ -228,7 +228,7 @@ namespace BlindBoxShop.Application.Migrations
                         .IsUnique()
                         .HasFilter("[VoucherId] IS NOT NULL");
 
-                    b.ToTable("Orders");
+                    b.ToTable("Orders", (string)null);
                 });
 
             modelBuilder.Entity("BlindBoxShop.Entities.Models.OrderDetail", b =>
@@ -258,7 +258,7 @@ namespace BlindBoxShop.Application.Migrations
                     b.HasIndex("OrderId", "BlindBoxPriceHistoryId")
                         .IsUnique();
 
-                    b.ToTable("OrderDetails");
+                    b.ToTable("OrderDetails", (string)null);
                 });
 
             modelBuilder.Entity("BlindBoxShop.Entities.Models.Package", b =>
@@ -296,7 +296,7 @@ namespace BlindBoxShop.Application.Migrations
                     b.HasIndex("Barcode")
                         .IsUnique();
 
-                    b.ToTable("Packages");
+                    b.ToTable("Packages", (string)null);
                 });
 
             modelBuilder.Entity("BlindBoxShop.Entities.Models.ReplyReviews", b =>
@@ -329,7 +329,7 @@ namespace BlindBoxShop.Application.Migrations
                     b.HasIndex("UserId", "CustomerReviewsId")
                         .IsUnique();
 
-                    b.ToTable("ReplyReviews");
+                    b.ToTable("ReplyReviews", (string)null);
                 });
 
             modelBuilder.Entity("BlindBoxShop.Entities.Models.Roles", b =>
@@ -484,7 +484,7 @@ namespace BlindBoxShop.Application.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Vouchers");
+                    b.ToTable("Vouchers", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>

@@ -2,6 +2,7 @@
 {
     public enum PackageType
     {
-        Opened = 1
+        Opened = 1,
+        Standard = 2
     }
 }

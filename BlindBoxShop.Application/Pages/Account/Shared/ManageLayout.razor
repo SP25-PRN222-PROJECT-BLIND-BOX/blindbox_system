@@ -1,11 +1,16 @@
 ﻿@inherits LayoutComponentBase
 @layout AccountLayout
+@using MudBlazor
 
-<h1>Manage your account</h1>
+<!-- Page Header -->
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-0 px-0 mb-6">
+    <MudPaper Elevation="0" Class="page-header" Style="background-color: var(--mud-palette-secondary);">
+        <MudText Typo="Typo.h3" Class="font-weight-bold mb-2">Manage Your Account</MudText>
+        <MudText Typo="Typo.body1">Change your account settings</MudText>
+    </MudPaper>
+</MudContainer>
 
 <div>
-    <h2>Change your account settings</h2>
-    <hr />
     <div class="row">
         <div class="col-md-3">
             <ManageNavMenu />

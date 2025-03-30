@@ -8,7 +8,6 @@ namespace BlindBoxShop.Repository
     {
         private readonly IDbContextFactory<RepositoryContext> _dbContextFactory;
 
-
         public RepositoryManager(IDbContextFactory<RepositoryContext> dbContextFactory)
         {
             _dbContextFactory = dbContextFactory;
@@ -110,6 +109,15 @@ namespace BlindBoxShop.Repository
             {
                 var context = _dbContextFactory.CreateDbContext();
                 return new ReplyRepository(context);
+            }
+        }
+        
+        public IBlindBoxItemRepository BlindBoxItem
+        {
+            get
+            {
+                var context = _dbContextFactory.CreateDbContext();
+                return new BlindBoxItemRepository(context);
             }
         }
 

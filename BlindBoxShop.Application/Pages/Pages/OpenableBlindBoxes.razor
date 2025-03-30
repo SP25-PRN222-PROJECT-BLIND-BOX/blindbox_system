@@ -1,0 +1,254 @@
+@page "/openable-blindboxes"
+@using BlindBoxShop.Shared.Enum
+
+<PageTitle>BlindBox Shop - Online Openable BlindBoxes</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="px-2 px-sm-4 mt-4">
+    <!-- Hero Banner -->
+    <MudPaper Elevation="0" Class="relative overflow-hidden rounded-xl mb-8" Style="height: 300px;">
+        <MudImage Src="https://vending-cdn.kootoro.com/torov-cms/upload/image/1723016271998-L%C3%BD%20gi%E1%BA%A3i%20xu%20h%C6%B0%E1%BB%9Bng%20%C4%91%E1%BB%93%20ch%C6%A1i%20blind%20box%20%C4%91%C6%B0%E1%BB%A3c%20gi%E1%BB%9Bi%20tr%E1%BA%BB%20s%C4%83n%20%C4%91%C3%B3n.jpg" 
+                Alt="Online BlindBox" Class="object-cover w-full h-full" Style="filter: brightness(0.7);" />
+        <div class="absolute inset-0 flex flex-col items-center justify-center text-center p-4 bg-gradient-to-r from-teal-900/50 to-cyan-900/50">
+            <MudText Typo="Typo.h2" Color="Color.Surface" Class="font-weight-bold mb-2 text-shadow">Online Openable BlindBoxes</MudText>
+            <MudText Typo="Typo.h5" Color="Color.Surface" Class="mb-6 text-shadow">Discover and open BlindBoxes online - Try your luck today!</MudText>
+        </div>
+    </MudPaper>
+
+    <!-- How It Works Section -->
+    <MudPaper Elevation="3" Class="px-6 py-4 mb-6 rounded-lg bg-cyan-800">
+        <MudText Typo="Typo.h5" Color="Color.Surface" Class="font-weight-bold mb-2">How It Works</MudText>
+        <MudGrid>
+            <MudItem xs="12" sm="4">
+                <div class="d-flex flex-column align-center text-center pa-2">
+                    <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" Color="Color.Surface" Size="Size.Large" Class="mb-2" />
+                    <MudText Typo="Typo.subtitle1" Color="Color.Surface" Class="font-weight-bold mb-1">1. Choose a Box</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Surface">Select the BlindBox you want to open and add it to cart</MudText>
+                </div>
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <div class="d-flex flex-column align-center text-center pa-2">
+                    <MudIcon Icon="@Icons.Material.Filled.Payment" Color="Color.Surface" Size="Size.Large" Class="mb-2" />
+                    <MudText Typo="Typo.subtitle1" Color="Color.Surface" Class="font-weight-bold mb-1">2. Checkout</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Surface">Complete your order and make online payment</MudText>
+                </div>
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <div class="d-flex flex-column align-center text-center pa-2">
+                    <MudIcon Icon="@Icons.Material.Filled.Celebration" Color="Color.Surface" Size="Size.Large" Class="mb-2" />
+                    <MudText Typo="Typo.subtitle1" Color="Color.Surface" Class="font-weight-bold mb-1">3. Open Box</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Surface">Open your BlindBox online and see your surprise item</MudText>
+                </div>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <!-- Filter Controls -->
+    <MudGrid Class="mb-6">
+        <MudItem xs="12" sm="6" md="4">
+            <MudSelect T="Guid?" Value="_selectedPackage" ValueChanged="OnPackageChanged" Label="Collection" 
+                      Variant="Variant.Outlined" Class="mt-0">
+                <MudSelectItem T="Guid?" Value="@((Guid?)null)">All Collections</MudSelectItem>
+                @foreach (var package in _packages)
+                {
+                    <MudSelectItem T="Guid?" Value="@package.Id">@package.Name</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <MudSelect T="BlindBoxRarity?" Value="_selectedRarity" ValueChanged="OnRarityChanged" Label="Rarity" 
+                      Variant="Variant.Outlined" Class="mt-0">
+                <MudSelectItem T="BlindBoxRarity?" Value="@((BlindBoxRarity?)null)">All Rarities</MudSelectItem>
+                <MudSelectItem T="BlindBoxRarity?" Value="@BlindBoxRarity.Common">Common</MudSelectItem>
+                <MudSelectItem T="BlindBoxRarity?" Value="@BlindBoxRarity.Uncommon">Uncommon</MudSelectItem>
+                <MudSelectItem T="BlindBoxRarity?" Value="@BlindBoxRarity.Rare">Rare</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" sm="12" md="4">
+            <MudTextField @bind-Value="_searchTerm" Label="Search" Variant="Variant.Outlined"
+                         Immediate="true" Clearable="true" OnClearButtonClick="OnClearSearch" 
+                         OnKeyDown="OnSearchKeyDown" Adornment="Adornment.End" 
+                         AdornmentIcon="@Icons.Material.Filled.Search" Class="mt-0" />
+        </MudItem>
+    </MudGrid>
+
+    <!-- Sorting and Results Count -->
+    <div class="d-flex justify-space-between align-center mb-4">
+        <MudText Typo="Typo.body1">Found @_filteredBlindBoxes.Count products</MudText>
+        <MudSelect T="string" Value="_sortOrder" ValueChanged="OnSortOrderChanged" Label="Sort By" 
+                  Style="width: 180px;" Variant="Variant.Outlined" Margin="Margin.Dense">
+            <MudSelectItem Value="@("price_asc")">Price: Low to High</MudSelectItem>
+            <MudSelectItem Value="@("price_desc")">Price: High to Low</MudSelectItem>
+            <MudSelectItem Value="@("probability_asc")">Probability: Low to High</MudSelectItem>
+            <MudSelectItem Value="@("probability_desc")">Probability: High to Low</MudSelectItem>
+        </MudSelect>
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="d-flex justify-center my-12">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        </div>
+    }
+    else if (_filteredBlindBoxes.Count == 0)
+    {
+        <MudPaper Elevation="0" Class="d-flex flex-column align-center justify-center py-8 px-4 text-center">
+            <MudIcon Icon="@Icons.Material.Filled.SearchOff" Color="Color.Secondary" Size="Size.Large" Class="mb-4" />
+            <MudText Typo="Typo.h5" Class="mb-2">No Products Found</MudText>
+            <MudText Typo="Typo.body1" Class="mb-4 mx-auto" Style="max-width: 500px;">
+                No BlindBoxes match your filter criteria. Please try different search parameters.
+            </MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ResetFilters">Clear Filters</MudButton>
+        </MudPaper>
+    }
+    else
+    {
+        <MudGrid Spacing="3">
+            @foreach (var box in _pagedBlindBoxes)
+            {
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudPaper Elevation="3" Class="pa-0 h-100 d-flex flex-column rounded-lg overflow-hidden mud-transition-on-hover mud-hover:mud-elevation-8" 
+                              Style="cursor: pointer;"
+                              @onclick="@(() => NavigateToProductDetail(box.Id))">
+                        <div class="position-relative overflow-hidden" style="height: 240px;">
+                            <MudImage Src="@((_blindBoxImages.ContainsKey(box.Id) ? _blindBoxImages[box.Id] : 
+                                   (!string.IsNullOrEmpty(box.MainImageUrl) ? box.MainImageUrl : "/images/box-placeholder.jpg")))" 
+                                    Alt="@box.Name" Class="w-full h-full object-cover mud-transition transform duration-500 mud-hover:scale-110" />
+                            
+                            <div class="position-absolute d-flex flex-column gap-1" style="top: 4px; right: 4px;">
+                                <MudChip T="string" Color="Color.Secondary" Size="Size.Small" 
+                                        Class="px-2 font-weight-bold text-capitalize">
+                                    <MudIcon Icon="@Icons.Material.Filled.Public" Size="Size.Small" Class="mr-1" />
+                                    Online
+                                </MudChip>
+                                <MudChip T="string" Color="@GetRarityColor(box.Rarity)" Size="Size.Small" 
+                                        Class="px-2 font-weight-bold text-capitalize">
+                                    @GetRarityText(box.Rarity)
+                                </MudChip>
+                            </div>
+                            
+                            <div class="position-absolute bottom-0 left-0 right-0 py-1 px-2" 
+                                 style="background-color: rgba(103, 58, 183, 0.7);">
+                                <div class="d-flex align-center">
+                                    <MudIcon Icon="@Icons.Material.Filled.Casino" Color="Color.Surface" Size="Size.Small" Class="mr-1" />
+                                    <MudText Typo="Typo.caption" Color="Color.Surface">Try Your Luck Online</MudText>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pa-4 d-flex flex-column flex-grow-1">
+                            <MudText Typo="Typo.h6" Class="mb-1 text-truncate font-weight-bold">@box.Name</MudText>
+                            
+                            <!-- Probability Indicator -->
+                            <div class="d-flex align-center mb-2">
+                                <MudText Typo="Typo.caption" Color="Color.Primary" Class="mr-2">Secret Item:</MudText>
+                                <MudProgressLinear Color="@GetProbabilityColor(box.Probability)" 
+                                                  Value="@Math.Min(box.Probability * 5, 100)" 
+                                                  Class="flex-grow-1 mud-elevation-1 rounded-pill" 
+                                                  Style="height: 8px;" />
+                                <MudText Typo="Typo.caption" Color="@GetProbabilityColor(box.Probability)" Class="ml-2 font-weight-bold">
+                                    @($"{box.Probability:0.0}%")
+                                </MudText>
+                            </div>
+                            
+                            <MudText Typo="Typo.body2" Class="mb-3 flex-grow-1" Style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                @box.Description
+                            </MudText>
+                            
+                            <MudText Typo="Typo.h6" Color="Color.Primary" Class="font-weight-bold mb-3">@FormatPrice(box.CurrentPrice)</MudText>
+                            
+                            <div class="d-flex">
+                                <MudSpacer />
+                                <MudButton Variant="Variant.Filled" 
+                                          Color="Color.Secondary" 
+                                          StartIcon="@Icons.Material.Filled.Casino" 
+                                          Class="text-transform-none"
+                                          Href="@($"/blindbox/{box.Id}")">
+                                    Try Your Luck
+                                </MudButton>
+                            </div>
+                        </div>
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+        
+        <!-- Pagination -->
+        <div class="d-flex justify-center mt-8">
+            <MudPagination Count="@_totalPages" SelectedChanged="OnPageChanged" Selected="_currentPage" Color="Color.Primary" />
+        </div>
+    }
+
+    <!-- Odds Information -->
+    <MudPaper Elevation="3" Class="mt-10 mb-6 pa-6 rounded-lg">
+        <MudText Typo="Typo.h5" Class="mb-4 font-weight-bold">Probability Information</MudText>
+        <MudText Typo="Typo.body1" Class="mb-4">
+            The chance of winning rare items depends on various factors like box type, rarity, and number of openings.
+            Each time you open a box, the probability of receiving a rare item increases.
+        </MudText>
+        
+        <MudGrid>
+            <MudItem xs="12" sm="4">
+                <MudPaper Elevation="2" Class="pa-4 rounded-lg h-100 d-flex flex-column">
+                    <MudText Typo="Typo.h6" Color="Color.Default" Class="mb-2 font-weight-bold">Common</MudText>
+                    <MudDivider Class="mb-3" />
+                    <MudText Typo="Typo.body2" Class="flex-grow-1">
+                        Common items have approximately 70-80% drop rate. These are the easiest items to obtain.
+                    </MudText>
+                </MudPaper>
+            </MudItem>
+            
+            <MudItem xs="12" sm="4">
+                <MudPaper Elevation="2" Class="pa-4 rounded-lg h-100 d-flex flex-column" Style="border-left: 4px solid var(--mud-palette-success);">
+                    <MudText Typo="Typo.h6" Color="Color.Success" Class="mb-2 font-weight-bold">Uncommon</MudText>
+                    <MudDivider Class="mb-3" />
+                    <MudText Typo="Typo.body2" Class="flex-grow-1">
+                        Uncommon items have approximately 15-25% drop rate. They are more limited than common items.
+                    </MudText>
+                </MudPaper>
+            </MudItem>
+            
+            <MudItem xs="12" sm="4">
+                <MudPaper Elevation="2" Class="pa-4 rounded-lg h-100 d-flex flex-column" Style="border-left: 4px solid var(--mud-palette-warning);">
+                    <MudText Typo="Typo.h6" Color="Color.Warning" Class="mb-2 font-weight-bold">Rare</MudText>
+                    <MudDivider Class="mb-3" />
+                    <MudText Typo="Typo.body2" Class="flex-grow-1">
+                        Rare items are special with only 1-5% drop rate. Each time you open a box, this rate increases.
+                    </MudText>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+</MudContainer>
+
+<style>
+    .text-shadow {
+        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    
+    .mud-transition {
+        transition: all 0.3s ease-in-out;
+    }
+    
+    .mud-transition-on-hover:hover {
+        transform: translateY(-5px);
+    }
+    
+    .transform {
+        transform: scale(1);
+    }
+    
+    .duration-500 {
+        transition-duration: 500ms;
+    }
+    
+    .mud-hover\:scale-110:hover {
+        transform: scale(1.1);
+    }
+    
+    .mud-hover\:mud-elevation-8:hover {
+        box-shadow: var(--mud-elevation-8);
+    }
+    
+    .rounded-pill {
+        border-radius: 50rem !important;
+    }
+</style> 

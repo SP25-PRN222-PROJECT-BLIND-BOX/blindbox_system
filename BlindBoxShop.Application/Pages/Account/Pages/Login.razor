@@ -1,129 +1,220 @@
-﻿@page "/Account/Login"
-
+﻿@page "/account/login"
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Identity
-@using BlindBoxShop.Entities.Models;
-
+@using BlindBoxShop.Entities.Models
+@using Microsoft.AspNetCore.Authorization
+@using BlindBoxShop.Service.Contract
+@using Microsoft.JSInterop
+@using BlindBoxShop.Shared.Extension
+@using BlindBoxShop.Application.Components.Layout
+@layout BlindBoxShop.Application.Components.Layout.MainLayout
+@attribute [AllowAnonymous]
 
 @inject SignInManager<User> SignInManager
+@inject UserManager<User> UserManager
 @inject ILogger<Login> Logger
 @inject NavigationManager NavigationManager
-@inject IdentityRedirectManager RedirectManager
+@inject ISnackbar Snackbar
+@inject IServiceManager ServiceManager
+@inject IJSRuntime JSRuntime
 
-<PageTitle>Log in</PageTitle>
+<PageTitle>Đăng nhập - BoxBox</PageTitle>
 
-<h1>Log in</h1>
-<div class="row">
-    <div class="col-md-4">
-        <section>
-            <StatusMessage Message="@errorMessage" />
-            <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login">
-                <DataAnnotationsValidator />
-                <h2>Use a local account to log in.</h2>
-                <hr />
-                <ValidationSummary class="text-danger" role="alert" />
-                <div class="form-floating mb-3">
-                    <InputText @bind-Value="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
-                    <label for="email" class="form-label">Email</label>
-                    <ValidationMessage For="() => Input.Email" class="text-danger" />
-                </div>
-                <div class="form-floating mb-3">
-                    <InputText type="password" @bind-Value="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
-                    <label for="password" class="form-label">Password</label>
-                    <ValidationMessage For="() => Input.Password" class="text-danger" />
-                </div>
-                <div class="checkbox mb-3">
-                    <label class="form-label">
-                        <InputCheckbox @bind-Value="Input.RememberMe" class="darker-border-checkbox form-check-input" />
-                        Remember me
-                    </label>
-                </div>
-                <div>
-                    <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
-                </div>
-                <div>
-                    <p>
-                        <a href="Account/ForgotPassword">Forgot your password?</a>
-                    </p>
-                    <p>
-                        <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">Register as a new user</a>
-                    </p>
-                    <p>
-                        <a href="Account/ResendEmailConfirmation">Resend email confirmation</a>
-                    </p>
-                </div>
-            </EditForm>
-        </section>
-    </div>
-    <div class="col-md-6 col-md-offset-2">
-        <section>
-            <h3>Use another service to log in.</h3>
-            <hr />
-            <ExternalLoginPicker />
-        </section>
-    </div>
-</div>
+<!-- Page Header -->
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-0 px-0">
+    <MudPaper Elevation="0" Class="page-header" Style="background-color: var(--mud-palette-secondary);">
+        <MudText Typo="Typo.h3" Class="font-weight-bold mb-2">Đăng nhập</MudText>
+        <MudText Typo="Typo.body1">Đăng nhập để tiếp tục mua sắm và quản lý đơn hàng của bạn</MudText>
+    </MudPaper>
+</MudContainer>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="py-8">
+    <MudCard Elevation="3" Class="rounded-lg pa-7">
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-4" Variant="Variant.Filled" Dense="true">@errorMessage</MudAlert>
+        }
+        
+        <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4 font-weight-bold">Đăng nhập tài khoản</MudText>
+        
+        <EditForm Model="@Input" OnSubmit="@LoginUser" FormName="loginForm">
+            <DataAnnotationsValidator />
+            
+            <MudTextField Label="Email"
+                          @bind-Value="Input.Email"
+                          For="@(() => Input.Email)"
+                          Variant="Variant.Outlined"
+                          Class="mb-4"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Email"
+                          Required="true"
+                          RequiredError="Vui lòng nhập email"
+                          FullWidth="true" />
+                          
+            <MudTextField Label="Mật khẩu"
+                          @bind-Value="Input.Password"
+                          For="@(() => Input.Password)"
+                          Variant="Variant.Outlined"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Lock"
+                          AdornmentAriaLabel="Show Password"
+                          InputType="@(_showPassword ? InputType.Text : InputType.Password)"
+                          EndAdornment="Adornment.End"
+                          EndAdornmentIcon="@(_showPassword ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                          OnEndAdornmentClick="TogglePasswordVisibility"
+                          Required="true"
+                          RequiredError="Vui lòng nhập mật khẩu"
+                          FullWidth="true" />
+                          
+            <MudCheckBox @bind-Checked="Input.RememberMe" Label="Ghi nhớ đăng nhập" Color="Color.Primary" Class="mb-4" T="bool" />
+            
+            <div class="d-flex flex-column gap-2 mb-4">
+                <MudButton ButtonType="ButtonType.Submit"
+                           Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           Size="Size.Large"
+                           StartIcon="@Icons.Material.Filled.Login"
+                           FullWidth="true"
+                           Disabled="@_isProcessing">
+                    @if (_isProcessing)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                        <MudText Class="ms-2">Đang xử lý...</MudText>
+                    }
+                    else
+                    {
+                        <MudText>Đăng nhập</MudText>
+                    }
+                </MudButton>
+                
+                <MudButton Href="/account/register"
+                           Variant="Variant.Outlined"
+                           Color="Color.Secondary"
+                           Size="Size.Medium"
+                           Class="mt-2"
+                           FullWidth="true">
+                    Tạo tài khoản mới
+                </MudButton>
+            </div>
+            
+            <div class="d-flex flex-column align-center">
+                <MudLink Href="/account/forgotpassword" Color="Color.Primary">Quên mật khẩu?</MudLink>
+            </div>
+        </EditForm>
+        
+        <MudDivider Class="my-4" />
+        
+        <MudText Typo="Typo.subtitle1" Align="Align.Center" Class="mb-3">Đăng nhập với</MudText>
+        <div class="d-flex justify-center gap-2">
+            <MudButton Variant="Variant.Outlined" 
+                      StartIcon="@Icons.Custom.Brands.Google" 
+                      Color="Color.Error"
+                      OnClick="@(() => ProcessExternalLogin("Google"))">
+                Google
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" 
+                      StartIcon="@Icons.Custom.Brands.Facebook" 
+                      Color="Color.Info"
+                      OnClick="@(() => ProcessExternalLogin("Facebook"))">
+                Facebook
+            </MudButton>
+        </div>
+    </MudCard>
+</MudContainer>
 
 @code {
     private string? errorMessage;
-
-    [CascadingParameter]
-    private HttpContext HttpContext { get; set; } = default!;
-
-    [SupplyParameterFromForm]
+    private bool _isProcessing = false;
+    private bool _showPassword = false;
+    
     private InputModel Input { get; set; } = new();
-
+    
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
-
-    protected override async Task OnInitializedAsync()
+    
+    protected override void OnInitialized()
     {
-        if (HttpMethods.IsGet(HttpContext.Request.Method))
+        // Sanitize ReturnUrl to avoid Base64 encoding/decoding issues
+        if (!string.IsNullOrEmpty(ReturnUrl) && !ReturnUrl.StartsWith("/"))
         {
-            // Clear the existing external cookie to ensure a clean login process
-            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+            ReturnUrl = "/";
         }
     }
-
-    public async Task LoginUser()
+    
+    private void TogglePasswordVisibility()
     {
-        // This doesn't count login failures towards account lockout
-        // To enable password failures to trigger account lockout, set lockoutOnFailure: true
-        var result = await SignInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
-        if (result.Succeeded)
+        _showPassword = !_showPassword;
+    }
+    
+    private async Task ProcessExternalLogin(string provider)
+    {
+        // Use form POST method to pass parameters safely without encoding/decoding
+        NavigationManager.NavigateTo($"/Account/PerformExternalLogin?provider={provider}&returnUrl={ReturnUrl ?? "/"}", forceLoad: true);
+    }
+    
+    private async Task LoginUser(EditContext context)
+    {
+        if (context.Validate())
         {
-            Logger.LogInformation("User logged in.");
-            RedirectManager.RedirectTo(ReturnUrl);
-        }
-        else if (result.RequiresTwoFactor)
-        {
-            RedirectManager.RedirectTo(
-                "Account/LoginWith2fa",
-                new() { ["returnUrl"] = ReturnUrl, ["rememberMe"] = Input.RememberMe });
-        }
-        else if (result.IsLockedOut)
-        {
-            Logger.LogWarning("User account locked out.");
-            RedirectManager.RedirectTo("Account/Lockout");
-        }
-        else
-        {
-            errorMessage = "Error: Invalid login attempt.";
+            try
+            {
+                _isProcessing = true;
+                errorMessage = null;
+                
+                // Sử dụng AuthService để đăng nhập đơn giản
+                using var authService = ServiceManager.AuthService;
+                var result = await authService.LoginAsync(Input.Email, Input.Password);
+                
+                if (result.IsSuccess)
+                {
+                    // Lưu thông tin người dùng vào localStorage
+                    var userInfo = result.GetValue<UserLoginResult>();
+                    await JSRuntime.InvokeVoidAsync("localStorage.setItem", "user_id", userInfo.UserId.ToString());
+                    await JSRuntime.InvokeVoidAsync("localStorage.setItem", "user_email", userInfo.Email);
+                    await JSRuntime.InvokeVoidAsync("localStorage.setItem", "user_name", $"{userInfo.FirstName} {userInfo.LastName}");
+                    await JSRuntime.InvokeVoidAsync("localStorage.setItem", "user_roles", string.Join(",", userInfo.Roles));
+                    
+                    Logger.LogInformation("Người dùng đã đăng nhập thành công.");
+                    Snackbar.Add("Đăng nhập thành công!", Severity.Success);
+                    
+                    // Cập nhật trạng thái đăng nhập trong MainLayout
+                    if (MainLayout.Instance != null)
+                    {
+                        await MainLayout.Instance.NotifyUserLogin();
+                    }
+                    
+                    // Điều hướng về trang chủ hoặc returnUrl
+                    NavigationManager.NavigateTo(ReturnUrl?.StartsWith("/") == true ? ReturnUrl : "/");
+                }
+                else
+                {
+                    errorMessage = result.Errors?.FirstOrDefault()?.Description ?? "Đăng nhập không thành công.";
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Lỗi khi đăng nhập");
+                errorMessage = "Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại sau.";
+            }
+            finally
+            {
+                _isProcessing = false;
+            }
         }
     }
-
-    private sealed class InputModel
+    
+    private class InputModel
     {
-        [Required]
-        [EmailAddress]
+        [Required(ErrorMessage = "Vui lòng nhập email")]
+        [EmailAddress(ErrorMessage = "Email không hợp lệ")]
         public string Email { get; set; } = "";
-
-        [Required]
+        
+        [Required(ErrorMessage = "Vui lòng nhập mật khẩu")]
         [DataType(DataType.Password)]
         public string Password { get; set; } = "";
-
-        [Display(Name = "Remember me?")]
-        public bool RememberMe { get; set; }
+        
+        [Display(Name = "Ghi nhớ đăng nhập?")]
+        public bool RememberMe { get; set; } = true;
     }
 }

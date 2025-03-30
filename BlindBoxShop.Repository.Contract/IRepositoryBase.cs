@@ -19,6 +19,8 @@ namespace BlindBoxShop.Repository.Contract
         Task CreateAsync(T entity);
 
         Task CreateAsync(T[] entity);
+        void CreateRange(IEnumerable<T> entities);
+        Task CreateRangeAsync(IEnumerable<T> entities);
 
         void Update(T entity);
 
@@ -27,6 +29,8 @@ namespace BlindBoxShop.Repository.Contract
         void Delete(T entity);
 
         void Delete(T[] entity);
+        void DeleteRange(IEnumerable<T> entities);
+        Task DeleteRangeAsync(IEnumerable<T> entities);
 
         Task SaveAsync();
     }

@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BlindBoxShop.Shared\BlindBoxShop.Shared.csproj" />
-
+   
   </ItemGroup>
 
 </Project>

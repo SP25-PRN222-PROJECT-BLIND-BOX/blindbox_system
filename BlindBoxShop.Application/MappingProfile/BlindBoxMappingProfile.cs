@@ -37,6 +37,8 @@ namespace BlindBoxShop.Application.MappingProfile
 
             // Map from Entity to DTO
             CreateMap<BlindBoxImage, BlindBoxImageDto>();
+            CreateMap<BlindBoxPriceHistory, BlindBoxPriceHistoryDto>();
+            
         }
     }
 }

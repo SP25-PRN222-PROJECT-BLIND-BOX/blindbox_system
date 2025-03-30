@@ -13,4 +13,4 @@
         public virtual ICollection<OrderDetail>? OrderDetails { get; set; }
     }
 
-}
+} 

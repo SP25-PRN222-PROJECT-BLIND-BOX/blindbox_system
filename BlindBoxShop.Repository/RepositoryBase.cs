@@ -57,6 +57,12 @@ namespace BlindBoxShop.Repository
             .Set<T>()
             .AddRangeAsync(entity);
 
+        public virtual void CreateRange(IEnumerable<T> entities) =>
+            RepositoryContext.Set<T>().AddRange(entities);
+
+        public virtual async Task CreateRangeAsync(IEnumerable<T> entities) =>
+            await RepositoryContext.Set<T>().AddRangeAsync(entities);
+
         public virtual void Update(T entity) =>
             RepositoryContext
             .Set<T>()
@@ -76,6 +82,13 @@ namespace BlindBoxShop.Repository
             RepositoryContext
             .Set<T>()
             .RemoveRange(entity);
+        public virtual void DeleteRange(IEnumerable<T> entities) =>
+            RepositoryContext.Set<T>().RemoveRange(entities);
+        public virtual Task DeleteRangeAsync(IEnumerable<T> entities)
+        {
+            RepositoryContext.Set<T>().RemoveRange(entities);
+            return Task.CompletedTask;
+        }
 
         public async Task SaveAsync() => await RepositoryContext.SaveChangesAsync();
 

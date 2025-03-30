@@ -46,6 +46,34 @@ namespace BlindBoxShop.Service
             }
         }
 
+        // Get by BlindBoxId
+        public async Task<Result<IEnumerable<BlindBoxPriceHistoryDto>>> GetByBlindBoxIdAsync(Guid blindBoxId)
+        {
+
+            try
+            {
+                // Await để lấy IQueryable<BlindBoxPriceHistory>
+                var query = await _blindBoxPriceHistoryRepository
+                    .FindByConditionAsync(bph => bph.BlindBoxId.Equals(blindBoxId), false);
+
+                // Bây giờ có thể gọi OrderBy và ToListAsync trên IQueryable
+                var blindBoxPriceHistories = await query
+                    .OrderBy(bph => bph.CreatedAt)
+                    .ToListAsync();
+
+                var blindBoxPriceHistoriesDto = _mapper.Map<IEnumerable<BlindBoxPriceHistoryDto>>(blindBoxPriceHistories);
+                return Result<IEnumerable<BlindBoxPriceHistoryDto>>.Success(blindBoxPriceHistoriesDto);
+            }
+            catch (Exception ex)
+            {
+                return Result<IEnumerable<BlindBoxPriceHistoryDto>>.Failure(new ErrorResult
+                {
+                    Code = "BlindBoxPriceHistory.GetByBlindBoxId.Failed",
+                    Description = ex.Message
+                });
+            }
+        }
+
 
         public void Dispose()
         {

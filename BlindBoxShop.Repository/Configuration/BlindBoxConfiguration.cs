@@ -1,5 +1,6 @@
 ﻿using BlindBoxShop.Entities.Models;
 using BlindBoxShop.Shared.Enum;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -17,6 +18,8 @@ namespace BlindBoxShop.Repository.Configuration
             entity.Property(e => e.Status).HasConversion(typeof(string));
 
             entity.Property(e => e.Description).HasColumnType("text");
+
+            entity.Property(e => e.Price).HasColumnType("decimal(18,2)");
 
             entity.HasOne(e => e.BlindBoxCategory)
                 .WithMany(e => e.BlindBoxes)

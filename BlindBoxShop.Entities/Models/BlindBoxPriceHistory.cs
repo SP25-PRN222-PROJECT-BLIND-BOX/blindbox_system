@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-
-namespace BlindBoxShop.Entities.Models
+﻿namespace BlindBoxShop.Entities.Models
 {
     public class BlindBoxPriceHistory : BaseEntity
     {

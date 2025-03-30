@@ -1,16 +1,18 @@
 ﻿using AutoMapper;
+
 using BlindBoxShop.Entities.Models;
 using BlindBoxShop.Repository.Contract;
 using BlindBoxShop.Service.Contract;
-using System;
-using System.Threading.Tasks;
+using BlindBoxShop.Shared.DataTransferObject.Users;
+using BlindBoxShop.Shared.Features;
+using BlindBoxShop.Shared.ResultModel;
 
 namespace BlindBoxShop.Service
 {
     public class UserService : BaseService, IUserService
     {
         private readonly IUserRepository _userRepository;
-        
+
         public UserService(IRepositoryManager repositoryManager, IMapper mapper) : base(repositoryManager, mapper)
         {
             _userRepository = repositoryManager.User;
@@ -43,7 +45,7 @@ namespace BlindBoxShop.Service
                 var user = userObj as User;
                 if (user == null)
                     return false;
-                    
+
                 var existingUser = await _userRepository.FindById(userId, true);
                 if (existingUser == null)
                     return false;
@@ -73,5 +75,25 @@ namespace BlindBoxShop.Service
             _userRepository.Dispose();
             GC.SuppressFinalize(this);
         }
+
+        public async Task<Result<IEnumerable<UserDtoWithRelation>>> GetStaffListAsync(UserParameters userParameters, bool trackChanges)
+        {
+            userParameters.Role = Shared.Enum.UserRole.Staff;
+            var users = await _userRepository.GetUsersAsync(userParameters, trackChanges);
+
+            var userDtos = _mapper.Map<IEnumerable<UserDtoWithRelation>>(users);
+
+            return (userDtos, users.MetaData);
+        }
+
+        public async Task<Result<IEnumerable<UserDtoWithRelation>>> GetUserListAsync(UserParameters userParameters, bool trackChanges)
+        {
+            var users = await _userRepository.GetUsersAsync(userParameters, trackChanges);
+
+            var userDtos = _mapper.Map<IEnumerable<UserDtoWithRelation>>(users);
+
+            return (userDtos, users.MetaData);
+        }
+
     }
 }

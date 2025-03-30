@@ -1,6 +1,8 @@
 ﻿using BlindBoxShop.Entities.Models;
 using BlindBoxShop.Repository.Contract;
+
 using Microsoft.EntityFrameworkCore;
+
 using System.Linq.Expressions;
 
 namespace BlindBoxShop.Repository
@@ -107,5 +109,6 @@ namespace BlindBoxShop.Repository
             Dispose(true);
             GC.SuppressFinalize(this);
         }
+
     }
 }

@@ -13,7 +13,7 @@
   <ItemGroup>
     <ProjectReference Include="..\BlindBoxShop.Repository.Contract\BlindBoxShop.Repository.Contract.csproj" />
     <ProjectReference Include="..\BlindBoxShop.Service.Contract\BlindBoxShop.Service.Contract.csproj" />
-    <ProjectReference Include="..\BlindBoxShop.Shared.Services\BlindBoxShop.Shared.Services.csproj" />
+    
   </ItemGroup>
 
 </Project>

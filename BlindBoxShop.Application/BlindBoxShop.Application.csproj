@@ -22,7 +22,6 @@
 	<ItemGroup>
 		<ProjectReference Include="..\BlindBoxShop.Repository\BlindBoxShop.Repository.csproj" />
 		<ProjectReference Include="..\BlindBoxShop.Service\BlindBoxShop.Service.csproj" />
-		<ProjectReference Include="..\BlindBoxShop.Shared.Services\BlindBoxShop.Shared.Services.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

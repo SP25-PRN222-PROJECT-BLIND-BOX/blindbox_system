@@ -144,7 +144,45 @@ namespace BlindBoxShop.Service
                 });
             }
         }
+        public async Task<Result<BlindBoxImageDto>> CreateBlindBoxImageAsync(BlindBoxImageDto blindBoxImageDto)
+        {
+            try
+            {
+                if (blindBoxImageDto == null)
+                {
+                    return Result<BlindBoxImageDto>.Failure(new ErrorResult
+                    {
+                        Code = "BlindBoxImage.Create.InvalidData",
+                        Description = "Dữ liệu ảnh không hợp lệ."
+                    });
+                }
 
+
+                var blindBoxImage = new BlindBoxImage
+                {
+                    Id = Guid.NewGuid(),
+                    BlindBoxId = blindBoxImageDto.BlindBoxId,
+                    ImageUrl = blindBoxImageDto.ImageUrl,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                
+                await _blindBoxImageRepository.CreateAsync(blindBoxImage);
+                await _blindBoxImageRepository.SaveAsync();
+
+                
+                var resultDto = _mapper.Map<BlindBoxImageDto>(blindBoxImage);
+                return Result<BlindBoxImageDto>.Success(resultDto);
+            }
+            catch (Exception ex)
+            {
+                return Result<BlindBoxImageDto>.Failure(new ErrorResult
+                {
+                    Code = "BlindBoxImage.Create.Failed",
+                    Description = ex.Message
+                });
+            }
+        }
 
         public void Dispose()
         {

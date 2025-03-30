@@ -11,6 +11,8 @@ namespace BlindBoxShop.Repository.Configuration
             base.ModelCreating(entity);
             entity.Property(e => e.DefaultPrice).HasColumnType("decimal(18,2)");
             entity.Property(e => e.Price).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.DefaultProbability).HasColumnType("decimal(5,2)");
+            entity.Property(e => e.Probability).HasColumnType("decimal(5,2)");
         }
 
         protected override void SeedData(EntityTypeBuilder<BlindBoxPriceHistory> entity)
@@ -23,6 +25,8 @@ namespace BlindBoxShop.Repository.Configuration
                     BlindBoxId = Guid.Parse("7594c261-b8d9-43a0-a2ea-095214afc2a9"),
                     DefaultPrice = 150000m,
                     Price = 150000m,
+                    DefaultProbability = 5.00m,
+                    Probability = 5.00m,
                     CreatedAt = DateTime.Now
                 },
 
@@ -33,6 +37,8 @@ namespace BlindBoxShop.Repository.Configuration
                     BlindBoxId = Guid.Parse("8109eb24-4086-42a3-9d20-8e07a321b905"),
                     DefaultPrice = 350000m,
                     Price = 350000m,
+                    DefaultProbability = 3.00m,
+                    Probability = 3.00m,
                     CreatedAt = DateTime.Now
                 },
 
@@ -43,6 +49,8 @@ namespace BlindBoxShop.Repository.Configuration
                     BlindBoxId = Guid.Parse("56792b87-5156-4959-82e3-25a12b66b267"),
                     DefaultPrice = 120000m,
                     Price = 120000m,
+                    DefaultProbability = 10.00m,
+                    Probability = 10.00m,
                     CreatedAt = DateTime.Now
                 },
 
@@ -53,6 +61,8 @@ namespace BlindBoxShop.Repository.Configuration
                     BlindBoxId = Guid.Parse("5d0d8d83-a8a6-410d-97b0-73bd5fb5d213"),
                     DefaultPrice = 280000m,
                     Price = 280000m,
+                    DefaultProbability = 2.50m,
+                    Probability = 2.50m,
                     CreatedAt = DateTime.Now
                 },
 
@@ -63,6 +73,8 @@ namespace BlindBoxShop.Repository.Configuration
                     BlindBoxId = Guid.Parse("3db50dc1-b3aa-4088-b083-d8823235120b"),
                     DefaultPrice = 320000m,
                     Price = 320000m,
+                    DefaultProbability = 2.00m,
+                    Probability = 2.00m,
                     CreatedAt = DateTime.Now
                 },
 
@@ -73,6 +85,8 @@ namespace BlindBoxShop.Repository.Configuration
                     BlindBoxId = Guid.Parse("6b34d818-8e04-4d63-9c40-2aeb68a60a90"),
                     DefaultPrice = 500000m,
                     Price = 500000m,
+                    DefaultProbability = 1.00m,
+                    Probability = 1.00m,
                     CreatedAt = DateTime.Now
                 },
 
@@ -83,6 +97,8 @@ namespace BlindBoxShop.Repository.Configuration
                     BlindBoxId = Guid.Parse("1c3f7db4-557f-46c9-8d59-25c557e2cbb2"),
                     DefaultPrice = 100000m,
                     Price = 100000m,
+                    DefaultProbability = 15.00m,
+                    Probability = 15.00m,
                     CreatedAt = DateTime.Now
                 },
 
@@ -93,6 +109,8 @@ namespace BlindBoxShop.Repository.Configuration
                     BlindBoxId = Guid.Parse("2ba2b8a7-3fcf-4dd6-a3de-51a897ba7c27"),
                     DefaultPrice = 250000m,
                     Price = 250000m,
+                    DefaultProbability = 5.00m,
+                    Probability = 5.00m,
                     CreatedAt = DateTime.Now
                 }
             );

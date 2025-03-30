@@ -17,5 +17,9 @@ namespace BlindBoxShop.Service.Contract
         Task<Result<IEnumerable<BlindBoxDto>>> GetBlindBoxesByPackageIdAsync(Guid packageId, bool trackChanges);
         Task<Result<bool>> ResetBlindBoxProbabilityAsync(Guid blindBoxId);
         Task<Result<bool>> IncrementBlindBoxProbabilityAsync(Guid blindBoxId);
+        
+        // New methods for the gacha probability/price system
+        Task<Result<BlindBoxDto>> IncrementProbabilityAndPriceAsync(Guid blindBoxId);
+        Task<Result<BlindBoxDto>> ResetProbabilityAndPriceAsync(Guid blindBoxId);
     }
 }

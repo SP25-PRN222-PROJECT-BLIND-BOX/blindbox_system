@@ -41,7 +41,7 @@ namespace BlindBoxShop.Application.Pages.Pages
         private bool _isLoading = true;
         private bool _isGridView = true;
         private string _searchTerm = string.Empty;
-        private string _sortOrder = "price_asc";
+        private string _sortOrder = "created_desc";
         private Guid? _selectedCategory;
         private Guid? _selectedPackage;
         private int _pageSize = 12;
@@ -140,6 +140,7 @@ namespace BlindBoxShop.Application.Pages.Pages
                     // Lọc rõ ràng các BlindBox thuộc loại Standard packages
                     var standardPackageIds = _packages
                         .Where(p => p.Type == PackageType.Standard)
+                        .OrderByDescending(p => p.CreatedAt)
                         .Select(p => p.Id)
                         .ToList();
                         
@@ -291,7 +292,9 @@ namespace BlindBoxShop.Application.Pages.Pages
                 "price_desc" => blindBoxes.OrderByDescending(b => b.CurrentPrice).ToList(),
                 "name_asc" => blindBoxes.OrderBy(b => b.Name).ToList(),
                 "name_desc" => blindBoxes.OrderByDescending(b => b.Name).ToList(),
-                _ => blindBoxes
+                "created_desc" => blindBoxes.OrderByDescending(b => b.CreatedAt).ToList(),
+                "created_asc" => blindBoxes.OrderBy(b => b.CreatedAt).ToList(),
+                _ => blindBoxes.OrderByDescending(b => b.CreatedAt).ToList()
             };
         }
 
@@ -348,7 +351,7 @@ namespace BlindBoxShop.Application.Pages.Pages
             _selectedCategory = null;
             _selectedPackage = null;
             _searchTerm = string.Empty;
-            _sortOrder = "price_asc";
+            _sortOrder = "created_desc";
             _currentPage = 1;
             ApplyFilters();
         }

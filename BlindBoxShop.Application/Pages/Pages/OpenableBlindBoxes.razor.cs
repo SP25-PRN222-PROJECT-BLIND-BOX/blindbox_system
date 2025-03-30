@@ -35,7 +35,7 @@ namespace BlindBoxShop.Application.Pages.Pages
         private string _searchTerm = string.Empty;
         private Guid? _selectedPackage;
         private BlindBoxRarity? _selectedRarity;
-        private string _sortOrder = "price_asc";
+        private string _sortOrder = "created_desc";
         
         private int _pageSize = 12;
         private int _currentPage = 1;
@@ -59,6 +59,7 @@ namespace BlindBoxShop.Application.Pages.Pages
                     // Filter packages with type Opened (openable packages)
                     _packages = result.Value
                         .Where(p => p.Type == PackageType.Opened)
+                        .OrderByDescending(p => p.CreatedAt)
                         .ToList();
                 }
             }
@@ -234,7 +235,9 @@ namespace BlindBoxShop.Application.Pages.Pages
                 "price_desc" => blindBoxes.OrderByDescending(b => b.CurrentPrice).ToList(),
                 "probability_asc" => blindBoxes.OrderBy(b => b.Probability).ToList(),
                 "probability_desc" => blindBoxes.OrderByDescending(b => b.Probability).ToList(),
-                _ => blindBoxes
+                "created_desc" => blindBoxes.OrderByDescending(b => b.CreatedAt).ToList(),
+                "created_asc" => blindBoxes.OrderBy(b => b.CreatedAt).ToList(),
+                _ => blindBoxes.OrderByDescending(b => b.CreatedAt).ToList()
             };
         }
 
@@ -291,7 +294,7 @@ namespace BlindBoxShop.Application.Pages.Pages
             _selectedPackage = null;
             _selectedRarity = null;
             _searchTerm = string.Empty;
-            _sortOrder = "price_asc";
+            _sortOrder = "created_desc";
             _currentPage = 1;
             ApplyFilters();
         }

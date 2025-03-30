@@ -84,8 +84,8 @@ namespace BlindBoxShop.Service
                     };
                     
                     // Lưu price history mới
-                    _repositoryManager.BlindBoxPriceHistory.Create(priceHistory);
-                    await _repositoryManager.BlindBoxPriceHistory.SaveAsync();
+                    _blindBoxPriceHistoryRepository.Create(priceHistory);
+                    await _blindBoxPriceHistoryRepository.SaveAsync();
                     
                     Console.WriteLine($"Created new price history with ID: {priceHistory.Id}");
                     
@@ -194,8 +194,8 @@ namespace BlindBoxShop.Service
                         };
                         
                         // Lưu price history mới
-                        _repositoryManager.BlindBoxPriceHistory.Create(priceHistory);
-                        await _repositoryManager.BlindBoxPriceHistory.SaveAsync();
+                        _blindBoxPriceHistoryRepository.Create(priceHistory);
+                        await _blindBoxPriceHistoryRepository.SaveAsync();
                         
                         Console.WriteLine($"Created new price history with ID: {priceHistory.Id}");
                         

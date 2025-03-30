@@ -176,11 +176,25 @@
                     {
                         var probabilityValue = (float)BlindBox.Probability;
                         <MudText Typo="Typo.subtitle1" Class="mb-1 d-flex align-center">
-                            <span class="font-weight-medium mr-2">Tỷ lệ secret item:</span> 
+                            <span class="font-weight-medium mr-2">Secret item chance:</span> 
                             <MudProgressLinear Value="@probabilityValue" Color="Color.Secondary" Class="mx-4" 
                                               Style="width: 150px; height: 10px;" />
-                            <span>@(BlindBox.Probability)%</span>
+                            <span>@(BlindBox.Probability.ToString("0.0"))%</span>
                         </MudText>
+                        
+                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mt-3 mb-3">
+                            <div class="d-flex align-center">
+                                <MudIcon Icon="@Icons.Material.Filled.Casino" Class="mr-2" />
+                                <div>
+                                    <MudText Typo="Typo.body2">
+                                        Each unsuccessful attempt increases the chance by <strong>0.1%</strong> and price by <strong>10.000₫</strong>.
+                                    </MudText>
+                                    <MudText Typo="Typo.body2">
+                                        When someone wins a secret item, probability and price reset to default values.
+                                    </MudText>
+                                </div>
+                            </div>
+                        </MudAlert>
                     }
                 </div>
                 
@@ -326,6 +340,14 @@
                             <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="mr-2" />
                             Online BlindBox can only be purchased one at a time
                         </MudAlert>
+                        
+                        <div class="mt-3 pa-2 rounded-lg" Style="background-color: rgba(103, 58, 183, 0.05); border: 1px dashed var(--mud-palette-secondary);">
+                            <div class="d-flex justify-space-between align-center mb-2">
+                                <MudText Typo="Typo.subtitle2">Secret Item Chance:</MudText>
+                                <MudChip T="string" Color="Color.Secondary" Size="Size.Small">@(BlindBox.Probability.ToString("0.0"))%</MudChip>
+                            </div>
+                            <MudProgressLinear Color="Color.Secondary" Value="@((double)BlindBox.Probability)" Class="mb-1" />
+                        </div>
                     </div>
                 }
 

@@ -161,6 +161,21 @@
                             </div>
                         </div>
                         
+                        @if (BlindBox?.Probability > 0)
+                        {
+                            <MudPaper Elevation="0" Class="pa-3 mb-4 rounded-lg" Style="background-color: rgba(103, 58, 183, 0.05); border: 1px dashed var(--mud-palette-secondary);">
+                                <div class="d-flex justify-space-between align-center mb-2">
+                                    <MudText Typo="Typo.subtitle2">Secret Item Chance:</MudText>
+                                    <MudChip T="string" Color="Color.Secondary" Size="Size.Small">@(BlindBox.Probability.ToString("0.0"))%</MudChip>
+                                </div>
+                                <MudProgressLinear Color="Color.Secondary" Value="@((double)BlindBox.Probability)" Class="mb-1" />
+                                <MudText Typo="Typo.caption" Class="d-flex align-center">
+                                    <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="mr-1" />
+                                    Each unsuccessful attempt increases the chance by 0.1% and price by 10.000₫
+                                </MudText>
+                            </MudPaper>
+                        }
+                        
                         <MudText Typo="Typo.subtitle1" Class="font-weight-medium mb-4">Shipping Address</MudText>
                         
                         <div class="d-flex flex-column gap-3">
@@ -266,6 +281,12 @@
             // Normal case - load BlindBox info
             await LoadBlindBoxAsync();
         }
+        
+        // We won't access localStorage or sessionStorage here 
+        // (will be handled in OnAfterRenderAsync), but we
+        // can pre-set other properties to improve UI readiness
+        _acceptTerms = false; // Reset checkbox state
+        await LoadUserInfoAsync();
     }
     
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -273,6 +294,18 @@
         if (firstRender)
         {
             _firstRender = false;
+            
+            // First priority: load user info as soon as possible
+            try 
+            {
+                Console.WriteLine("Loading user info immediately after first render");
+                await LoadUserInfoAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in initial user info loading: {ex.Message}");
+                // Don't stop execution - continue with other initialization
+            }
             
             // Add custom animation styles
             await JSRuntime.InvokeVoidAsync("eval", @"
@@ -367,7 +400,6 @@
                 if (_showGachaAnimation)
                 {
                     await LoadBlindBoxFromSessionAsync();
-                    await LoadUserInfoAsync();
                     await PrepareAnimationImagesAsync();
                 }
                 
@@ -469,8 +501,8 @@
             }
             else if (BlindBoxId != Guid.Empty)
             {
-                // Normal flow - just load user info
-                await LoadUserInfoAsync();
+                // Normal flow - no need to load user info here as it's done at the start of the method
+                Console.WriteLine("Normal flow - already loaded user info");
             }
         }
     }
@@ -482,11 +514,20 @@
             _isProcessing = true;
             StateHasChanged();
             
+            Console.WriteLine($"Loading BlindBox with ID: {BlindBoxId}");
             var result = await ServiceManager.BlindBoxService.GetBlindBoxByIdAsync(BlindBoxId, false);
             
             if (result.IsSuccess && result.Value != null)
             {
                 BlindBox = result.Value;
+                Console.WriteLine($"Loaded BlindBox: {BlindBox.Id} - {BlindBox.Name} with probability {BlindBox.Probability}% and price {BlindBox.CurrentPrice}");
+                
+                // Verify that we have a valid probability (should be coming from price history)
+                if (BlindBox.Probability <= 0)
+                {
+                    Console.WriteLine("WARNING: BlindBox has zero or negative probability!");
+                }
+                
                 await LoadImageAsync();
             }
             else
@@ -574,14 +615,18 @@
     {
         try
         {
+            Console.WriteLine("LoadUserInfoAsync started");
+            
             // Skip localStorage access during prerendering
             if (_firstRender)
             {
+                Console.WriteLine("Skipping user info loading during prerendering");
                 return;
             }
             
             // Get the current user ID from localStorage
             var userId = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "user_id");
+            Console.WriteLine($"Retrieved user ID from localStorage: {(string.IsNullOrEmpty(userId) ? "Not found" : "Found")}");
             
             if (string.IsNullOrEmpty(userId))
             {
@@ -593,6 +638,7 @@
             try
             {
                 // Use the user service to get user info
+                Console.WriteLine($"Fetching user info for ID: {userId}");
                 var userObj = await ServiceManager.UserService.GetUserByIdAsync(Guid.Parse(userId), false);
                 
                 if (userObj != null)
@@ -606,32 +652,69 @@
                     _province = user.Provinces ?? "";
                     _ward = user.Wards ?? "";
                     _phone = user.PhoneNumber ?? "";
+                    
+                    Console.WriteLine("Successfully populated user info fields");
+                    
+                    // Force UI update
+                    StateHasChanged();
+                }
+                else
+                {
+                    Console.WriteLine("User object returned as null");
                 }
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error getting user information: {ex.Message}");
                 Snackbar.Add($"Error getting user information: {ex.Message}", Severity.Error);
             }
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"Error in LoadUserInfoAsync: {ex.Message}");
             Snackbar.Add($"Error: {ex.Message}", Severity.Error);
         }
     }
     
-    private void GoToMyAccount()
+    private async Task GoToMyAccount()
     {
         // Clear the selected item before navigation
         _selectedItem = null;
         _showResult = false;
+        
+        // Clear all session storage data related to gacha
+        if (!_firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_payment_processed");
+            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_order_id");
+            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_blindbox_id");
+            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_payment_success");
+            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_selected_item_id");
+            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_current_display_item_id");
+            Console.WriteLine("Cleared all gacha session storage from GoToMyAccount");
+        }
+        
         NavigationManager.NavigateTo("/my-account", true);
     }
     
-    private void ContinueShopping()
+    private async Task ContinueShopping()
     {
         // Clear the selected item before navigation
         _selectedItem = null;
         _showResult = false;
+        
+        // Clear all session storage data related to gacha
+        if (!_firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_payment_processed");
+            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_order_id");
+            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_blindbox_id");
+            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_payment_success");
+            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_selected_item_id");
+            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_current_display_item_id");
+            Console.WriteLine("Cleared all gacha session storage from ContinueShopping");
+        }
+        
         NavigationManager.NavigateTo("/", true);
     }
     
@@ -831,9 +914,15 @@
             if (!string.IsNullOrEmpty(tempOrderId) && Guid.TryParse(tempOrderId, out Guid orderId))
             {
                 Console.WriteLine($"Processing gacha for order ID: {orderId}");
-                _selectedItem = await RandomSelectItemAsync();
                 
-                if (_selectedItem == null)
+                // Get selected item and track if it was a secret item
+                var result = await RandomSelectItemAsync();
+                
+                // Store the selected item temporarily for display purposes only
+                var selectedItem = result.Item1;
+                bool isSecretItem = result.Item2;
+                
+                if (selectedItem == null)
                 {
                     Snackbar.Add("Could not select a random item", Severity.Error);
                     _showGachaAnimation = false;
@@ -841,14 +930,21 @@
                     return;
                 }
                 
+                // Set for display purposes only - will be shown to user in animation
+                _selectedItem = selectedItem;
+                
                 // Create/update order detail with selected item
-                await SaveOrderDetailAsync(orderId, _selectedItem.Id);
+                await SaveOrderDetailAsync(orderId, selectedItem.Id);
+                
+                // Update probability and price based on whether a secret item was found
+                await UpdateBlindBoxProbabilityAndPrice(BlindBox.Id, isSecretItem);
             }
             else
             {
                 // No order ID, select random item only for display
                 Console.WriteLine("No order ID found, selecting random item only for display");
-                _selectedItem = await RandomSelectItemAsync();
+                var result = await RandomSelectItemAsync();
+                _selectedItem = result.Item1;
             }
             
             // Start animation and complete after delay (only once)
@@ -926,6 +1022,22 @@
                     Console.WriteLine($"Error creating order detail: {errorMsg}");
                     Snackbar.Add($"Error saving your prize: {errorMsg}", Severity.Error);
                 }
+            }
+
+            // IMPORTANT: Clear _selectedItem immediately after saving to prevent duplication
+            // Keep a temporary reference for display purposes only
+            if (_selectedItem != null)
+            {
+                // The result is already displayed to user, so we can safely clear the selected item
+                // Store a deep copy to display and clear the original reference
+                var tempItem = _selectedItem;
+                _selectedItem = null;
+                
+                // Restore just for current display cycle
+                _selectedItem = tempItem;
+                
+                // This ensures the item won't be saved again if this method is called multiple times
+                Console.WriteLine("Cleared selected item reference after saving");
             }
         }
         catch (Exception ex)
@@ -1184,6 +1296,16 @@
             _animationTimer.Dispose();
         }
         
+        // Create a temporary copy of the selected item for display
+        var tempItem = _selectedItem;
+        
+        // Clear the original reference to prevent duplicate processing
+        _selectedItem = null;
+        Console.WriteLine("Cleared _selectedItem reference in FinishAnimation");
+        
+        // Restore temporarily just for display purposes
+        _selectedItem = tempItem;
+        
         // Complete animation and show result
         _showGachaAnimation = false;
         _showResult = true;
@@ -1192,11 +1314,20 @@
         // If item wasn't selected (rare error case), try again
         if (_selectedItem == null)
         {
-            _selectedItem = await RandomSelectItemAsync();
+            var result = await RandomSelectItemAsync();
+            _selectedItem = result.Item1;
+        }
+        
+        // Store selected item ID in session storage to be able to recover it 
+        // even if the app state is lost
+        if (_selectedItem != null)
+        {
+            await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "gacha_current_display_item_id", _selectedItem.Id.ToString());
+            Console.WriteLine($"Saved display item ID to session: {_selectedItem.Id}");
         }
     }
     
-    private async Task<BlindBoxItemDto> RandomSelectItemAsync()
+    private async Task<(BlindBoxItemDto, bool)> RandomSelectItemAsync()
     {
         // Check if BlindBox is null or has no ID - attempt to load it first
         if (BlindBox == null || BlindBox.Id == Guid.Empty)
@@ -1222,7 +1353,7 @@
             if (BlindBox == null)
             {
                 Console.WriteLine("Failed to load BlindBox in RandomSelectItemAsync, creating mock item");
-                return CreateMockItem();
+                return (CreateMockItem(), false);
             }
         }
         
@@ -1245,6 +1376,10 @@
                 
                 var rnd = new Random();
                 var secretRoll = rnd.Next(1, 101);
+                bool gotSecretItem = false;
+                
+                // Log the probability value being used for the roll
+                Console.WriteLine($"Rolling with probability: {BlindBox.Probability}% (random roll: {secretRoll})");
                 
                 // Check if we get a secret item based on probability
                 if (BlindBox.Probability > 0 && secretRoll <= BlindBox.Probability)
@@ -1255,7 +1390,8 @@
                     {
                         var selectedItem = secretItems[rnd.Next(secretItems.Count)];
                         Console.WriteLine($"Selected SECRET item: {selectedItem.Name} - {selectedItem.ImageUrl}");
-                        return selectedItem;
+                        gotSecretItem = true;
+                        return (selectedItem, gotSecretItem);
                     }
                 }
                 
@@ -1265,13 +1401,13 @@
                 {
                     var selectedItem = normalItems[rnd.Next(normalItems.Count)];
                     Console.WriteLine($"Selected NORMAL item: {selectedItem.Name} - {selectedItem.ImageUrl}");
-                    return selectedItem;
+                    return (selectedItem, gotSecretItem);
                 }
                 
                 // Fallback to all items if no normal items found
                 var randomItem = items[rnd.Next(items.Count)];
                 Console.WriteLine($"Selected FALLBACK item: {randomItem.Name} - {randomItem.ImageUrl}");
-                return randomItem;
+                return (randomItem, randomItem.IsSecret);
             }
             else
             {
@@ -1279,13 +1415,13 @@
                 Console.WriteLine($"No items found for BlindBox {BlindBox.Id} or error fetching them");
                 
                 // Fallback to mock item if no items found
-                return CreateMockItem();
+                return (CreateMockItem(), false);
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error selecting random item: {ex.Message}");
-            return CreateMockItem();
+            return (CreateMockItem(), false);
         }
     }
     
@@ -1385,6 +1521,122 @@
         {
             _ = JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_payment_processed");
             _ = ClearGachaSessionStorage();
+        }
+    }
+
+    // New method to update blindbox probability and price
+    private async Task UpdateBlindBoxProbabilityAndPrice(Guid blindBoxId, bool isSecretItem)
+    {
+        try
+        {
+            // Capture current values for comparison
+            var oldProbability = BlindBox?.Probability ?? 0;
+            var oldPrice = BlindBox?.CurrentPrice ?? 0;
+            
+            Console.WriteLine($"Before update - BlindBox {blindBoxId}: Probability: {oldProbability}%, Price: {oldPrice}");
+            
+            if (isSecretItem)
+            {
+                // Reset probability and price to default when a secret item is found
+                Console.WriteLine("Secret item found! Resetting probability and price to default values.");
+                var resetResult = await ServiceManager.BlindBoxService.ResetProbabilityAndPriceAsync(blindBoxId);
+                
+                if (resetResult.IsSuccess)
+                {
+                    Console.WriteLine($"Successfully reset probability to {resetResult.Value.Probability}% and price to {resetResult.Value.CurrentPrice}");
+                    
+                    // Store values directly from the result
+                    var newProbability = resetResult.Value.Probability;
+                    var newPrice = resetResult.Value.CurrentPrice;
+                    
+                    // Reload BlindBox to reflect the updated values
+                    await Task.Delay(500); // Small delay to ensure database changes have been committed
+                    await LoadBlindBoxAsync();
+                    
+                    // Verify changes took effect
+                    Console.WriteLine($"After reset - BlindBox {blindBoxId}: Probability: {BlindBox?.Probability}%, Price: {BlindBox?.CurrentPrice}");
+                    
+                    if (BlindBox != null)
+                    {
+                        if (Math.Abs(BlindBox.Probability - newProbability) > 0.01f)
+                        {
+                            Console.WriteLine($"WARNING: Reset probability doesn't match: Expected {newProbability}% but got {BlindBox.Probability}%");
+                        }
+                        
+                        if (BlindBox.CurrentPrice != newPrice)
+                        {
+                            Console.WriteLine($"WARNING: Reset price doesn't match: Expected {newPrice} but got {BlindBox.CurrentPrice}");
+                        }
+                    }
+                }
+                else
+                {
+                    var errorMsg = resetResult.Errors?.FirstOrDefault()?.Description ?? "Unknown error resetting probability and price";
+                    Console.WriteLine($"Error resetting probability and price: {errorMsg}");
+                    Snackbar.Add($"Error updating probability: {errorMsg}", Severity.Error);
+                }
+            }
+            else
+            {
+                // Increment probability and price when no secret item is found
+                Console.WriteLine("No secret item found. Incrementing probability and price.");
+                var incrementResult = await ServiceManager.BlindBoxService.IncrementProbabilityAndPriceAsync(blindBoxId);
+                
+                if (incrementResult.IsSuccess)
+                {
+                    Console.WriteLine($"Successfully incremented probability to {incrementResult.Value.Probability}% and price to {incrementResult.Value.CurrentPrice}");
+                    
+                    // Store values directly from the result
+                    var newProbability = incrementResult.Value.Probability;
+                    var newPrice = incrementResult.Value.CurrentPrice;
+                    
+                    // Reload BlindBox to reflect the updated values
+                    await Task.Delay(500); // Small delay to ensure database changes have been committed
+                    await LoadBlindBoxAsync();
+                    
+                    // Verify changes took effect
+                    Console.WriteLine($"After increment - BlindBox {blindBoxId}: Probability: {BlindBox?.Probability}%, Price: {BlindBox?.CurrentPrice}");
+                    
+                    if (BlindBox != null)
+                    {
+                        if (Math.Abs(BlindBox.Probability - newProbability) > 0.01f)
+                        {
+                            Console.WriteLine($"WARNING: Incremented probability doesn't match: Expected {newProbability}% but got {BlindBox.Probability}%");
+                        }
+                        
+                        if (BlindBox.CurrentPrice != newPrice)
+                        {
+                            Console.WriteLine($"WARNING: Incremented price doesn't match: Expected {newPrice} but got {BlindBox.CurrentPrice}");
+                        }
+                        
+                        // Check against expected values based on old values
+                        var expectedProbability = oldProbability + 0.1f;
+                        var expectedPrice = oldPrice + 10000;
+                        
+                        if (Math.Abs(BlindBox.Probability - expectedProbability) > 0.01f)
+                        {
+                            Console.WriteLine($"WARNING: Expected probability to be {expectedProbability}% but got {BlindBox.Probability}%");
+                        }
+                        
+                        if (BlindBox.CurrentPrice != expectedPrice)
+                        {
+                            Console.WriteLine($"WARNING: Expected price to be {expectedPrice} but got {BlindBox.CurrentPrice}");
+                        }
+                    }
+                }
+                else
+                {
+                    var errorMsg = incrementResult.Errors?.FirstOrDefault()?.Description ?? "Unknown error incrementing probability and price";
+                    Console.WriteLine($"Error incrementing probability and price: {errorMsg}");
+                    Snackbar.Add($"Error updating probability: {errorMsg}", Severity.Error);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating BlindBox probability and price: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            Snackbar.Add($"Error updating probability and price: {ex.Message}", Severity.Error);
         }
     }
 } 

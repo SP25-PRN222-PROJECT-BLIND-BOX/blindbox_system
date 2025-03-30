@@ -188,10 +188,16 @@
                 <MudPaper Elevation="0" Class="pa-4 rounded-lg mb-6" 
                          Style="@(BlindBox.Probability > 0 ? "background-color: rgba(103, 58, 183, 0.1); border: 1px solid rgba(103, 58, 183, 0.3)" : "background-color: rgba(0,139,139,0.05)")">
                     <div class="d-flex flex-column flex-sm-row gap-4">
-                        <MudNumericField @bind-Value="_quantity" Min="1" Max="10" Label="Số lượng" Variant="Variant.Filled" Class="flex-grow-0" />
-                        
                         @if (BlindBox.Probability > 0)
                         {
+                            <!-- Only one BlindBox allowed for online boxes -->
+                            <div class="w-100 mb-3">
+                                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="d-flex align-center">
+                                    <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="mr-2" />
+                                    Online BlindBox can only be purchased one at a time
+                                </MudAlert>
+                            </div>
+                            
                             <MudButton Variant="Variant.Filled" 
                                       Color="Color.Primary"
                                       FullWidth="true"
@@ -205,6 +211,8 @@
                         }
                         else
                         {
+                            <MudNumericField @bind-Value="_quantity" Min="1" Max="10" Label="Số lượng" Variant="Variant.Filled" Class="flex-grow-0" />
+                            
                             <MudButton Variant="Variant.Filled" Color="Color.Primary" 
                                       StartIcon="@Icons.Material.Filled.ShoppingCart" 
                                       Size="Size.Large"
@@ -310,6 +318,16 @@
                 </div>
                 
                 <MudText Typo="Typo.h5" Align="Align.Center" Class="mb-4 font-weight-bold">@BlindBox.Name</MudText>
+
+                @if (BlindBox.Probability > 0)
+                {
+                    <div class="mb-4">
+                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="mr-2" />
+                            Online BlindBox can only be purchased one at a time
+                        </MudAlert>
+                    </div>
+                }
 
                 <div class="d-flex flex-column gap-2 mb-4">
                     <div class="d-flex justify-space-between align-center">

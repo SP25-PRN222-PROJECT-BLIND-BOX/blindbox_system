@@ -114,7 +114,7 @@
                         <MudButton Variant="Variant.Filled" 
                                   Color="Color.Primary" 
                                   Size="Size.Large"
-                                  Href="/"
+                                  OnClick="ContinueShopping"
                                   Class="px-6">
                             Continue Shopping
                         </MudButton>
@@ -247,12 +247,18 @@
         if (_hasPaymentParams)
         {
             _isProcessing = true;
+            
             var query = QueryHelpers.ParseQuery(_currentUri.Query);
             string responseCode = query.TryGetValue("vnp_ResponseCode", out var code) ? code.ToString() : string.Empty;
+            
+            // For payment success, immediately prepare for animation instead of showing form
             if (responseCode == "00")
             {
-                // Pre-load session data
-                await LoadBlindBoxFromSessionAsync();
+                _showGachaAnimation = true;
+                _animationComplete = false;
+                
+                // DO NOT access sessionStorage here during prerendering
+                // We'll load the BlindBox in OnAfterRenderAsync instead
             }
         }
         else if (BlindBoxId != Guid.Empty)
@@ -354,15 +360,28 @@
                 }
             ");
             
-            // Process payment parameters ONLY ONCE if they exist
+            // Now it's safe to access sessionStorage, as we're after the first render
             if (_hasPaymentParams)
             {
+                // Now it's safe to preload the session data
+                if (_showGachaAnimation)
+                {
+                    await LoadBlindBoxFromSessionAsync();
+                    await LoadUserInfoAsync();
+                    await PrepareAnimationImagesAsync();
+                }
+                
                 try
                 {
                     var query = QueryHelpers.ParseQuery(_currentUri.Query);
                     
-                    // Get ResponseCode from VNPay
+                    // Get payment information from query
                     string responseCode = query.TryGetValue("vnp_ResponseCode", out var code) ? code.ToString() : string.Empty;
+                    string txnRef = query.TryGetValue("vnp_TxnRef", out var txn) ? txn.ToString() : string.Empty;
+                    
+                    // Check if this page was loaded with a return URL from BlindBox gacha
+                    bool isGachaReturn = _currentUri.AbsolutePath.Contains("/blindbox-gacha/payment-return") || 
+                                        query.ContainsKey("bbid");
                     
                     // Payment success check
                     bool paymentSuccess = responseCode == "00";
@@ -370,38 +389,70 @@
                     if (paymentSuccess)
                     {
                         // Double-check to prevent reprocessing if already processed
-                        var alreadyProcessed = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "payment_processed");
+                        var alreadyProcessed = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "gacha_payment_processed");
                         
                         if (alreadyProcessed != "true")
                         {
                             // Mark as processed to prevent duplicate processing
-                            await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "payment_processed", "true");
+                            await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "gacha_payment_processed", "true");
                             
                             // Set payment success
-                            await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "payment_success", "true");
+                            await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "gacha_payment_success", "true");
                             
-                            // User info already loaded in OnInitializedAsync
-                            if (BlindBox == null)
+                            // Get temp order ID from session
+                            var tempOrderId = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "gacha_order_id");
+                            
+                            // Always treat this as a gacha payment when we're on the blindbox-gacha page
+                            if (!string.IsNullOrEmpty(tempOrderId))
                             {
-                                await LoadBlindBoxFromSessionAsync();
+                                Snackbar.Add("Payment successful! Opening your BlindBox...", Severity.Success);
+                                
+                                // Don't delay, immediately start processing
+                                await ProcessGachaAsync();
                             }
-                            await LoadUserInfoAsync();
-                            
-                            // Only process once
-                            Snackbar.Add("Thanh toán thành công! Đang mở hộp quà...", Severity.Success);
-                            await ProcessGachaAsync();
+                            else
+                            {
+                                // For other payment origins, just show success
+                                Snackbar.Add("Payment successful!", Severity.Success);
+                                _isProcessing = false;
+                                _showGachaAnimation = false;
+                                StateHasChanged();
+                            }
+                        }
+                        else
+                        {
+                            // Already processed, make sure we show the result if we have it
+                            if (_selectedItem == null)
+                            {
+                                var selectedItemId = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "gacha_selected_item_id");
+                                if (!string.IsNullOrEmpty(selectedItemId) && Guid.TryParse(selectedItemId, out Guid itemId))
+                                {
+                                    using var blindBoxItemService = ServiceManager.BlindBoxItemService;
+                                    var result = await blindBoxItemService.GetBlindBoxItemByIdAsync(itemId, false);
+                                    if (result.IsSuccess)
+                                    {
+                                        _selectedItem = result.Value;
+                                        _showResult = true;
+                                        _showGachaAnimation = false;
+                                        _isProcessing = false;
+                                        StateHasChanged();
+                                    }
+                                }
+                            }
                         }
                     }
                     else
                     {
-                        Snackbar.Add("Thanh toán không thành công hoặc đã bị hủy.", Severity.Warning);
+                        Snackbar.Add("Payment was unsuccessful or canceled.", Severity.Warning);
+                        _showGachaAnimation = false;
+                        _isProcessing = false;
+                        StateHasChanged();
+                        
                         if (BlindBox == null)
                         {
                             await LoadBlindBoxFromSessionAsync();
                         }
                         await LoadUserInfoAsync();
-                        _isProcessing = false;
-                        StateHasChanged();
                     }
                     
                     // Clean URL to prevent reprocessing on page refresh
@@ -410,8 +461,9 @@
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Error processing payment result: {ex.Message}");
-                    Snackbar.Add($"Lỗi xử lý kết quả thanh toán: {ex.Message}", Severity.Error);
+                    Snackbar.Add($"Error processing payment result: {ex.Message}", Severity.Error);
                     _isProcessing = false;
+                    _showGachaAnimation = false;
                     StateHasChanged();
                 }
             }
@@ -569,7 +621,18 @@
     
     private void GoToMyAccount()
     {
+        // Clear the selected item before navigation
+        _selectedItem = null;
+        _showResult = false;
         NavigationManager.NavigateTo("/my-account", true);
+    }
+    
+    private void ContinueShopping()
+    {
+        // Clear the selected item before navigation
+        _selectedItem = null;
+        _showResult = false;
+        NavigationManager.NavigateTo("/", true);
     }
     
     private async Task ClearGachaSessionStorage()
@@ -580,9 +643,9 @@
             // Only attempt to clear session storage if we're not in prerendering
             if (_firstRender == false)
             {
-                await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "temp_order_id");
-                await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "blindbox_id");
-                await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "payment_success");
+                await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_order_id");
+                await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_blindbox_id");
+                await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_payment_success");
                 Console.WriteLine("Cleared gacha session storage");
             }
         }
@@ -628,6 +691,7 @@
                 return;
             }
             
+            // IMPORTANT - Use "gacha" prefix for all blindbox gacha related storage to avoid conflicts
             // Lưu lại URL hiện tại để biết thanh toán này đến từ trang blindbox-gacha
             await JSRuntime.InvokeVoidAsync("localStorage.setItem", "payment_referring_url", "blindbox-gacha");
             
@@ -657,14 +721,20 @@
                         _tempOrderId = orderResult.Value.Id;
                         
                         // Store order details in sessionStorage for retrieval post-payment
-                        await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "temp_order_id", _tempOrderId.ToString());
-                        await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "blindbox_id", BlindBox.Id.ToString());
+                        // Use gacha-specific prefix for all keys
+                        await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "gacha_order_id", _tempOrderId.ToString());
+                        await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "gacha_blindbox_id", BlindBox.Id.ToString());
                         
-                        // Get payment URL for the created order
+                        // Log to console for debugging
+                        Console.WriteLine($"Set gacha_order_id: {_tempOrderId.ToString()}");
+                        Console.WriteLine($"Set gacha_blindbox_id: {BlindBox.Id.ToString()}");
+                        
+                        // Get payment URL for the created order with custom return URL
+                        var returnUrl = $"{baseUrl}/blindbox-gacha/payment-return?bbid={BlindBox.Id}";
                         var paymentResult = await ServiceManager.VNPayService.GetPaymentUrlAsync(
                             _tempOrderId,
                             userGuid,
-                            baseUrl
+                            returnUrl
                         );
                         
                         if (paymentResult.IsSuccess && !string.IsNullOrEmpty(paymentResult.Value))
@@ -673,7 +743,7 @@
                             Console.WriteLine($"Redirecting to VNPay URL: {paymentResult.Value}");
                             
                             // Thông báo cho người dùng
-                            Snackbar.Add("Đang chuyển đến cổng thanh toán VNPay...", Severity.Info);
+                            Snackbar.Add("Redirecting to VNPay payment gateway...", Severity.Info);
                             
                             // Redirect to payment page
                             NavigationManager.NavigateTo(paymentResult.Value);
@@ -689,7 +759,7 @@
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Lỗi khi xử lý thanh toán VNPay: {ex.Message}");
+                        Console.WriteLine($"Error processing VNPay payment: {ex.Message}");
                         Snackbar.Add($"Error: {ex.Message}", Severity.Error);
                         _isProcessing = false;
                         StateHasChanged();
@@ -724,8 +794,17 @@
         {
             Console.WriteLine("Starting gacha process...");
             
-            // Get order information from session storage
-            var tempOrderId = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "temp_order_id");
+            // Get order information from session storage with gacha prefix
+            var tempOrderId = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "gacha_order_id");
+            
+            // Only set animation state if not already set
+            if (!_showGachaAnimation)
+            {
+                _showGachaAnimation = true;
+                _animationComplete = false;
+                _isProcessing = false;
+                StateHasChanged();
+            }
             
             // Ensure BlindBox is loaded
             if (BlindBox == null)
@@ -736,18 +815,17 @@
                 {
                     Snackbar.Add("BlindBox information not found. Cannot process gacha.", Severity.Error);
                     _isProcessing = false;
+                    _showGachaAnimation = false;
                     StateHasChanged();
                     return;
                 }
             }
             
-            // Prepare animation only once
-            await PrepareAnimationImagesAsync();
-            
-            _showGachaAnimation = true;
-            _animationComplete = false;
-            _isProcessing = false;
-            StateHasChanged();
+            // Prepare animation if not already done
+            if (_animationImages.Count == 0)
+            {
+                await PrepareAnimationImagesAsync();
+            }
             
             // Process order if we have an order ID
             if (!string.IsNullOrEmpty(tempOrderId) && Guid.TryParse(tempOrderId, out Guid orderId))
@@ -782,7 +860,7 @@
         catch (Exception ex)
         {
             Console.WriteLine($"Error in ProcessGachaAsync: {ex.Message}");
-            Snackbar.Add($"Lỗi khi mở hộp quà: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Error opening BlindBox: {ex.Message}", Severity.Error);
             _isProcessing = false;
             _showGachaAnimation = false;
             StateHasChanged();
@@ -792,6 +870,9 @@
     private async Task SaveOrderDetailAsync(Guid orderId, Guid selectedItemId)
     {
         try {
+            // Set a marker in session storage even before the API call - use gacha prefix
+            await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "gacha_selected_item_id", selectedItemId.ToString());
+            
             // Check if an order detail already exists for this order
             var existingOrderDetails = await ServiceManager.OrderDetailService.GetOrderDetailsByOrderIdAsync(orderId, true);
             
@@ -802,6 +883,8 @@
                 
                 if (existingDetail != null)
                 {
+                    Console.WriteLine($"Updating order detail {existingDetail.Id} with BlindBoxItemId: {selectedItemId}");
+                    
                     var updateResult = await ServiceManager.OrderDetailService.UpdateOrderDetailBlindBoxItemAsync(
                         existingDetail.Id, 
                         selectedItemId);
@@ -809,7 +892,6 @@
                     if (updateResult.IsSuccess)
                     {
                         Console.WriteLine($"Successfully updated order detail {existingDetail.Id} with BlindBoxItemId: {selectedItemId}");
-                        await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "selected_item_id", selectedItemId.ToString());
                     }
                     else
                     {
@@ -831,12 +913,12 @@
                     Price = BlindBox.CurrentPrice
                 };
                 
+                Console.WriteLine($"Creating new order detail for order {orderId} with item {selectedItemId}");
                 var createResult = await ServiceManager.OrderDetailService.CreateOrderDetailAsync(orderDetail);
                 
                 if (createResult.IsSuccess)
                 {
                     Console.WriteLine($"Successfully created order detail for order {orderId} with item {selectedItemId}");
-                    await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "selected_item_id", selectedItemId.ToString());
                 }
                 else
                 {
@@ -856,28 +938,60 @@
     // New method to load BlindBox from session storage
     private async Task LoadBlindBoxFromSessionAsync()
     {
-        if (BlindBoxId == Guid.Empty)
-        {
-            var blindBoxIdString = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "blindbox_id");
-            if (!string.IsNullOrEmpty(blindBoxIdString) && Guid.TryParse(blindBoxIdString, out Guid blindBoxId))
+        try {
+            // CRITICAL: Skip sessionStorage access during prerendering
+            if (_firstRender)
             {
-                BlindBoxId = blindBoxId;
+                Console.WriteLine("Skipping sessionStorage access during prerendering");
+                return;
+            }
+            
+            if (BlindBoxId == Guid.Empty)
+            {
+                var blindBoxIdString = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "gacha_blindbox_id");
+                if (!string.IsNullOrEmpty(blindBoxIdString) && Guid.TryParse(blindBoxIdString, out Guid blindBoxId))
+                {
+                    BlindBoxId = blindBoxId;
+                    Console.WriteLine($"Retrieved BlindBoxId from session: {BlindBoxId}");
+                }
+                else
+                {
+                    Console.WriteLine("Failed to retrieve BlindBoxId from session");
+                }
+            }
+            
+            if (BlindBoxId != Guid.Empty)
+            {
+                await LoadBlindBoxAsync();
+            }
+            else
+            {
+                Console.WriteLine("No BlindBoxId available, cannot load BlindBox");
+                _isProcessing = false;
+                StateHasChanged();
             }
         }
-        
-        if (BlindBoxId != Guid.Empty)
+        catch (Exception ex)
         {
-            await LoadBlindBoxAsync();
+            Console.WriteLine($"Error in LoadBlindBoxFromSessionAsync: {ex.Message}");
+            _isProcessing = false;
+            StateHasChanged();
         }
     }
     
     // New method to prepare animation images
     private async Task PrepareAnimationImagesAsync()
     {
-        _animationImages.Clear();
-        
-        try
-        {
+        try {
+            // Skip if in prerendering
+            if (_firstRender)
+            {
+                Console.WriteLine("Skipping animation preparation during prerendering");
+                return;
+            }
+            
+            _animationImages.Clear();
+            
             // First, ensure BlindBox is loaded
             if (BlindBox == null)
             {
@@ -886,7 +1000,7 @@
                 // Try to get BlindBox ID from session storage if not set
                 if (BlindBoxId == Guid.Empty)
                 {
-                    var blindBoxIdString = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "blindbox_id");
+                    var blindBoxIdString = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "gacha_blindbox_id");
                     if (!string.IsNullOrEmpty(blindBoxIdString) && Guid.TryParse(blindBoxIdString, out Guid blindBoxId))
                     {
                         BlindBoxId = blindBoxId;
@@ -1092,7 +1206,7 @@
             // Try to get BlindBox ID from session storage if not set
             if (BlindBoxId == Guid.Empty)
             {
-                var blindBoxIdString = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "blindbox_id");
+                var blindBoxIdString = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "gacha_blindbox_id");
                 if (!string.IsNullOrEmpty(blindBoxIdString) && Guid.TryParse(blindBoxIdString, out Guid blindBoxId))
                 {
                     BlindBoxId = blindBoxId;
@@ -1262,10 +1376,14 @@
             _animationTimer.Dispose();
         }
         
+        // Clear _selectedItem when navigating away
+        _selectedItem = null;
+        _showResult = false;
+        
         // Clear payment_processed flag to allow new payments
         if (!_firstRender)
         {
-            _ = JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "payment_processed");
+            _ = JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_payment_processed");
             _ = ClearGachaSessionStorage();
         }
     }

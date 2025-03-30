@@ -119,28 +119,85 @@
                     <div><span class="font-semibold">Address:</span> @OrderWithDetails.Order.Address, @OrderWithDetails.Order.Wards, @OrderWithDetails.Order.Province</div>
                 </div>
                 
-                @if (OrderWithDetails.Order.Status == OrderStatus.Pending && OrderWithDetails.Order.PaymentMethod != PaymentMethod.Cash)
+                <MudText Typo="Typo.subtitle1" Class="mb-2 mt-4">Payment Information</MudText>
+                <div class="p-3 bg-gray-50 rounded-lg mb-3">
+                    <div class="mb-1"><span class="font-semibold">Payment Method:</span> @GetPaymentMethodName(OrderWithDetails.Order.PaymentMethod)</div>
+                </div>
+                
+                @if (OrderWithDetails.Order.Status == OrderStatus.AwaitingPayment && OrderWithDetails.Order.PaymentMethod != PaymentMethod.Cash)
                 {
-                    <MudAlert Severity="Severity.Info" Class="my-4">
+                    <MudAlert Severity="Severity.Info" Class="my-6">
                         <div class="flex items-center mb-1">
                             <MudIcon Icon="@Icons.Material.Filled.Info" Class="mr-2" />
-                            <MudText Typo="Typo.body1" Class="font-semibold">Payment Pending</MudText>
+                            <MudText Typo="Typo.body1" Class="font-semibold">Awaiting Payment</MudText>
                         </div>
                         <MudText Typo="Typo.body2">
-                            This order is awaiting payment confirmation. Once payment is received, your order will be processed.
+                            Your order is awaiting payment confirmation. Once payment is received, your order will be processed.
+                        </MudText>
+                    </MudAlert>
+                    
+                    <div class="flex flex-col gap-6 mt-8 mb-6">
+                        <MudButton Variant="Variant.Filled" 
+                                 Color="Color.Success" 
+                                 OnClick="ProceedPayment"
+                                 FullWidth="true"
+                                 Size="Size.Large"
+                                 StartIcon="@Icons.Material.Filled.Payment"
+                                 Disabled="_isProcessingPayment"
+                                 Style="height: 56px; font-size: 16px;">
+                            CONTINUE PAYMENT
+                        </MudButton>
+                        
+                        <MudButton Variant="Variant.Filled" 
+                                 Color="Color.Primary" 
+                                 OnClick="ChangePaymentMethodToCOD"
+                                 FullWidth="true"
+                                 Size="Size.Large"
+                                 StartIcon="@Icons.Material.Filled.CreditCard"
+                                 Style="height: 56px; font-size: 16px; background-color: #00897b; margin-top: 16px;">
+                            CHANGE TO COD
+                        </MudButton>
+                    </div>
+                }
+                
+                @if (OrderWithDetails.Order.Status == OrderStatus.Pending && OrderWithDetails.Order.PaymentMethod != PaymentMethod.Cash)
+                {
+                    <MudAlert Severity="Severity.Info" Class="my-6">
+                        <div class="flex items-center mb-1">
+                            <MudIcon Icon="@Icons.Material.Filled.Info" Class="mr-2" />
+                            <MudText Typo="Typo.body1" Class="font-semibold">Order Processing</MudText>
+                        </div>
+                        <MudText Typo="Typo.body2">
+                            Your order has been received and is being processed.
                         </MudText>
                     </MudAlert>
                 }
                 
-                @if (OrderWithDetails.Order.Status == OrderStatus.Pending)
+                @if ((OrderWithDetails.Order.Status == OrderStatus.Pending || OrderWithDetails.Order.Status == OrderStatus.Processing || OrderWithDetails.Order.Status == OrderStatus.AwaitingPayment) && !HasBlindBoxItems())
                 {
-                    <MudButton Variant="Variant.Filled" 
-                               Color="Color.Error" 
-                               OnClick="CancelOrder"
-                               FullWidth="true"
-                               Class="mt-4">
-                        Cancel Order
-                    </MudButton>
+                    <div class="mt-8 mb-6">
+                        <MudButton Variant="Variant.Filled" 
+                                 Color="Color.Error" 
+                                 OnClick="CancelOrder"
+                                 FullWidth="true"
+                                 Size="Size.Large"
+                                 StartIcon="@Icons.Material.Filled.Cancel"
+                                 Style="height: 56px; font-size: 16px;">
+                            CANCEL ORDER
+                        </MudButton>
+                    </div>
+                }
+                @if ((OrderWithDetails.Order.Status == OrderStatus.Pending || OrderWithDetails.Order.Status == OrderStatus.Processing) && HasBlindBoxItems())
+                {
+                    <MudAlert Severity="Severity.Warning" Class="my-4">
+                        <div class="flex items-center mb-1">
+                            <MudIcon Icon="@Icons.Material.Filled.Info" Class="mr-2" />
+                            <MudText Typo="Typo.body1" Class="font-semibold">Cannot Cancel Order</MudText>
+                        </div>
+                        <MudText Typo="Typo.body2">
+                            Online BlindBox orders cannot be cancelled once items have been assigned.
+                        </MudText>
+                    </MudAlert>
                 }
             </div>
         }
@@ -244,6 +301,7 @@
     private bool _imagePreviewVisible = false;
     private string _selectedImage = string.Empty;
     private bool _isZoomed = false;
+    private bool _isProcessingPayment = false;
     
     // Dictionary to track loading state
     private Dictionary<Guid, bool> _itemsLoading = new Dictionary<Guid, bool>();
@@ -406,6 +464,16 @@
         };
     }
     
+    private string GetPaymentMethodName(PaymentMethod paymentMethod)
+    {
+        return paymentMethod switch
+        {
+            PaymentMethod.Cash => "Cash on Delivery (COD)",
+            PaymentMethod.VnPay => "VNPay",
+            _ => paymentMethod.ToString()
+        };
+    }
+    
     private async Task OpenImagePreview(string imageUrl)
     {
         if (!string.IsNullOrEmpty(imageUrl))
@@ -433,12 +501,142 @@
     // Simple method for closing dialog
     private void Cancel() => MudDialog.Cancel();
     
+    private async Task ChangePaymentMethodToCOD()
+    {
+        try
+        {
+            var parameters = new DialogParameters
+            {
+                ["OrderId"] = OrderWithDetails.Order.Id,
+                ["Content"] = "Are you sure you want to change the payment method to COD? The order will be processed immediately after you confirm.",
+                ["IsChangePayment"] = true,
+                ["Title"] = "Confirm Payment Method Change",
+                ["ConfirmButtonText"] = "Confirm Change",
+                ["CancelButtonText"] = "Cancel"
+            };
+            
+            var options = new DialogOptions
+            {
+                CloseButton = true,
+                MaxWidth = MaxWidth.ExtraSmall
+            };
+            
+            var dialog = await DialogService.ShowAsync<ConfirmCancelOrderDialog>("Confirm Payment Method Change", parameters, options);
+            var result = await dialog.Result;
+            
+            if (!result.Canceled)
+            {
+                // For immediate feedback, update the local order object
+                // This gives user feedback even before the dialog closes and page refreshes
+                if (result.Data is bool success && success)
+                {
+                    OrderWithDetails.Order.PaymentMethod = PaymentMethod.Cash;
+                    OrderWithDetails.Order.Status = OrderStatus.Processing;
+                    
+                    Snackbar.Add("Payment method changed to COD. Your order is being processed.", Severity.Success);
+                    MudDialog.Close(DialogResult.Ok(true));
+                }
+                else
+                {
+                    // Try direct API call to see actual response
+                    var changeResult = await ServiceManager.OrderService.ChangePaymentMethodAsync(
+                        OrderWithDetails.Order.Id, 
+                        PaymentMethod.Cash
+                    );
+                    
+                    if (changeResult.IsSuccess)
+                    {
+                        OrderWithDetails.Order.PaymentMethod = PaymentMethod.Cash;
+                        OrderWithDetails.Order.Status = OrderStatus.Processing;
+                        
+                        Snackbar.Add("Payment method changed to COD. Your order is being processed.", Severity.Success);
+                        MudDialog.Close(DialogResult.Ok(true));
+                    }
+                    else
+                    {
+                        Snackbar.Add($"Failed to change payment method: {changeResult.Errors?.FirstOrDefault()?.Description}", Severity.Error);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error changing payment method: {ex.Message}");
+            Snackbar.Add($"Error changing payment method: {ex.Message}", Severity.Error);
+        }
+    }
+    
+    private async Task ProceedPayment()
+    {
+        try
+        {
+            _isProcessingPayment = true;
+            StateHasChanged();
+            
+            // Get user ID from localStorage
+            var userId = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "user_id");
+            
+            if (string.IsNullOrEmpty(userId))
+            {
+                Snackbar.Add("You need to log in to proceed with payment", Severity.Warning);
+                _isProcessingPayment = false;
+                StateHasChanged();
+                return;
+            }
+            
+            // Clear any gacha and checkout session storage to avoid conflicts
+            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_order_id");
+            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_blindbox_id");
+            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_payment_success");
+            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "checkout_order_id");
+            
+            // Save order information with order-specific prefix
+            await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "order_payment_id", OrderWithDetails.Order.Id.ToString());
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "payment_referring_url", "order_details");
+            
+            Console.WriteLine($"Set order_payment_id: {OrderWithDetails.Order.Id.ToString()}");
+            
+            var baseUrl = NavigationManager.BaseUri.TrimEnd('/');
+            var returnUrl = $"{baseUrl}/my-account?tab=1"; // Return to account page with Orders tab
+            
+            // Get VNPay payment URL with the return URL
+            var paymentResult = await ServiceManager.VNPayService.GetPaymentUrlAsync(
+                OrderWithDetails.Order.Id,
+                Guid.Parse(userId),
+                baseUrl + "/payment/order-return?return_url=" + Uri.EscapeDataString(returnUrl)
+            );
+            
+            if (paymentResult.IsSuccess && !string.IsNullOrEmpty(paymentResult.Value))
+            {
+                // Close the dialog before navigation
+                MudDialog.Close();
+                
+                // Redirect to VNPay payment page
+                NavigationManager.NavigateTo(paymentResult.Value);
+            }
+            else
+            {
+                var errorMsg = paymentResult.Errors?.FirstOrDefault()?.Description ?? "Failed to create payment URL";
+                Snackbar.Add(errorMsg, Severity.Error);
+                _isProcessingPayment = false;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error proceeding with payment: {ex.Message}");
+            Snackbar.Add($"Error proceeding with payment: {ex.Message}", Severity.Error);
+            _isProcessingPayment = false;
+            StateHasChanged();
+        }
+    }
+    
     private async Task CancelOrder()
     {
         var parameters = new DialogParameters
         {
             ["OrderId"] = OrderWithDetails.Order.Id,
-            ["Content"] = "Bạn có chắc chắn muốn hủy đơn hàng này không?"
+            ["Content"] = "Are you sure you want to cancel this order?"
         };
         
         var options = new DialogOptions
@@ -447,7 +645,7 @@
             MaxWidth = MaxWidth.ExtraSmall
         };
         
-        var dialog = await DialogService.ShowAsync<ConfirmCancelOrderDialog>("Xác nhận hủy đơn hàng", parameters, options);
+        var dialog = await DialogService.ShowAsync<ConfirmCancelOrderDialog>("Confirm Cancel Order", parameters, options);
         var result = await dialog.Result;
         
         if (!result.Canceled)
@@ -497,5 +695,10 @@
         
         // Default placeholder if no image available
         return "/images/box-placeholder.jpg";
+    }
+    
+    private bool HasBlindBoxItems()
+    {
+        return OrderWithDetails.OrderDetails.Any(od => od.BlindBoxItemId.HasValue);
     }
 } 

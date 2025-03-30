@@ -111,7 +111,8 @@ namespace BlindBoxShop.Service
                 {
                     OrderId = orderDetailForCreation.OrderId,
                     BlindBoxPriceHistoryId = priceHistory.Id,
-                    Quantity = orderDetailForCreation.Quantity
+                    Quantity = orderDetailForCreation.Quantity,
+                    BlindBoxItemId = orderDetailForCreation.BlindBoxItemId
                 };
                 
                 _orderDetailRepository.Create(orderDetailEntity);

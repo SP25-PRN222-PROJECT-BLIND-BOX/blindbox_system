@@ -15,12 +15,42 @@ namespace BlindBoxShop.Application.Components.Dialogs
 
         [Parameter] public Guid OrderId { get; set; }
         [Parameter] public string Content { get; set; }
+        [Parameter] public bool IsChangePayment { get; set; } = false;
+        [Parameter] public string Title { get; set; } = string.Empty;
+        [Parameter] public string ConfirmButtonText { get; set; } = string.Empty;
+        [Parameter] public string CancelButtonText { get; set; } = string.Empty;
 
         private async void Submit()
         {
-            using var orderService = ServiceManager!.OrderService;
-            await orderService.CancelOrderAsync(OrderId);
-            MudDialog.Close(DialogResult.Ok(true));
+            try 
+            {
+                if (IsChangePayment)
+                {
+                    using var orderService = ServiceManager!.OrderService;
+                    var result = await orderService.ChangePaymentMethodAsync(OrderId, BlindBoxShop.Shared.Enum.PaymentMethod.Cash);
+                    
+                    if (result.IsSuccess)
+                    {
+                        MudDialog.Close(DialogResult.Ok(true));
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Payment method change failed: {result.Errors?.FirstOrDefault()?.Description}");
+                        MudDialog.Close(DialogResult.Ok(false));
+                    }
+                }
+                else
+                {
+                    using var orderService = ServiceManager!.OrderService;
+                    await orderService.CancelOrderAsync(OrderId);
+                    MudDialog.Close(DialogResult.Ok(true));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in ConfirmCancelOrderDialog.Submit: {ex.Message}");
+                MudDialog.Close(DialogResult.Ok(false));
+            }
         }
 
         private void Cancel() => MudDialog.Cancel();

@@ -1,0 +1,36 @@
+@using BlindBoxShop.Service.Contract
+@using BlindBoxShop.Shared.DataTransferObject.BlindBox
+@using MudBlazor
+
+<MudDialog Class="rounded-lg">
+    <TitleContent>
+        <MudText Typo="Typo.h6" Class="px-6 py-2 flex items-center">
+            <MudIcon Icon="@Icons.Material.Filled.Warning" Class="mr-2" Color="Color.Warning" />
+            Xác nhận hủy đơn hàng
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <div class="px-6 pb-4 pt-2">
+            <MudText>@Content</MudText>
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <div class="px-6 pb-4 flex justify-end">
+            <MudButton Variant="Variant.Outlined" Color="Color.Dark" OnClick="Cancel" Class="mr-2">Hủy bỏ</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="Submit" StartIcon="@Icons.Material.Filled.Delete">Xác nhận hủy</MudButton>
+        </div>
+    </DialogActions>
+</MudDialog>
+
+<style>
+    .mud-dialog {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    
+    .mud-dialog-title {
+        padding: 16px 24px;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+</style> 

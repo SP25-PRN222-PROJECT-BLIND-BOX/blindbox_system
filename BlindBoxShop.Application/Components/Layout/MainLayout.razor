@@ -47,29 +47,30 @@
     </div>
     
     <MudSpacer />
-    <MudButton Variant="Variant.Text" Color="Color.Inherit" Href="/" Class="mx-2">TRANG CHỦ</MudButton>
-    <MudButton Variant="Variant.Text" Color="Color.Inherit" Href="/physical-blindboxes" Class="mx-2">HỘP QUÀ VẬT LÝ</MudButton>
-    <MudButton Variant="Variant.Text" Color="Color.Inherit" Href="/openable-blindboxes" Class="mx-2">HỘP QUÀ ONLINE</MudButton>
+    <MudButton Variant="Variant.Text" Color="Color.Inherit" Href="/" Class="mx-2">HOME</MudButton>
+    <MudButton Variant="Variant.Text" Color="Color.Inherit" Href="/physical-blindboxes" Class="mx-2">PHYSICAL BOXES</MudButton>
+    <MudButton Variant="Variant.Text" Color="Color.Inherit" Href="/openable-blindboxes" Class="mx-2">ONLINE BOXES</MudButton>
+    
+    
+    <MudBadge Color="Color.Secondary" Content="@_cartItemCount" Overlap="true" Origin="Origin.TopRight" Bordered="true">
+        <MudIconButton Href="/cart" Icon="@Icons.Material.Filled.ShoppingCart" Color="Color.Inherit" />
+    </MudBadge>
+
     
     @if (_isUserLoggedIn)
     {
-        <MudMenu Icon="@Icons.Material.Filled.Person" Color="Color.Inherit" Dense="true" Direction="Direction.Bottom" OffsetY="true" Class="mx-2">
-            <MudMenuItem Class="px-2">
-                <div class="d-flex flex-column">
-                    <MudText Typo="Typo.subtitle1" Class="mud-text-secondary font-weight-bold mb-n1">@_userName</MudText>
-                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@_userEmail</MudText>
-                </div>
-            </MudMenuItem>
-            <MudDivider Class="mb-2" />
-            <MudMenuItem Href="/my-account" Icon="@Icons.Material.Filled.Person">Tài khoản của tôi</MudMenuItem>
-            <MudMenuItem Href="/my-orders" Icon="@Icons.Material.Filled.ShoppingBag">Đơn hàng của tôi</MudMenuItem>
-            @if (_userRoles != null && (_userRoles.Contains("Admin") || _userRoles.Contains("Manager")))
-            {
-                <MudMenuItem Href="/admin/dashboard" Icon="@Icons.Material.Filled.Dashboard">Quản trị</MudMenuItem>
-            }
-            <MudDivider />
-            <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="HandleLogout">Đăng xuất</MudMenuItem>
-        </MudMenu>
+        <MudIconButton Icon="@Icons.Material.Filled.Person" 
+                    Color="Color.Inherit" 
+                    Href="/my-account" 
+                    Class="mx-2" 
+                    aria-label="account" />
+                    
+        <MudButton Variant="Variant.Text" 
+                 Color="Color.Inherit" 
+                 OnClick="HandleLogout" 
+                 StartIcon="@Icons.Material.Filled.Logout" 
+                 Class="mx-2">
+        </MudButton>
     }
     else
     {
@@ -78,13 +79,9 @@
                     Href="/account/login" 
                     StartIcon="@Icons.Material.Filled.Login" 
                     Class="mx-2">
-            ĐĂNG NHẬP
+            LOGIN
         </MudButton>
     }
-    
-    <MudBadge Color="Color.Secondary" Content="@_cartItemCount" Overlap="true" Origin="Origin.TopRight" Bordered="true">
-        <MudIconButton Href="/cart" Icon="@Icons.Material.Filled.ShoppingCart" Color="Color.Inherit" />
-    </MudBadge>
 </MudAppBar>
 
 <MudLayout>
@@ -201,5 +198,26 @@
     
     .mud-paper.mud-elevation-1 {
         border-radius: 8px;
+    }
+    
+    /* Order status chip styles */
+    .mud-chip.order-status-awaiting {
+        background-color: #ffc107 !important; /* Yellow */
+        color: #000 !important;
+    }
+    
+    .mud-chip.order-status-processing {
+        background-color: #2196f3 !important; /* Blue */
+        color: #fff !important;
+    }
+    
+    .mud-chip.order-status-delivered {
+        background-color: #4caf50 !important; /* Green */
+        color: #fff !important;
+    }
+    
+    .mud-chip.order-status-canceled {
+        background-color: #f44336 !important; /* Red */
+        color: #fff !important;
     }
 </style> 

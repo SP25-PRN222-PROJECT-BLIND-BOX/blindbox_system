@@ -210,6 +210,7 @@ namespace BlindBoxShop.Service
                 {
                     Id = detail.Id,
                     Quantity = detail.Quantity,
+                    BlindBoxItemId = detail.BlindBoxItemId,
                     BlindBoxName = detail.BlindBoxPriceHistory?.BlindBox?.Name ?? "Unknown",
                     Price = detail.BlindBoxPriceHistory?.Price ?? 0,
                     ImageUrl = GetFirstImageUrl(detail.BlindBoxPriceHistory?.BlindBox),

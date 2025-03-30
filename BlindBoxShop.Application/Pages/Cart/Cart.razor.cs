@@ -26,7 +26,7 @@ namespace BlindBoxShop.Application.Pages.Cart
         {
             await LoadCartFromLocalStorage();
             
-            // Xử lý các tham số truy vấn URL
+            // Process URL query parameters
             var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
             
             if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("action", out var action))

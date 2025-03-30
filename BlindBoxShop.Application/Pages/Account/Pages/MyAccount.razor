@@ -173,7 +173,11 @@ else
                                         <MudTd DataLabel="ID">@context.Id.ToString().Substring(0, 8)</MudTd>
                                         <MudTd DataLabel="Date">@context.CreatedAt.ToString("dd/MM/yyyy")</MudTd>
                                         <MudTd DataLabel="Status">
-                                            <MudBadge Color="@GetOrderStatusColor(context.Status)" Content="@context.Status.ToString()" />
+                                            <MudChip T="string" Size="Size.Small"
+                                                     Color="@GetOrderStatusColor(context.Status)"
+                                                     Class="@($"order-status-{context.Status.ToString().ToLower()}")">
+                                                @context.Status.ToString()
+                                            </MudChip>
                                         </MudTd>
                                         <MudTd DataLabel="Total">@FormatPrice(context.Total)</MudTd>
                                         <MudTd>
@@ -191,4 +195,107 @@ else
             </div>
         </div>
     </div>
-} 
+}
+
+<!-- Image Preview Overlay -->
+<MudOverlay @bind-Visible="_imagePreviewVisible" DarkBackground="true" ZIndex="999" OnClick="CloseImagePreview">
+    <div class="d-flex justify-center align-items-center" style="height: 100vh;" @onclick:preventDefault>
+        <div class="position-relative" style="width: 90%; max-width: 800px; max-height: 90vh; overflow: auto;">
+            <MudCard Class="pa-4 position-relative" Style="background-color: rgba(0,0,0,0.8);">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6" Color="Color.Surface">Image Preview</MudText>
+                    </CardHeaderContent>
+                    <CardHeaderActions>
+                        <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Surface" OnClick="CloseImagePreview" />
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent Class="d-flex flex-column align-center justify-center">
+                    <div class="result-image-container @($"{(_isZoomed ? "zoomed" : "")}")">
+                        <MudImage Src="@_selectedImage" 
+                                 Alt="Image Preview"
+                                 Class="result-image rounded-lg" 
+                                 ObjectFit="ObjectFit.Contain"
+                                 @onclick="ToggleZoom" />
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </div>
+    </div>
+</MudOverlay>
+
+<style>
+    .result-image-container {
+        width: 280px;
+        height: 280px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: transparent;
+        border-radius: 8px;
+        transition: transform 0.3s ease;
+        cursor: zoom-in;
+    }
+    
+    .result-image-container.zoomed {
+        transform: scale(1.5);
+        cursor: zoom-out;
+    }
+    
+    .result-image {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        width: 100%;
+        height: 100%;
+    }
+    
+    .product-image-container {
+        width: 48px;
+        height: 48px;
+        overflow: hidden;
+        border-radius: 4px;
+        position: relative;
+        cursor: pointer;
+    }
+    
+    .product-image-container:hover .image-overlay {
+        opacity: 1;
+    }
+    
+    .image-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0,0,0,0.3);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+    
+    /* Order status styles */
+    .order-status-pending {
+        background-color: #ffd700 !important;
+        color: #000 !important;
+    }
+    
+    .order-status-processing {
+        background-color: #4caf50 !important;
+        color: #fff !important;
+    }
+    
+    .order-status-delivered {
+        background-color: #2196f3 !important;
+        color: #fff !important;
+    }
+    
+    .order-status-cancelled {
+        background-color: #f44336 !important;
+        color: #fff !important;
+    }
+</style> 

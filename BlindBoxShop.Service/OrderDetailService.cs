@@ -384,6 +384,51 @@ namespace BlindBoxShop.Service
             }
         }
 
+        public async Task<Result<bool>> UpdateOrderDetailBlindBoxItemAsync(Guid orderDetailId, Guid blindBoxItemId)
+        {
+            try
+            {
+                Console.WriteLine($"Updating order detail {orderDetailId} with BlindBoxItemId: {blindBoxItemId}");
+                
+                // Find the order detail by ID
+                var orderDetail = await _orderDetailRepository.FindById(orderDetailId, true);
+                
+                if (orderDetail == null)
+                {
+                    return Result<bool>.Failure(new ErrorResult
+                    {
+                        Code = "OrderDetailNotFound",
+                        Description = $"Order detail with ID {orderDetailId} not found"
+                    });
+                }
+                
+                // Update only the BlindBoxItemId field
+                orderDetail.BlindBoxItemId = blindBoxItemId;
+                
+                // Save the changes
+                _orderDetailRepository.Update(orderDetail);
+                await _orderDetailRepository.SaveAsync();
+                
+                Console.WriteLine($"Successfully updated order detail {orderDetailId} with BlindBoxItemId: {blindBoxItemId}");
+                
+                return Result<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ERROR in UpdateOrderDetailBlindBoxItemAsync: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Inner Exception: {ex.InnerException.Message}");
+                }
+                
+                return Result<bool>.Failure(new ErrorResult
+                {
+                    Code = "UpdateOrderDetailError",
+                    Description = $"Error updating order detail: {ex.Message}"
+                });
+            }
+        }
+
         public void Dispose()
         {
             _orderDetailRepository.Dispose();

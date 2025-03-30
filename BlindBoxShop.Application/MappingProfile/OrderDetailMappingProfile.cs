@@ -12,6 +12,7 @@ namespace BlindBoxShop.Application.MappingProfile
             CreateMap<OrderDetail, OrderDetailDto>()
                 .ForMember(dest => dest.BlindBoxName, opt => opt.MapFrom(src => src.BlindBoxPriceHistory!.BlindBox!.Name))
                 .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.BlindBoxPriceHistory!.Price))
+                .ForMember(dest => dest.BlindBoxItemId, opt => opt.MapFrom(src => src.BlindBoxItemId))
                 .ReverseMap();
 
             CreateMap<Order, OrderWithDetailsDto>()

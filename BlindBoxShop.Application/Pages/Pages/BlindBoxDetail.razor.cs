@@ -558,13 +558,20 @@ namespace BlindBoxShop.Application.Pages.Pages
         }
         
         // Open the gacha dialog
-        private async Task OpenGachaDialog()
+        private void OpenGachaDialog()
         {
-            if (BlindBox == null || BlindBox.Status != BlindBoxStatus.Available) return;
-            
-            _gachaDialogVisible = true;
-            StateHasChanged();
-            Console.WriteLine("Opened gacha dialog, visible: " + _gachaDialogVisible);
+            try
+            {
+                if (BlindBox == null || BlindBox.Status != BlindBoxStatus.Available) return;
+                
+                // Điều hướng đến trang BlindBoxGacha
+                NavigationManager.NavigateTo($"/blindbox-gacha/{BlindBox.Id}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error navigating to gacha page: {ex.Message}");
+                Snackbar.Add($"Lỗi khi mở trang quay gacha: {ex.Message}", Severity.Error);
+            }
         }
         
         // Close the gacha dialog

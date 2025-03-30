@@ -169,7 +169,7 @@ namespace BlindBoxShop.Application.Pages.Pages
                 }
                 else
                 {
-                    // Xử lý lỗi từ API
+                    // Handle API errors
                     if (result.Errors != null)
                     {
                         foreach (var error in result.Errors)

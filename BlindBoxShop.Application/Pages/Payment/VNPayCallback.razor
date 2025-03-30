@@ -62,6 +62,19 @@
     {
         try
         {
+            // Kiểm tra xem thanh toán này đến từ đâu dựa vào URL gốc được lưu trong localStorage
+            var referringUrl = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "payment_referring_url");
+            Console.WriteLine($"Payment referring URL: {referringUrl ?? "Unknown"}");
+            
+            // Check if this is a BlindBox gacha payment by looking for order ID in sessionStorage
+            var tempOrderId = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "temp_order_id");
+            var blindBoxId = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "blindbox_id");
+            bool isGachaPayment = !string.IsNullOrEmpty(tempOrderId) && !string.IsNullOrEmpty(blindBoxId);
+            
+            // Hiển thị thông tin cho debug
+            Console.WriteLine($"isGachaPayment: {isGachaPayment}, tempOrderId: {tempOrderId}, blindBoxId: {blindBoxId}");
+            Console.WriteLine($"Response code: {_vnpayRequest.VnpResponseCode}, Transaction ref: {_vnpayRequest.VnpTxnRef}");
+            
             // Process payment callback
             var result = await ServiceManager.VNPayService.ProcessPaymentCallbackAsync(_vnpayRequest);
             
@@ -72,26 +85,135 @@
                 // Check if payment was successful
                 if (response.IsSuccessful)
                 {
-                    // Clear cart after successful payment
-                    await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "blindbox_cart");
+                    try 
+                    {
+                        // Xác định loại thanh toán dựa trên referringUrl và sessionStorage
+                        bool isFromBlindBoxGacha = referringUrl == "blindbox-gacha" || isGachaPayment;
+                        
+                        if (isFromBlindBoxGacha)
+                        {
+                            // ===== ONLINE BLINDBOX PAYMENT FLOW =====
+                            Console.WriteLine("ONLINE BLINDBOX PAYMENT - Redirecting to BlindBoxGacha payment-return");
+                            
+                            try
+                            {
+                                // Đảm bảo cập nhật trạng thái đơn hàng trước khi redirect
+                                if (Guid.TryParse(tempOrderId, out Guid orderId))
+                                {
+                                    try
+                                    {
+                                        var order = await ServiceManager.OrderService.GetOrderWithDetailsByIdAsync(orderId, false);
+                                        if (order != null && order.IsSuccess && order.Value != null)
+                                        {
+                                            // Cập nhật trạng thái đơn hàng thành công
+                                            Console.WriteLine($"Order found, current status: {order.Value.Order.Status}");
+                                        }
+                                        else
+                                        {
+                                            Console.WriteLine("Order not found or could not be retrieved");
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Console.WriteLine($"Error checking order: {ex.Message}");
+                                    }
+                                }
+
+                                // Lưu thông tin vào sessionStorage để dùng trong BlindBoxGacha
+                                await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "payment_success", "true");
+                                
+                                // Redirect to BlindBoxGacha payment return page với đầy đủ thông tin
+                                Console.WriteLine("Redirecting to blindbox-gacha");
+                                if (!string.IsNullOrEmpty(blindBoxId) && Guid.TryParse(blindBoxId, out Guid blindBoxGuid))
+                                {
+                                    NavigationManager.NavigateTo($"/blindbox-gacha/{blindBoxId}?vnp_ResponseCode={_vnpayRequest.VnpResponseCode}&vnp_TxnRef={_vnpayRequest.VnpTxnRef}", true);
+                                }
+                                else
+                                {
+                                    NavigationManager.NavigateTo($"/blindbox-gacha?vnp_ResponseCode={_vnpayRequest.VnpResponseCode}&vnp_TxnRef={_vnpayRequest.VnpTxnRef}", true);
+                                }
+                                return; // Exit the method to prevent double redirects
+                            }
+                            catch (Exception ex) 
+                            {
+                                Console.WriteLine($"Error redirecting to gacha page: {ex.Message}");
+                                Snackbar.Add($"Lỗi khi chuyển hướng: {ex.Message}", Severity.Error);
+                                // Nếu lỗi khi chuyển hướng đến trang gacha, tiếp tục xử lý như thanh toán thông thường
+                            }
+                        }
+                        else
+                        {
+                            // ===== PHYSICAL BLINDBOX PAYMENT FLOW =====
+                            Console.WriteLine("PHYSICAL BLINDBOX PAYMENT - Redirecting to default success URL");
+                            
+                            // Clear cart after successful payment for physical products
+                            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "blindbox_cart");
+                            
+                            // XÓA TẤT CẢ dữ liệu sessionStorage của blindbox gacha để tránh redirect sai
+                            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "temp_order_id");
+                            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "blindbox_id"); 
+                            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "payment_success");
+                            
+                            // Chuyển hướng đến URL thành công
+                            Console.WriteLine($"Redirecting to order-success: {response.RedirectUrl}");
+                            NavigationManager.NavigateTo(response.RedirectUrl, true);
+                            return; // Exit the method to prevent double redirects
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error determining payment type: {ex.Message}");
+                        
+                        // Nếu có lỗi, chuyển về trang mặc định
+                        Console.WriteLine($"Error occurred, falling back to default URL: {response.RedirectUrl}");
+                        NavigationManager.NavigateTo(response.RedirectUrl, true);
+                        return;
+                    }
                 }
-                
-                // Chuyển hướng đến URL kết quả tương ứng (thành công hoặc thất bại)
-                NavigationManager.NavigateTo(response.RedirectUrl, true);
+                else
+                {
+                    // Thanh toán không thành công
+                    
+                    // Xóa các session storage của blindbox gacha nếu có
+                    await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "temp_order_id");
+                    await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "blindbox_id");
+                    await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "payment_success");
+                    
+                    // Chuyển hướng đến URL thất bại
+                    Console.WriteLine($"Payment failed, redirecting to: {response.RedirectUrl}");
+                    NavigationManager.NavigateTo(response.RedirectUrl, true);
+                    return;
+                }
             }
             else
             {
                 // Chuyển hướng đến trang thất bại trong trường hợp có lỗi xử lý
                 var errorMessage = result.Errors?.FirstOrDefault()?.Description ?? "Đã xảy ra lỗi khi xử lý thanh toán.";
                 await JSRuntime.InvokeVoidAsync("localStorage.setItem", "payment_error", errorMessage);
+                
+                // Xóa các session storage của blindbox gacha nếu có
+                await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "temp_order_id");
+                await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "blindbox_id");
+                await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "payment_success");
+                
+                Console.WriteLine("Error processing payment, redirecting to order-failed");
                 NavigationManager.NavigateTo("/order-failed", true);
+                return;
             }
         }
         catch (Exception ex)
         {
             // Chuyển hướng đến trang thất bại trong trường hợp có lỗi
             await JSRuntime.InvokeVoidAsync("localStorage.setItem", "payment_error", $"Lỗi xử lý thanh toán: {ex.Message}");
+            
+            // Xóa các session storage của blindbox gacha nếu có
+            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "temp_order_id");
+            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "blindbox_id");
+            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "payment_success");
+            
+            Console.WriteLine($"Exception caught: {ex.Message}, redirecting to order-failed");
             NavigationManager.NavigateTo("/order-failed", true);
+            return;
         }
     }
 } 

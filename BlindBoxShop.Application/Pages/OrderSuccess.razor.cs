@@ -45,6 +45,9 @@ namespace BlindBoxShop.Application.Pages
         
         protected override async Task OnInitializedAsync()
         {
+            // Xóa dữ liệu session storage liên quan đến BlindBox Gacha
+            await CleanupGachaSessionStorage();
+            
             // Redirect if accessed directly without order ID
             if (string.IsNullOrEmpty(OrderId) || OrderId == "null")
             {
@@ -157,7 +160,7 @@ namespace BlindBoxShop.Application.Pages
                         }
                     }
                     
-                    // Xử lý URL hình ảnh trực tiếp từ OrderDetailDto
+                    // Process image URL directly from OrderDetailDto
                     orderItem.ImageUrl = EnsureCorrectImageUrl(orderItem.ImageUrl);
                     _blindBoxImages[orderItem.Id] = orderItem.ImageUrl;
                     
@@ -258,6 +261,27 @@ namespace BlindBoxShop.Application.Pages
             if (Guid.TryParse(OrderId, out Guid orderId))
             {
                 NavigationManager.NavigateTo($"/my-account?tab=1");
+            }
+        }
+
+        // Thêm phương thức này
+        private async Task CleanupGachaSessionStorage()
+        {
+            try
+            {
+                // Xóa tất cả localStorage và sessionStorage liên quan đến thanh toán và blindbox gacha
+                await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "temp_order_id");
+                await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "blindbox_id");
+                await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "payment_success");
+                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "payment_referring_url");
+                
+                // In thông tin để debug
+                Console.WriteLine("OrderSuccess page: Cleaned up all session storage related to gacha");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error cleaning session storage: {ex.Message}");
+                // Chỉ ghi log, không dừng quá trình xử lý
             }
         }
     }

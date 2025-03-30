@@ -1,6 +1,6 @@
 ﻿using BlindBoxShop.Entities.Models;
 using BlindBoxShop.Shared.Enum;
-using Microsoft.EntityFrameworkCore;
+
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace BlindBoxShop.Repository.Configuration
@@ -27,7 +27,37 @@ namespace BlindBoxShop.Repository.Configuration
                     TotalBlindBox = 20,
                     CurrentTotalBlindBox = 20,
                     CreatedAt = DateTime.Now
-                }
+                },
+                 new Package
+                 {
+                     Id = Guid.Parse("9a47fcb2-4910-4589-baea-6f8698c9ceab"),
+                     Name = "Hộp Premium",
+                     Barcode = "PKG-STD-002",
+                     Type = PackageType.Standard,
+                     TotalBlindBox = 20,
+                     CurrentTotalBlindBox = 20,
+                     CreatedAt = DateTime.Now
+                 },
+                  new Package
+                  {
+                      Id = Guid.Parse("bc37c5bb-dc22-4bd1-85b1-9c3fe13f5c40"),
+                      Name = "Hộp Deluxe",
+                      Barcode = "PKG-STD-003",
+                      Type = PackageType.Standard,
+                      TotalBlindBox = 20,
+                      CurrentTotalBlindBox = 20,
+                      CreatedAt = DateTime.Now
+                  },
+                  new Package
+                  {
+                      Id = Guid.Parse("68f2ac54-5118-4711-9f22-97167b5b5a9a"),
+                      Name = "Hộp Giới hạn",
+                      Barcode = "PKG-STD-004",
+                      Type = PackageType.Standard,
+                      TotalBlindBox = 20,
+                      CurrentTotalBlindBox = 20,
+                      CreatedAt = DateTime.Now
+                  }
             );
         }
     }

@@ -1,4 +1,5 @@
 using AutoMapper;
+
 using BlindBoxShop.Entities.Models;
 using BlindBoxShop.Shared.DataTransferObject.BlindBox;
 
@@ -10,29 +11,26 @@ namespace BlindBoxShop.Application.MappingProfile
         {
             // Map từ Entity sang DTO
             CreateMap<BlindBox, BlindBoxDto>()
-                .ForMember(dest => dest.CurrentPrice, opt => opt.MapFrom(src => 
-                    src.BlindBoxPriceHistories != null && src.BlindBoxPriceHistories.Any() 
-                    ? src.BlindBoxPriceHistories.OrderByDescending(p => p.CreatedAt).First().Price 
-                    : 0))
-                .ForMember(dest => dest.MainImageUrl, opt => opt.MapFrom(src => 
-                    src.BlindBoxImages != null && src.BlindBoxImages.Any() 
-                    ? src.BlindBoxImages.OrderBy(i => i.CreatedAt).First().ImageUrl 
+                .ForMember(dest => dest.CurrentPrice, opt => opt.MapFrom(src => src.Price))
+                .ForMember(dest => dest.MainImageUrl, opt => opt.MapFrom(src =>
+                    src.BlindBoxImages != null && src.BlindBoxImages.Any()
+                    ? src.BlindBoxImages.OrderBy(i => i.CreatedAt).First().ImageUrl
                     : string.Empty))
-                .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => 
-                    src.BlindBoxCategory != null 
-                    ? src.BlindBoxCategory.Name 
+                .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src =>
+                    src.BlindBoxCategory != null
+                    ? src.BlindBoxCategory.Name
                     : string.Empty))
-                .ForMember(dest => dest.PackageName, opt => opt.MapFrom(src => 
-                    src.Package != null 
-                    ? src.Package.Name 
+                .ForMember(dest => dest.PackageName, opt => opt.MapFrom(src =>
+                    src.Package != null
+                    ? src.Package.Name
                     : string.Empty));
 
             // Map từ DTO sang Entity
             CreateMap<BlindBoxDto, BlindBox>();
-            
+
             // Map cho Create
             CreateMap<BlindBoxForCreate, BlindBox>();
-            
+
             // Map cho Update
             CreateMap<BlindBoxForUpdate, BlindBox>();
             CreateMap<BlindBoxDto, BlindBoxForUpdate>();
@@ -41,4 +39,4 @@ namespace BlindBoxShop.Application.MappingProfile
             CreateMap<BlindBoxImage, BlindBoxImageDto>();
         }
     }
-} 
+}

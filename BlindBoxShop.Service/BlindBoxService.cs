@@ -144,71 +144,12 @@ namespace BlindBoxShop.Service
         {
             try
             {
-                var blindBoxes = _blindBoxRepository.FindAll(trackChanges);
+                var blindBoxes = await _blindBoxRepository.GetBlindBoxesAsync(blindBoxParameter, trackChanges);
 
-                // Apply filtering by category if specified
-                if (blindBoxParameter.CategoryId.HasValue)
-                {
-                    blindBoxes = blindBoxes.Where(bb => bb.BlindBoxCategoryId == blindBoxParameter.CategoryId.Value);
-                }
 
-                // Apply search by name if specified
-                if (!string.IsNullOrWhiteSpace(blindBoxParameter.SearchByName))
-                {
-                    blindBoxes = blindBoxes.Where(bb =>
-                        bb.Name.Contains(blindBoxParameter.SearchByName, StringComparison.OrdinalIgnoreCase) ||
-                        bb.Description.Contains(blindBoxParameter.SearchByName, StringComparison.OrdinalIgnoreCase));
-                }
+                var blindBoxDtos = _mapper.Map<IEnumerable<BlindBoxDto>>(blindBoxes);
 
-                // Apply package filter if specified
-                if (blindBoxParameter.PackageId.HasValue)
-                {
-                    blindBoxes = blindBoxes.Where(bb => bb.PackageId == blindBoxParameter.PackageId.Value);
-                }
-
-                // Apply status filter if specified
-                if (blindBoxParameter.Status.HasValue)
-                {
-                    blindBoxes = blindBoxes.Where(bb => (int)bb.Status == blindBoxParameter.Status.Value);
-                }
-
-                // Apply rarity filter if specified
-                if (blindBoxParameter.Rarity.HasValue)
-                {
-                    blindBoxes = blindBoxes.Where(bb => (int)bb.Rarity == blindBoxParameter.Rarity.Value);
-                }
-
-                // Apply sorting
-                if (string.IsNullOrWhiteSpace(blindBoxParameter.OrderBy))
-                {
-                    blindBoxes = blindBoxes.OrderByDescending(e => e.CreatedAt);
-                }
-                else
-                {
-                    // Default to ordering by creation date if order param is invalid
-                    blindBoxes = blindBoxes.OrderByDescending(e => e.CreatedAt);
-                }
-
-                // Apply pagination
-                blindBoxes = blindBoxes
-                    .Skip((blindBoxParameter.PageNumber - 1) * blindBoxParameter.PageSize)
-                    .Take(blindBoxParameter.PageSize);
-
-                var blindBoxList = await blindBoxes.ToListAsync();
-                var blindBoxDtos = _mapper.Map<IEnumerable<BlindBoxDto>>(blindBoxList);
-
-                // Get current prices for each blindbox
-                foreach (var dto in blindBoxDtos)
-                {
-                    var priceHistories = _repositoryManager.BlindBoxPriceHistory
-                        .FindByCondition(ph => ph.BlindBoxId == dto.Id, trackChanges)
-                        .ToList();
-
-                    var latestPrice = priceHistories.OrderByDescending(p => p.CreatedAt).FirstOrDefault();
-                    if (latestPrice != null)
-                        dto.CurrentPrice = latestPrice.Price;
-                }
-                return Result<IEnumerable<BlindBoxDto>>.Success(blindBoxDtos);
+                return (blindBoxDtos, blindBoxes.MetaData);
             }
             catch (Exception ex)
             {

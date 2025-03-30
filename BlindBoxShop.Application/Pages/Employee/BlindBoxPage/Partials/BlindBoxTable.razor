@@ -1,9 +1,9 @@
 @using BlindBoxShop.Shared.DataTransferObject.BlindBox
 @using BlindBoxShop.Shared.Enum
 
-<MudTable ServerData="ServerReload" Dense="false" Hover="true" @ref="table" FixedHeader="true" FixedFooter="true" 
+<MudTable ServerData="ServerReload" Dense="false" Hover="true" @ref="table" FixedHeader="true" FixedFooter="true"
           Height="600px" MultiSelection="true" T="BlindBoxDto"
-          @bind-SelectedItem="_blindBoxDto" 
+          @bind-SelectedItem="_blindBoxDto"
           OnRowClick="RowClickEvent"
           CanCancelEdit="true"
           SortLabel="Sort By"
@@ -12,15 +12,15 @@
           RowEditCommit="ItemHasBeenCommitted"
           IsEditRowSwitchingBlocked="false"
           AllowUnsorted="false"
-          ApplyButtonPosition="TableApplyButtonPosition.End" 
-          EditButtonPosition="TableEditButtonPosition.End" 
+          ApplyButtonPosition="TableApplyButtonPosition.End"
+          EditButtonPosition="TableEditButtonPosition.End"
           EditTrigger="TableEditTrigger.RowClick">
     <ToolBarContent>
-        <MudFab StartIcon="@Icons.Material.Filled.Add" DropShadow="true" Size="Size.Small" Label="Add BlindBox" 
+        <MudFab StartIcon="@Icons.Material.Filled.Add" DropShadow="true" Size="Size.Small" Label="Add BlindBox"
                 @onclick="OpenCreateDialogAsync" Class="mr-3" />
-        <MudFab StartIcon="@Icons.Material.Filled.Remove" DropShadow="true" Size="Size.Small" Label="Remove BlindBox" 
+        <MudFab StartIcon="@Icons.Material.Filled.Remove" DropShadow="true" Size="Size.Small" Label="Remove BlindBox"
                 @onclick="OpenRemoveDialogAsync" Disabled="_disableRemoveBtn" Class="mr-3" />
-                
+
         <MudSelect T="Guid?" Label="Category" AnchorOrigin="Origin.BottomCenter" Class="mx-2" Style="min-width: 200px;"
                    @bind-Value="_blindBoxParameters.CategoryId" HelperText="Filter by category">
             <MudSelectItem T="Guid?" Value="@((Guid?)null)">All Categories</MudSelectItem>
@@ -29,23 +29,23 @@
                 <MudSelectItem T="Guid?" Value="@category.Id">@category.Name</MudSelectItem>
             }
         </MudSelect>
-        
-        <MudSelect T="int?" Label="Rarity" AnchorOrigin="Origin.BottomCenter" Class="mx-2" Style="min-width: 150px;"
+
+        <MudSelect T="BlindBoxRarity?" Label="Rarity" AnchorOrigin="Origin.BottomCenter" Class="mx-2" Style="min-width: 150px;"
                    @bind-Value="_blindBoxParameters.Rarity" HelperText="Filter by rarity">
-            <MudSelectItem T="int?" Value="@((int?)null)">All Rarities</MudSelectItem>
-            <MudSelectItem T="int?" Value="@((int?)BlindBoxRarity.Common)">Common</MudSelectItem>
-            <MudSelectItem T="int?" Value="@((int?)BlindBoxRarity.Uncommon)">Uncommon</MudSelectItem>
-            <MudSelectItem T="int?" Value="@((int?)BlindBoxRarity.Rare)">Rare</MudSelectItem>
+            <MudSelectItem T="BlindBoxRarity?" Value="@((BlindBoxRarity?)null)">All Rarities</MudSelectItem>
+            <MudSelectItem T="BlindBoxRarity?" Value="@(BlindBoxRarity.Common)">Common</MudSelectItem>
+            <MudSelectItem T="BlindBoxRarity?" Value="@(BlindBoxRarity.Uncommon)">Uncommon</MudSelectItem>
+            <MudSelectItem T="BlindBoxRarity?" Value="@(BlindBoxRarity.Rare)">Rare</MudSelectItem>
         </MudSelect>
-        
-        <MudSelect T="int?" Label="Status" AnchorOrigin="Origin.BottomCenter" Class="mx-2" Style="min-width: 150px;"
+
+        <MudSelect T="BlindBoxStatus?" Label="Status" AnchorOrigin="Origin.BottomCenter" Class="mx-2" Style="min-width: 150px;"
                    @bind-Value="_blindBoxParameters.Status" HelperText="Filter by status">
-            <MudSelectItem T="int?" Value="@((int?)null)">All Statuses</MudSelectItem>
-            <MudSelectItem T="int?" Value="@((int?)BlindBoxStatus.Available)">Available</MudSelectItem>
-            <MudSelectItem T="int?" Value="@((int?)BlindBoxStatus.Sold_Out)">Sold Out</MudSelectItem>
-            <MudSelectItem T="int?" Value="@((int?)BlindBoxStatus.Coming_Soon)">Coming Soon</MudSelectItem>
+            <MudSelectItem T="BlindBoxStatus?" Value="@((BlindBoxStatus?)null)">All Statuses</MudSelectItem>
+            <MudSelectItem T="BlindBoxStatus?" Value="@(BlindBoxStatus.Available)">Available</MudSelectItem>
+            <MudSelectItem T="BlindBoxStatus?" Value="@(BlindBoxStatus.Sold_Out)">Sold Out</MudSelectItem>
+            <MudSelectItem T="BlindBoxStatus?" Value="@(BlindBoxStatus.Coming_Soon)">Coming Soon</MudSelectItem>
         </MudSelect>
-        
+
         <MudSpacer />
         <MudTextField T="string"
                       @bind-value="@searchString"
@@ -110,7 +110,7 @@
         <MudTablePager PageSizeOptions="new int[] { 10, 25, 50 }" />
     </PagerContent>
     <EditButtonContent Context="button">
-        <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" Class="pa-0" 
-                      OnClick="@button.ButtonAction" Disabled="@button.ButtonDisabled" />
+        <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" Class="pa-0"
+                       OnClick="@button.ButtonAction" Disabled="@button.ButtonDisabled" />
     </EditButtonContent>
 </MudTable> 

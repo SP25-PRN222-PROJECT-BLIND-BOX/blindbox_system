@@ -1,8 +1,11 @@
 ﻿using BlindBoxShop.Repository.Utilities;
 using BlindBoxShop.Shared.Features;
 
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
+
 using System.Linq.Dynamic.Core;
+
+
 
 namespace BlindBoxShop.Repository.Extensions
 {

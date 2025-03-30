@@ -1,5 +1,6 @@
 @using BlindBoxShop.Shared.DataTransferObject.BlindBox
 @using BlindBoxShop.Shared.DataTransferObject.BlindBoxCategory
+@using BlindBoxShop.Shared.DataTransferObject.BlindBoxItems
 @using BlindBoxShop.Shared.Enum
 @using System.ComponentModel.DataAnnotations
 
@@ -11,73 +12,110 @@
                 <MudItem xs="12" md="6">
                     <MudCard Elevation="0">
                         <MudCardContent>
-                            <MudTextField Label="Name" Required="true" 
-                                        @bind-Value="_blindBoxForCreate.Name" 
-                                        For="@(() => _blindBoxForCreate.Name)" />
-                                        
+                            <MudTextField Label="Name" Required="true"
+                                          @bind-Value="_blindBoxForCreate.Name"
+                                          For="@(() => _blindBoxForCreate.Name)" />
+
                             <MudTextField Label="Description" Class="mt-3" Required="true"
-                                        @bind-Value="_blindBoxForCreate.Description" 
-                                        For="@(() => _blindBoxForCreate.Description)" 
-                                        Lines="3" />
-                                        
+                                          @bind-Value="_blindBoxForCreate.Description"
+                                          For="@(() => _blindBoxForCreate.Description)"
+                                          Lines="3" />
+
                             <MudSelect T="Guid?" Label="Category" Required="true" Class="mt-3"
-                                      @bind-Value="_blindBoxForCreate.BlindBoxCategoryId" 
-                                      For="@(() => _blindBoxForCreate.BlindBoxCategoryId)">
+                                       @bind-Value="_blindBoxForCreate.BlindBoxCategoryId"
+                                       For="@(() => _blindBoxForCreate.BlindBoxCategoryId)">
                                 @foreach (var category in _categories)
                                 {
-                                    <MudSelectItem T="Guid?" Value="@category.Id">@category.Name</MudSelectItem>
+                                    <MudSelectItem T="Guid?" Value="@category.Id"><MudText Color="Color.Dark">@category.Name</MudText></MudSelectItem>
                                 }
                             </MudSelect>
-                            
-                            <MudSelect T="Guid" Label="Package" Required="true" Class="mt-3"
-                                      @bind-Value="_blindBoxForCreate.PackageId" 
-                                      For="@(() => _blindBoxForCreate.PackageId)">
+
+                            <MudSelect T="Guid?" Label="Package" Required="true" Class="mt-3"
+                                       @bind-Value="_blindBoxForCreate.PackageId"
+                                       For="@(() => _blindBoxForCreate.PackageId)">
                                 @foreach (var package in _packages)
                                 {
-                                    <MudSelectItem T="Guid" Value="@package.Id">@package.Name</MudSelectItem>
+                                    <MudSelectItem T="Guid?" Value="@package.Id" Class="text-black"><MudText Color="Color.Dark">@package.Name</MudText></MudSelectItem>
                                 }
                             </MudSelect>
                         </MudCardContent>
                     </MudCard>
                 </MudItem>
-                
+
                 <MudItem xs="12" md="6">
                     <MudCard Elevation="0">
                         <MudCardContent>
                             <MudSelect T="BlindBoxRarity" Label="Rarity" Required="true"
-                                      @bind-Value="_blindBoxForCreate.Rarity" 
-                                      For="@(() => _blindBoxForCreate.Rarity)">
-                                <MudSelectItem Value="@BlindBoxRarity.Common">Common</MudSelectItem>
-                                <MudSelectItem Value="@BlindBoxRarity.Uncommon">Uncommon</MudSelectItem>
-                                <MudSelectItem Value="@BlindBoxRarity.Rare">Rare</MudSelectItem>
+                                       @bind-Value="_blindBoxForCreate.Rarity"
+                                       For="@(() => _blindBoxForCreate.Rarity)">
+                                <MudSelectItem Value="@BlindBoxRarity.Common"><MudText Color="Color.Dark">Common</MudText></MudSelectItem>
+                                <MudSelectItem Value="@BlindBoxRarity.Uncommon"><MudText Color="Color.Dark">Uncommon</MudText></MudSelectItem>
+                                <MudSelectItem Value="@BlindBoxRarity.Rare"><MudText Color="Color.Dark">Rare</MudText></MudSelectItem>
                             </MudSelect>
-                            
+
                             <MudSelect T="BlindBoxStatus" Label="Status" Required="true" Class="mt-3"
-                                      @bind-Value="_blindBoxForCreate.Status" 
-                                      For="@(() => _blindBoxForCreate.Status)">
-                                <MudSelectItem Value="@BlindBoxStatus.Available">Available</MudSelectItem>
-                                <MudSelectItem Value="@BlindBoxStatus.Sold_Out">Sold Out</MudSelectItem>
-                                <MudSelectItem Value="@BlindBoxStatus.Coming_Soon">Coming Soon</MudSelectItem>
+                                       @bind-Value="_blindBoxForCreate.Status"
+                                       For="@(() => _blindBoxForCreate.Status)">
+                                <MudSelectItem Value="@BlindBoxStatus.Available"><MudText Color="Color.Dark">Available</MudText></MudSelectItem>
+                                <MudSelectItem Value="@BlindBoxStatus.Sold_Out"><MudText Color="Color.Dark">Sold Out</MudText></MudSelectItem>
+                                <MudSelectItem Value="@BlindBoxStatus.Coming_Soon"><MudText Color="Color.Dark">Coming Soon</MudText></MudSelectItem>
                             </MudSelect>
-                            
+
                             <MudNumericField T="float" Label="Probability (%)" Required="true" Class="mt-3"
-                                           @bind-Value="_blindBoxForCreate.Probability" 
-                                           For="@(() => _blindBoxForCreate.Probability)"
-                                           Min="0" Max="100" />
-                                           
+                                             @bind-Value="_blindBoxForCreate.Probability"
+                                             For="@(() => _blindBoxForCreate.Probability)"
+                                             Min="0" Max="100" />
+
                             <MudNumericField T="decimal" Label="Price (VND)" Required="true" Class="mt-3"
-                                           @bind-Value="_blindBoxForCreate.Price" 
-                                           For="@(() => _blindBoxForCreate.Price)"
-                                           Format="N0" Min="0" />
-                                           
+                                             @bind-Value="_blindBoxForCreate.Price"
+                                             For="@(() => _blindBoxForCreate.Price)"
+                                             Format="N0" Min="0" />
+
                             <MudTextField Label="Image URL" Class="mt-3"
-                                        @bind-Value="_blindBoxForCreate.MainImageUrl" 
-                                        For="@(() => _blindBoxForCreate.MainImageUrl)" />
+                                          @bind-Value="_blindBoxForCreate.MainImageUrl"
+                                          For="@(() => _blindBoxForCreate.MainImageUrl)" />
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudCard Elevation="0">
+                        <MudCardHeader>
+                            <MudText Typo="Typo.h6">Blind Box Items</MudText>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudTable Items="@_blindBoxItems" Dense="true" Hover="true" Class="mt-3">
+                                <ToolBarContent>
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                               StartIcon="@Icons.Material.Filled.Add"
+                                               OnClick="AddNewBlindBoxItem">Add Item</MudButton>
+                                </ToolBarContent>
+                                <HeaderContent>
+                                    <MudTh>Name</MudTh>
+                                    <MudTh>Description</MudTh>
+                                    <MudTh>Image URL</MudTh>
+                                    <MudTh>Actions</MudTh>
+                                </HeaderContent>
+                                <RowTemplate Context="item">
+                                    <MudTd DataLabel="Name">@item.Name</MudTd>
+                                    <MudTd DataLabel="Description">@item.Description</MudTd>
+                                    <MudTd DataLabel="ImageUrl">@item.ImageUrl</MudTd>
+                                    <MudTd>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                       OnClick="@(() => EditBlindBoxItem(item))" />
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                                       OnClick="@(() => RemoveBlindBoxItem(item))" />
+                                    </MudTd>
+                                </RowTemplate>
+                                <NoRecordsContent>
+                                    <MudText>No blind box items added yet.</MudText>
+                                </NoRecordsContent>
+                            </MudTable>
                         </MudCardContent>
                     </MudCard>
                 </MudItem>
             </MudGrid>
-            
+
             <MudAlert Class="mt-3" Severity="Severity.Info">All fields marked with an asterisk (*) are required.</MudAlert>
             <MudText Color="@Color.Error" Class="mt-2">
                 <ValidationSummary />
@@ -88,4 +126,22 @@
             <MudButton Color="Color.Primary" ButtonType="ButtonType.Submit">Create</MudButton>
         </DialogActions>
     </MudDialog>
-</EditForm> 
+</EditForm>
+
+@if (_showItemDialog)
+{
+    <MudDialog @bind-IsVisible="_showItemDialog" Options="dialogOptions">
+        <TitleContent>
+            <MudText Typo="Typo.h6">@(_editItemIndex >= 0 ? "Edit Item" : "Add New Item")</MudText>
+        </TitleContent>
+        <DialogContent>
+            <MudTextField @bind-Value="_currentItem.Name" Label="Name" Required="true" />
+            <MudTextField @bind-Value="_currentItem.Description" Label="Description" Lines="3" Class="mt-3" />
+            <MudTextField @bind-Value="_currentItem.ImageUrl" Label="Image URL" Class="mt-3" />
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="CancelItemEdit">Cancel</MudButton>
+            <MudButton Color="Color.Primary" OnClick="SaveBlindBoxItem">Save</MudButton>
+        </DialogActions>
+    </MudDialog>
+}

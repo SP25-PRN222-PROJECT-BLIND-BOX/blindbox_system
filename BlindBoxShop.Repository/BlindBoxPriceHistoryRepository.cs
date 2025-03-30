@@ -3,6 +3,7 @@ using BlindBoxShop.Repository.Contract;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace BlindBoxShop.Repository
@@ -52,6 +53,39 @@ namespace BlindBoxShop.Repository
             }
 
             return priceHistory;
+        }
+
+
+        
+
+        public async Task<BlindBoxPriceHistory> FindByIdAsync(Guid id, bool trackChanges)
+        {
+            return await FindByCondition(bph => bph.Id.Equals(id), trackChanges)
+                .SingleOrDefaultAsync();
+        }
+
+        public async Task CreateAsync(BlindBoxPriceHistory blindBoxPriceHistory)
+        {
+            await RepositoryContext.BlindBoxPriceHistories.AddAsync(blindBoxPriceHistory);
+        }
+
+        public async Task UpdateAsync(BlindBoxPriceHistory blindBoxPriceHistory)
+        {
+            RepositoryContext.BlindBoxPriceHistories.Update(blindBoxPriceHistory);
+            await Task.CompletedTask;
+        }
+
+        public async Task DeleteAsync(BlindBoxPriceHistory blindBoxPriceHistory)
+        {
+            RepositoryContext.BlindBoxPriceHistories.Remove(blindBoxPriceHistory);
+            await Task.CompletedTask;
+        }
+
+        public Task<IQueryable<BlindBoxPriceHistory>> FindByConditionAsync(
+            Expression<Func<BlindBoxPriceHistory, bool>> expression,
+            bool trackChanges)
+        {
+            return Task.FromResult(FindByCondition(expression, trackChanges));
         }
     }
 }

@@ -15,4 +15,4 @@ namespace BlindBoxShop.Entities.Models
         public virtual ICollection<OrderDetail>? OrderDetails { get; set; }
     }
 
-}
+} 

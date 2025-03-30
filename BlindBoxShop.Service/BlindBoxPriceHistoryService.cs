@@ -108,6 +108,49 @@ namespace BlindBoxShop.Service
             }
         }
 
+        // Update
+        public async Task<Result<BlindBoxPriceHistoryDto>> UpdateAsync(Guid id, BlindBoxPriceHistoryDto blindBoxPriceHistoryDto)
+        {
+            try
+            {
+                if (blindBoxPriceHistoryDto == null)
+                {
+                    return Result<BlindBoxPriceHistoryDto>.Failure(new ErrorResult
+                    {
+                        Code = "BlindBoxPriceHistory.Update.InvalidData",
+                        Description = "Dữ liệu lịch sử giá không hợp lệ."
+                    });
+                }
+
+                var existingBlindBoxPriceHistory = await _blindBoxPriceHistoryRepository.FindByIdAsync(id, true);
+                if (existingBlindBoxPriceHistory == null)
+                {
+                    return Result<BlindBoxPriceHistoryDto>.Failure(new ErrorResult
+                    {
+                        Code = "BlindBoxPriceHistory.Update.NotFound",
+                        Description = "Không tìm thấy lịch sử giá để cập nhật."
+                    });
+                }
+
+                _mapper.Map(blindBoxPriceHistoryDto, existingBlindBoxPriceHistory);
+
+
+                await _blindBoxPriceHistoryRepository.UpdateAsync(existingBlindBoxPriceHistory);
+                await _blindBoxPriceHistoryRepository.SaveAsync();
+
+                var resultDto = _mapper.Map<BlindBoxPriceHistoryDto>(existingBlindBoxPriceHistory);
+                return Result<BlindBoxPriceHistoryDto>.Success(resultDto);
+            }
+            catch (Exception ex)
+            {
+                return Result<BlindBoxPriceHistoryDto>.Failure(new ErrorResult
+                {
+                    Code = "BlindBoxPriceHistory.Update.Failed",
+                    Description = ex.Message
+                });
+            }
+        }
+
         
 
         public void Dispose()

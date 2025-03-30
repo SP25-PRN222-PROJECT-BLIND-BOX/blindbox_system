@@ -27,7 +27,6 @@
 
 	<ItemGroup>
 	  <Folder Include="Interceptor\" />
-	  <Folder Include="Pages\Admin\UserManagement\" />
 	  <Folder Include="Pages\Pages\Home\Partial\" />
 	</ItemGroup>
 

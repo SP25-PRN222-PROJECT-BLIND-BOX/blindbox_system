@@ -151,7 +151,35 @@ namespace BlindBoxShop.Service
             }
         }
 
-        
+        // Delete
+        public async Task<Result<bool>> DeleteAsync(Guid id)
+        {
+            try
+            {
+                var blindBoxPriceHistory = await _blindBoxPriceHistoryRepository.FindByIdAsync(id, true);
+                if (blindBoxPriceHistory == null)
+                {
+                    return Result<bool>.Failure(new ErrorResult
+                    {
+                        Code = "BlindBoxPriceHistory.Delete.NotFound",
+                        Description = "Không tìm thấy lịch sử giá để xóa."
+                    });
+                }
+
+                await _blindBoxPriceHistoryRepository.DeleteAsync(blindBoxPriceHistory);
+                await _blindBoxPriceHistoryRepository.SaveAsync();
+
+                return Result<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                return Result<bool>.Failure(new ErrorResult
+                {
+                    Code = "BlindBoxPriceHistory.Delete.Failed",
+                    Description = ex.Message
+                });
+            }
+        }
 
         public void Dispose()
         {

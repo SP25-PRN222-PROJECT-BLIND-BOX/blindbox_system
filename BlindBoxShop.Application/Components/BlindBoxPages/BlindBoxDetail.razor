@@ -1,0 +1,15 @@
+@using BlindBoxShop.Shared.DataTransferObject.BlindBox
+
+<MudButton Variant="Variant.Filled" 
+          Color="Color.Primary" 
+          FullWidth="true"
+          Size="Size.Large"
+          Href="@($"/blindbox-gacha/{BlindBox?.Id}")"
+          Class="mt-4 rounded-pill">
+    Try Your Luck
+</MudButton>
+
+@code {
+    [Parameter]
+    public BlindBoxDto BlindBox { get; set; }
+} 

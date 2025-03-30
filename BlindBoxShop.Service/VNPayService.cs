@@ -127,7 +127,7 @@ namespace BlindBoxShop.Service
                 var queryUrl = query.ToString() + "&vnp_SecureHash=" + secureHash;
 
                 // Update order status to awaiting payment
-                order.Status = OrderStatus.AwaitingPayment;
+                order.Status = OrderStatus.Processing;
                 _orderRepository.Update(order);
                 await _orderRepository.SaveAsync();
 

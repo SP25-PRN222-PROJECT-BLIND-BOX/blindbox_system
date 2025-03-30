@@ -361,4 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-.cursor/rules/prn222rule.mdc
+/.cursor
+/.cursor/rules
+.cursor/rules/prnrule.mdc

@@ -84,8 +84,8 @@ namespace BlindBoxShop.Service
                     };
                     
                     // Lưu price history mới
-                    _repositoryManager.BlindBoxPriceHistory.Create(priceHistory);
-                    await _repositoryManager.BlindBoxPriceHistory.SaveAsync();
+                    _blindBoxPriceHistoryRepository.Create(priceHistory);
+                    await _blindBoxPriceHistoryRepository.SaveAsync();
                     
                     Console.WriteLine($"Created new price history with ID: {priceHistory.Id}");
                     
@@ -111,7 +111,8 @@ namespace BlindBoxShop.Service
                 {
                     OrderId = orderDetailForCreation.OrderId,
                     BlindBoxPriceHistoryId = priceHistory.Id,
-                    Quantity = orderDetailForCreation.Quantity
+                    Quantity = orderDetailForCreation.Quantity,
+                    BlindBoxItemId = orderDetailForCreation.BlindBoxItemId
                 };
                 
                 _orderDetailRepository.Create(orderDetailEntity);
@@ -193,8 +194,8 @@ namespace BlindBoxShop.Service
                         };
                         
                         // Lưu price history mới
-                        _repositoryManager.BlindBoxPriceHistory.Create(priceHistory);
-                        await _repositoryManager.BlindBoxPriceHistory.SaveAsync();
+                        _blindBoxPriceHistoryRepository.Create(priceHistory);
+                        await _blindBoxPriceHistoryRepository.SaveAsync();
                         
                         Console.WriteLine($"Created new price history with ID: {priceHistory.Id}");
                         
@@ -380,6 +381,51 @@ namespace BlindBoxShop.Service
                 { 
                     Code = "GetOrderDetailsError",
                     Description = $"Error retrieving order details: {ex.Message}" 
+                });
+            }
+        }
+
+        public async Task<Result<bool>> UpdateOrderDetailBlindBoxItemAsync(Guid orderDetailId, Guid blindBoxItemId)
+        {
+            try
+            {
+                Console.WriteLine($"Updating order detail {orderDetailId} with BlindBoxItemId: {blindBoxItemId}");
+                
+                // Find the order detail by ID
+                var orderDetail = await _orderDetailRepository.FindById(orderDetailId, true);
+                
+                if (orderDetail == null)
+                {
+                    return Result<bool>.Failure(new ErrorResult
+                    {
+                        Code = "OrderDetailNotFound",
+                        Description = $"Order detail with ID {orderDetailId} not found"
+                    });
+                }
+                
+                // Update only the BlindBoxItemId field
+                orderDetail.BlindBoxItemId = blindBoxItemId;
+                
+                // Save the changes
+                _orderDetailRepository.Update(orderDetail);
+                await _orderDetailRepository.SaveAsync();
+                
+                Console.WriteLine($"Successfully updated order detail {orderDetailId} with BlindBoxItemId: {blindBoxItemId}");
+                
+                return Result<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ERROR in UpdateOrderDetailBlindBoxItemAsync: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Inner Exception: {ex.InnerException.Message}");
+                }
+                
+                return Result<bool>.Failure(new ErrorResult
+                {
+                    Code = "UpdateOrderDetailError",
+                    Description = $"Error updating order detail: {ex.Message}"
                 });
             }
         }

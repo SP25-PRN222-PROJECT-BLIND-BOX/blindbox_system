@@ -12,6 +12,14 @@ namespace BlindBoxShop.Repository.Configuration
             entity.HasIndex(e => new { e.OrderId, e.BlindBoxPriceHistoryId }).IsUnique();
 
             entity.HasIndex(e => e.OrderId);
+            
+            entity.HasIndex(e => e.BlindBoxItemId);
+            
+            entity.HasOne(e => e.BlindBoxItem)
+                .WithMany()
+                .HasForeignKey(e => e.BlindBoxItemId)
+                .IsRequired(false)
+                .OnDelete(Microsoft.EntityFrameworkCore.DeleteBehavior.SetNull);
         }
     }
 }

@@ -22,5 +22,8 @@ namespace BlindBoxShop.Shared.DataTransferObject.BlindBox
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public List<BlindBoxItemDto> Items { get; set; } = new List<BlindBoxItemDto>();
+        
+        // Debugging property to track probability source - not persisted to database
+        public string ProbabilitySource { get; set; } = "Unknown";
     }
 } 

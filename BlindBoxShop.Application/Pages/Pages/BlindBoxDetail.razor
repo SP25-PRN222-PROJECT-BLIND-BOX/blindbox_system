@@ -39,10 +39,15 @@
                             @foreach (var image in _images)
                             {
                                 <MudCarouselItem Transition="Transition.Slide">
-                                    <div class="d-flex justify-center align-center h-100">
+                                    <div class="d-flex justify-center align-center h-100 position-relative" 
+                                         style="cursor: zoom-in;">
                                         <MudImage Src="@image" Alt="@BlindBox.Name" ObjectFit="ObjectFit.Contain"
                                                  Class="rounded-lg" Style="max-height: 380px; max-width: 100%;" 
-                                                 Elevation="0" ErrorText="Cannot load image" />
+                                                 Elevation="0" ErrorText="Cannot load image"
+                                                 @onclick="@(() => OpenImagePreview(image))" />
+                                        <div class="image-overlay" @onclick="@(() => OpenImagePreview(image))">
+                                            <MudIcon Icon="@Icons.Material.Filled.ZoomIn" Color="Color.Surface" Size="Size.Large" />
+                                        </div>
                                     </div>
                                 </MudCarouselItem>
                             }
@@ -101,18 +106,36 @@
                         <div class="d-flex flex-wrap gap-2 justify-center">
                             @foreach (var item in BlindBox.Items)
                             {
-                                <div class="position-relative" style="transition: all 0.2s ease-in-out; cursor: pointer;" @onclick="() => OpenItemPreview(item)">
-                                    <MudAvatar Image="@item.ImageUrl" Style="width: 70px; height: 70px; border: 2px solid var(--mud-palette-secondary-lighten); box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                                        @if (string.IsNullOrEmpty(item.ImageUrl))
+                                <div class="position-relative" style="transition: all 0.2s ease-in-out;" >
+                                    <MudAvatar Style="width: 70px; height: 70px; border: 2px solid var(--mud-palette-secondary-lighten); box-shadow: 0 2px 8px rgba(0,0,0,0.1); background-color: #f0f0f0;">
+                                        @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                        {
+                                            <div class="position-relative" style="width: 100%; height: 100%;" @onclick:stopPropagation="true">
+                                                <MudImage Src="@item.ImageUrl" Style="width: 100%; height: 100%; object-fit: cover;" 
+                                                         ObjectFit="ObjectFit.Cover" Loading="true" ErrorText=""
+                                                         @onclick="@(() => OpenImagePreview(item.ImageUrl))" />
+                                                <div class="item-image-overlay" @onclick="@(() => OpenImagePreview(item.ImageUrl))">
+                                                    <MudIcon Icon="@Icons.Material.Filled.ZoomIn" Color="Color.Surface" Size="Size.Small" />
+                                                </div>
+                                            </div>
+                                        }
+                                        else
                                         {
                                             <MudIcon Icon="@Icons.Material.Filled.Image" />
                                         }
                                     </MudAvatar>
-                                    @if (item.IsSecret)
-                                    {
-                                        <MudIcon Icon="@Icons.Material.Filled.Star" Class="position-absolute" 
-                                                Style="bottom: -5px; right: -5px; color: gold;" Size="Size.Small" />
-                                    }
+                                    <MudTooltip Text="@($"{item.Name} - {GetRarityText(item.Rarity)}")">
+                                        <div class="position-absolute" style="bottom: -4px; right: -4px; background: white; border-radius: 50%; padding: 2px;" @onclick="() => OpenItemPreview(item)">
+                                            @if (item.IsSecret)
+                                            {
+                                                <MudIcon Icon="@Icons.Material.Filled.Star" Style="color: gold;" Size="Size.Small" />
+                                            }
+                                            else
+                                            {
+                                                <div style="width: 16px; height: 16px; border-radius: 50%;" class="@($"mud-{GetItemRarityColor(item.Rarity).ToString().ToLower()}")"></div>
+                                            }
+                                        </div>
+                                    </MudTooltip>
                                 </div>
                             }
                         </div>
@@ -153,11 +176,25 @@
                     {
                         var probabilityValue = (float)BlindBox.Probability;
                         <MudText Typo="Typo.subtitle1" Class="mb-1 d-flex align-center">
-                            <span class="font-weight-medium mr-2">Tỷ lệ secret item:</span> 
+                            <span class="font-weight-medium mr-2">Secret item chance:</span> 
                             <MudProgressLinear Value="@probabilityValue" Color="Color.Secondary" Class="mx-4" 
                                               Style="width: 150px; height: 10px;" />
-                            <span>@(BlindBox.Probability)%</span>
+                            <span>@(BlindBox.Probability.ToString("0.0"))%</span>
                         </MudText>
+                        
+                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mt-3 mb-3">
+                            <div class="d-flex align-center">
+                                <MudIcon Icon="@Icons.Material.Filled.Casino" Class="mr-2" />
+                                <div>
+                                    <MudText Typo="Typo.body2">
+                                        Each unsuccessful attempt increases the chance by <strong>0.1%</strong> and price by <strong>10.000₫</strong>.
+                                    </MudText>
+                                    <MudText Typo="Typo.body2">
+                                        When someone wins a secret item, probability and price reset to default values.
+                                    </MudText>
+                                </div>
+                            </div>
+                        </MudAlert>
                     }
                 </div>
                 
@@ -165,21 +202,31 @@
                 <MudPaper Elevation="0" Class="pa-4 rounded-lg mb-6" 
                          Style="@(BlindBox.Probability > 0 ? "background-color: rgba(103, 58, 183, 0.1); border: 1px solid rgba(103, 58, 183, 0.3)" : "background-color: rgba(0,139,139,0.05)")">
                     <div class="d-flex flex-column flex-sm-row gap-4">
-                        <MudNumericField @bind-Value="_quantity" Min="1" Max="10" Label="Số lượng" Variant="Variant.Filled" Class="flex-grow-0" />
-                        
                         @if (BlindBox.Probability > 0)
                         {
-                            <MudButton Variant="Variant.Filled" Color="Color.Secondary" 
-                                      StartIcon="@Icons.Material.Filled.Casino" 
+                            <!-- Only one BlindBox allowed for online boxes -->
+                            <div class="w-100 mb-3">
+                                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="d-flex align-center">
+                                    <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="mr-2" />
+                                    Online BlindBox can only be purchased one at a time
+                                </MudAlert>
+                            </div>
+                            
+                            <MudButton Variant="Variant.Filled" 
+                                      Color="Color.Primary"
+                                      FullWidth="true"
                                       Size="Size.Large"
-                                      Disabled="@(BlindBox.Status != BlindBoxStatus.Available)"
-                                      Class="flex-grow-1" 
-                                      OnClick="@OpenGachaDialog">
-                                Try Your Luck Now
+                                      Href="@($"/blindbox-gacha/{BlindBox.Id}")"
+                                      StartIcon="@Icons.Material.Filled.Casino"
+                                      Class="mt-4 rounded-lg"
+                                      Disabled="@(BlindBox.Status != BlindBoxStatus.Available)">
+                                Thử Vận May
                             </MudButton>
                         }
                         else
                         {
+                            <MudNumericField @bind-Value="_quantity" Min="1" Max="10" Label="Số lượng" Variant="Variant.Filled" Class="flex-grow-0" />
+                            
                             <MudButton Variant="Variant.Filled" Color="Color.Primary" 
                                       StartIcon="@Icons.Material.Filled.ShoppingCart" 
                                       Size="Size.Large"
@@ -268,77 +315,106 @@
 
 <!-- Try Your Luck Dialog -->
 <MudDialog @bind-IsVisible="_gachaDialogVisible" Options="_dialogOptions" DisableSidePadding="true">
-    <TitleContent>
-        <MudText Typo="Typo.h6" Class="pa-4">
-            @(BlindBox?.Name) - Try Your Luck
-        </MudText>
-    </TitleContent>
-    
     <DialogContent>
         @if (_isProcessing)
         {
             <div class="d-flex flex-column align-center py-8">
                 <MudProgressCircular Color="Color.Secondary" Indeterminate="true" Size="Size.Large" />
-                <MudText Class="mt-4">Processing payment request...</MudText>
+                <MudText Class="mt-4">Đang xử lý yêu cầu thanh toán...</MudText>
             </div>
         }
         else
         {
-            <div class="d-flex flex-column gap-4 px-4 pb-4">
-                <div class="d-flex justify-center">
+            <div class="pa-4 position-relative">
+                <div class="d-flex justify-center mb-4">
                     <MudImage Src="@(_images.FirstOrDefault() ?? "/images/box-placeholder.jpg")" 
                              Alt="@(BlindBox?.Name)" Width="200" Height="200" ObjectFit="ObjectFit.Contain" />
                 </div>
                 
-                <MudDivider />
-                
-                <div class="d-flex justify-space-between align-center">
-                    <MudText>Price:</MudText>
-                    <MudText Typo="Typo.h6" Color="Color.Primary" Class="font-weight-bold">
-                        @(BlindBox != null ? FormatPrice(BlindBox.CurrentPrice * _quantity) : "")
-                    </MudText>
+                <MudText Typo="Typo.h5" Align="Align.Center" Class="mb-4 font-weight-bold">@BlindBox.Name</MudText>
+
+                @if (BlindBox.Probability > 0)
+                {
+                    <div class="mb-4">
+                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="mr-2" />
+                            Online BlindBox can only be purchased one at a time
+                        </MudAlert>
+                        
+                        <div class="mt-3 pa-2 rounded-lg" Style="background-color: rgba(103, 58, 183, 0.05); border: 1px dashed var(--mud-palette-secondary);">
+                            <div class="d-flex justify-space-between align-center mb-2">
+                                <MudText Typo="Typo.subtitle2">Secret Item Chance:</MudText>
+                                <MudChip T="string" Color="Color.Secondary" Size="Size.Small">@(BlindBox.Probability.ToString("0.0"))%</MudChip>
+                            </div>
+                            <MudProgressLinear Color="Color.Secondary" Value="@((double)BlindBox.Probability)" Class="mb-1" />
+                        </div>
+                    </div>
+                }
+
+                <div class="d-flex flex-column gap-2 mb-4">
+                    <div class="d-flex justify-space-between align-center">
+                        <MudText>Giá:</MudText>
+                        <MudText Typo="Typo.h6" Color="Color.Primary" Class="font-weight-bold">
+                            @FormatPrice(BlindBox.CurrentPrice)
+                        </MudText>
+                    </div>
+                    
+                    <div class="d-flex justify-space-between align-center">
+                        <MudText>Phí vận chuyển:</MudText>
+                        <MudText Typo="Typo.body1">@FormatPrice(20000)</MudText>
+                    </div>
+                    
+                    <MudDivider Class="my-2" />
+                    
+                    <div class="d-flex justify-space-between align-center">
+                        <MudText>Tổng cộng:</MudText>
+                        <MudText Typo="Typo.h6" Color="Color.Primary" Class="font-weight-bold">
+                            @FormatPrice(BlindBox.CurrentPrice + 20000)
+                        </MudText>
+                    </div>
                 </div>
                 
-                <MudDivider />
+                <MudText Typo="Typo.subtitle1" Class="font-weight-medium mt-6 mb-3">Địa chỉ giao hàng</MudText>
                 
-                <!-- Shipping Information Form -->
-                <MudText Typo="Typo.subtitle1" Class="font-weight-medium">Shipping Information</MudText>
-                
-                <div class="d-flex gap-4">
-                    <MudTextField @bind-Value="_firstName" Label="First Name" Variant="Variant.Outlined" />
-                    <MudTextField @bind-Value="_lastName" Label="Last Name" Variant="Variant.Outlined" />
+                <div class="d-flex flex-column gap-3">
+                    <div class="d-flex gap-3">
+                        <MudTextField @bind-Value="_firstName" Label="Họ" Variant="Variant.Outlined" FullWidth="true" />
+                        <MudTextField @bind-Value="_lastName" Label="Tên" Variant="Variant.Outlined" FullWidth="true" />
+                    </div>
+                    
+                    <MudTextField @bind-Value="_address" Label="Địa chỉ" Variant="Variant.Outlined" />
+                    
+                    <div class="d-flex gap-3">
+                        <MudTextField @bind-Value="_province" Label="Tỉnh/Thành phố" Variant="Variant.Outlined" FullWidth="true" />
+                        <MudTextField @bind-Value="_ward" Label="Quận/Huyện" Variant="Variant.Outlined" FullWidth="true" />
+                    </div>
+                    
+                    <MudTextField @bind-Value="_phone" Label="Số điện thoại" Variant="Variant.Outlined" />
+                    
+                    <MudCheckBox @bind-Checked="_acceptTerms" T="bool" Label="Tôi hiểu rằng kết quả BlindBox là ngẫu nhiên và không được hoàn tiền" Color="Color.Secondary" Class="mt-2" />
                 </div>
                 
-                <MudTextField @bind-Value="_address" Label="Address" Variant="Variant.Outlined" />
-                
-                <div class="d-flex gap-4">
-                    <MudTextField @bind-Value="_province" Label="Province/City" Variant="Variant.Outlined" />
-                    <MudTextField @bind-Value="_ward" Label="District/Ward" Variant="Variant.Outlined" />
+                <div class="d-flex justify-center mt-6">
+                    <MudButton Variant="Variant.Filled" 
+                              Color="Color.Primary"
+                              Size="Size.Large"
+                              StartIcon="@Icons.Material.Filled.Payment"
+                              FullWidth="true"
+                              OnClick="ProcessGachaWithVNPay" 
+                              Disabled="@(!_acceptTerms || _isProcessing)">
+                        Nhấn để thanh toán
+                    </MudButton>
                 </div>
                 
-                <MudTextField @bind-Value="_phone" Label="Phone Number" Variant="Variant.Outlined" />
-                
-                <MudDivider />
-                
-                <MudCheckBox @bind-Checked="_acceptTerms" T="bool" Label="I understand that BlindBox results are final and non-refundable" Color="Color.Secondary" />
-                
-                <MudText Typo="Typo.caption" Class="mt-n2">
-                    By clicking "Pay and Open Box", you agree to our terms and conditions for online BlindBox purchases.
-                </MudText>
+                <MudIconButton Icon="@Icons.Material.Filled.Close" 
+                             Color="Color.Default" 
+                             Size="Size.Small"
+                             Class="position-absolute" 
+                             Style="top: 8px; right: 8px;" 
+                             OnClick="CloseGachaDialog" />
             </div>
         }
     </DialogContent>
-    
-    <DialogActions>
-        <MudButton OnClick="CloseGachaDialog" Disabled="_isProcessing">Cancel</MudButton>
-        <MudButton Variant="Variant.Filled" 
-                  Color="Color.Secondary" 
-                  StartIcon="@Icons.Material.Filled.Casino" 
-                  OnClick="ProcessGachaWithVNPay" 
-                  Disabled="@(!_acceptTerms || _isProcessing)">
-            Pay and Open Box
-        </MudButton>
-    </DialogActions>
 </MudDialog>
 
 <!-- Gacha Result Dialog -->
@@ -400,14 +476,20 @@
         @if (_selectedItem != null)
         {
             <div class="d-flex flex-column align-items-center">
-                <MudImage Src="@_selectedItem.ImageUrl" Alt="@_selectedItem.Name" 
-                         ObjectFit="ObjectFit.Contain" Style="max-height: 300px; width: 100%;" 
-                         Class="rounded-lg mb-4" />
-                         
-                <MudChip T="string" Color="@GetItemRarityColor(_selectedItem.Rarity)" Size="Size.Medium" 
-                        Class="mb-3">
-                    @GetRarityText(_selectedItem.Rarity)
-                </MudChip>
+                <div class="position-relative mb-4" style="width: 100%; max-width: 300px;">
+                    <MudImage Src="@_selectedItem.ImageUrl" Alt="@_selectedItem.Name" 
+                             ObjectFit="ObjectFit.Contain" Style="max-height: 300px; width: 100%;" 
+                             Class="rounded-lg" Loading="true" />
+                             
+                    <MudChip T="string" Color="@GetItemRarityColor(_selectedItem.Rarity)" Size="Size.Medium" 
+                            Class="position-absolute" Style="top: 10px; right: 10px;">
+                        @GetRarityText(_selectedItem.Rarity)
+                    </MudChip>
+                </div>
+                
+                <MudText Typo="Typo.h6" Class="mb-2 text-center">@_selectedItem.Name</MudText>
+                
+                <MudDivider Class="my-3" />
                 
                 <MudText Typo="Typo.body1" Class="mb-3 text-center px-3">
                     @_selectedItem.Description
@@ -415,10 +497,17 @@
                 
                 @if (_selectedItem.IsSecret)
                 {
-                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Star" Class="mb-3">
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Icon="@Icons.Material.Filled.Star" Class="mb-3 mt-2">
                         Đây là vật phẩm bí mật với tỷ lệ xuất hiện thấp!
                     </MudAlert>
                 }
+                
+                <MudPaper Elevation="0" Class="pa-3 mt-2 rounded-lg w-100" Style="background-color: rgba(0,0,0,0.02);">
+                    <MudText Typo="Typo.caption" Class="d-flex align-center justify-center">
+                        <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="mr-2" />
+                        Mỗi BlindBox chỉ có thể nhận được một vật phẩm.
+                    </MudText>
+                </MudPaper>
             </div>
         }
     </DialogContent>
@@ -426,6 +515,48 @@
         <MudButton OnClick="CloseItemPreview" Color="Color.Primary">Đóng</MudButton>
     </DialogActions>
 </MudDialog>
+
+<!-- Simple Image Preview -->
+<MudOverlay @bind-Visible="_imagePreviewVisible" DarkBackground="true" ZIndex="999" OnClick="CloseImagePreview">
+    <div class="d-flex justify-center align-items-center" style="height: 100vh;" @onclick:preventDefault>
+        <div class="position-relative" style="width: 90%; max-width: 1200px; max-height: 90vh; overflow: auto;">
+            <MudCard Class="pa-4 position-relative" Style="background-color: rgba(0,0,0,0.8);">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6" Color="Color.Surface">Xem chi tiết hình ảnh</MudText>
+                    </CardHeaderContent>
+                    <CardHeaderActions>
+                        <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Surface" OnClick="CloseImagePreview" />
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent Class="d-flex flex-column align-center justify-center">
+                    <div class="result-image-container @($"{(_isZoomed ? "zoomed" : "")}")">
+                        <MudImage Src="@_selectedImage" 
+                               Alt="Image Preview"
+                               Class="result-image rounded-lg" 
+                               ObjectFit="ObjectFit.Contain"
+                               @onclick="ToggleZoom" />
+                    </div>
+                    
+                    @if (_images.Count > 1)
+                    {
+                        <div class="d-flex align-center justify-center mt-4 gap-2">
+                            <MudIconButton Icon="@Icons.Material.Filled.NavigateBefore" Color="Color.Surface" 
+                                         OnClick="() => NavigatePreviewImage(-1)" />
+                            
+                            <MudText Typo="Typo.body2" Color="Color.Surface" Class="mx-2">
+                                @(_images.IndexOf(_selectedImage) + 1) / @_images.Count
+                            </MudText>
+                            
+                            <MudIconButton Icon="@Icons.Material.Filled.NavigateNext" Color="Color.Surface" 
+                                         OnClick="() => NavigatePreviewImage(1)" />
+                        </div>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </div>
+    </div>
+</MudOverlay>
 
 <style>
     .mud-tabs-panels {
@@ -451,5 +582,108 @@
     .gacha-item.active {
         opacity: 1;
         transform: scale(1);
+    }
+
+    .image-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.2);
+        opacity: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: opacity 0.3s ease;
+        border-radius: 8px;
+    }
+
+    .image-overlay:hover {
+        opacity: 1;
+    }
+
+    .thumbnail-preview {
+        width: 50px;
+        height: 50px;
+        cursor: pointer;
+        opacity: 0.6;
+        transition: all 0.2s;
+        border: 2px solid transparent;
+    }
+
+    .thumbnail-preview:hover {
+        opacity: 0.8;
+    }
+
+    .thumbnail-preview.active {
+        opacity: 1;
+        border-color: var(--mud-palette-primary);
+    }
+
+    .item-image-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.3);
+        opacity: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: opacity 0.2s ease;
+        border-radius: 50%;
+        cursor: zoom-in;
+    }
+
+    .item-image-overlay:hover {
+        opacity: 1;
+    }
+
+    .image-zoom-container {
+        position: relative;
+        overflow: hidden;
+        width: 100%;
+        cursor: zoom-in;
+    }
+
+    .zoom-image {
+        transition: transform 0.3s ease;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        cursor: zoom-in;
+    }
+
+    .zoom-image.zoomed {
+        transform: scale(1.5);
+        cursor: zoom-out;
+    }
+
+    .result-image-container {
+        width: 280px;
+        height: 280px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: transparent;
+        border-radius: 8px;
+        transition: transform 0.3s ease;
+        cursor: zoom-in;
+    }
+    
+    .result-image-container.zoomed {
+        transform: scale(1.5);
+        cursor: zoom-out;
+    }
+    
+    .result-image {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        width: 100%;
+        height: 100%;
     }
 </style> 

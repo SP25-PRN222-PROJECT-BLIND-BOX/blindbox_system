@@ -29,6 +29,8 @@ namespace BlindBoxShop.Repository.Contract
         void Delete(T entity);
 
         void Delete(T[] entity);
+        void DeleteRange(IEnumerable<T> entities);
+        Task DeleteRangeAsync(IEnumerable<T> entities);
 
         Task SaveAsync();
     }

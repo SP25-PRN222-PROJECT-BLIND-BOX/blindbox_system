@@ -84,6 +84,66 @@ namespace BlindBoxShop.Service
             }
         }
 
+        public async Task<Result<bool>> DeleteBlindBoxImageByIdAsync(Guid blindBoxImageId)
+        {
+            try
+            {
+                var blindBoxImage = await _blindBoxImageRepository.FindById(blindBoxImageId, true);
+                if (blindBoxImage == null)
+                {
+                    return Result<bool>.Failure(new ErrorResult
+                    {
+                        Code = "BlindBoxImage.Delete.NotFound",
+                        Description = "Không tìm thấy hình ảnh trong blind box."
+                    });
+                }
+
+                _blindBoxImageRepository.Delete(blindBoxImage);
+                await _blindBoxImageRepository.SaveAsync();
+
+                return Result<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                return Result<bool>.Failure(new ErrorResult
+                {
+                    Code = "BlindBoxImage.Delete.Failed",
+                    Description = ex.Message
+                });
+            }
+        }
+
+        public async Task<Result<bool>> DeleteBlindBoxImagesByBlindBoxIdAsync(Guid blindBoxId)
+        {
+            try
+            {
+                var blindBoxImages = await _blindBoxImageRepository
+                    .FindByCondition(bi => bi.BlindBoxId.Equals(blindBoxId), true)
+                    .ToListAsync();
+
+                if (!blindBoxImages.Any())
+                {
+                    return Result<bool>.Failure(new ErrorResult
+                    {
+                        Code = "BlindBoxImage.Delete.NotFound",
+                        Description = "Không có hình ảnh nào trong blind box để xóa."
+                    });
+                }
+
+                await _blindBoxImageRepository.DeleteRangeAsync(blindBoxImages);
+                await _blindBoxImageRepository.SaveAsync();
+
+                return Result<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                return Result<bool>.Failure(new ErrorResult
+                {
+                    Code = "BlindBoxImage.Delete.Failed",
+                    Description = ex.Message
+                });
+            }
+        }
 
 
         public void Dispose()

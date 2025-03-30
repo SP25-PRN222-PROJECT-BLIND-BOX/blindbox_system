@@ -80,6 +80,13 @@ namespace BlindBoxShop.Repository
             RepositoryContext
             .Set<T>()
             .RemoveRange(entity);
+        public virtual void DeleteRange(IEnumerable<T> entities) =>
+            RepositoryContext.Set<T>().RemoveRange(entities);
+        public virtual Task DeleteRangeAsync(IEnumerable<T> entities)
+        {
+            RepositoryContext.Set<T>().RemoveRange(entities);
+            return Task.CompletedTask;
+        }
 
         public async Task SaveAsync() => await RepositoryContext.SaveChangesAsync();
 

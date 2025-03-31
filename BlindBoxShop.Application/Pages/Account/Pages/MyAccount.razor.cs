@@ -1,6 +1,7 @@
 using BlindBoxShop.Entities.Models;
 using BlindBoxShop.Service.Contract;
 using BlindBoxShop.Shared.DataTransferObject.Order;
+using BlindBoxShop.Shared.DataTransferObject.BlindBox;
 using BlindBoxShop.Shared.Enum;
 using BlindBoxShop.Shared.Features;
 using Microsoft.AspNetCore.Components;
@@ -23,6 +24,15 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
         private List<OrderDto> _orders;
         private bool _loading = true;
         private bool _uploading;
+        
+        // Image preview properties
+        private bool _imagePreviewVisible;
+        private string _selectedImage;
+        private bool _isZoomed;
+        
+        // Dictionary to store BlindBoxItems for order details
+        private Dictionary<Guid, BlindBoxItemDto> _blindBoxItems = new Dictionary<Guid, BlindBoxItemDto>();
+        private Dictionary<Guid, bool> _itemsLoading = new Dictionary<Guid, bool>();
         
         // Form fields
         public string Username { get; set; }
@@ -68,7 +78,7 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
             {
                 _loading = true;
                 
-                // Xử lý tham số tab từ URL
+                // Process tab parameter from URL
                 if (!string.IsNullOrEmpty(TabParam) && int.TryParse(TabParam, out int tabIndex))
                 {
                     _activeTab = tabIndex;
@@ -97,7 +107,7 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
                 
                 if (string.IsNullOrEmpty(userId))
                 {
-                    Snackbar.Add("Không tìm thấy thông tin đăng nhập, vui lòng đăng nhập lại", Severity.Warning);
+                    Snackbar.Add("User information not found, please login again", Severity.Warning);
                     NavigationManager.NavigateTo("/account/login");
                     return;
                 }
@@ -110,7 +120,7 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
                     
                     if (_user == null)
                     {
-                        Snackbar.Add("Không tìm thấy thông tin người dùng", Severity.Error);
+                        Snackbar.Add("User information not found", Severity.Error);
                         NavigationManager.NavigateTo("/account/login");
                         return;
                     }
@@ -143,7 +153,7 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
                 }
                 catch (Exception ex)
                 {
-                    Snackbar.Add($"Lỗi khi lấy thông tin người dùng: {ex.Message}", Severity.Error);
+                    Snackbar.Add($"Error retrieving user information: {ex.Message}", Severity.Error);
                     Console.WriteLine($"Error fetching user data: {ex}");
                     NavigationManager.NavigateTo("/account/login");
                     return;
@@ -154,7 +164,7 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
             catch (Exception ex)
             {
                 _loading = false;
-                Snackbar.Add($"Lỗi khi tải thông tin: {ex.Message}", Severity.Error);
+                Snackbar.Add($"Error loading information: {ex.Message}", Severity.Error);
                 Console.WriteLine($"General error in LoadUserData: {ex}");
             }
         }
@@ -170,7 +180,7 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
                 
                 if (string.IsNullOrEmpty(userId))
                 {
-                    Snackbar.Add("Không tìm thấy thông tin người dùng để lấy lịch sử đơn hàng", Severity.Warning);
+                    Snackbar.Add("User information not found to retrieve order history", Severity.Warning);
                     _orders = new List<OrderDto>();
                     return;
                 }
@@ -196,19 +206,19 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
                     
                     if (_orders.Count == 0)
                     {
-                        Snackbar.Add("Bạn chưa có đơn hàng nào", Severity.Info);
+                        Snackbar.Add("You don't have any orders yet", Severity.Info);
                     }
                 }
                 else
                 {
-                    Snackbar.Add($"Lỗi khi tải lịch sử đơn hàng: {result.Errors?.FirstOrDefault()?.Description}", Severity.Error);
+                    Snackbar.Add($"Error loading order history: {result.Errors?.FirstOrDefault()?.Description}", Severity.Error);
                     _orders = new List<OrderDto>();
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error loading order history: {ex}");
-                Snackbar.Add($"Lỗi khi tải lịch sử đơn hàng: {ex.Message}", Severity.Error);
+                Snackbar.Add($"Error loading order history: {ex.Message}", Severity.Error);
                 _orders = new List<OrderDto>();
             }
             finally
@@ -236,6 +246,8 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
             return status switch
             {
                 OrderStatus.Pending => Color.Warning,
+                OrderStatus.Processing => Color.Info,
+                OrderStatus.Delivered => Color.Success,
                 OrderStatus.Cancelled => Color.Error,
                 _ => Color.Default
             };
@@ -268,8 +280,15 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
                 
                 if (result.IsSuccess && result.Value != null)
                 {
+                    // Pre-load BlindBoxItems for this order
+                    await LoadBlindBoxItemsForOrder(result.Value);
+                    
                     // Show order details dialog
-                    var parameters = new DialogParameters { ["OrderWithDetails"] = result.Value };
+                    var parameters = new DialogParameters { 
+                        ["OrderWithDetails"] = result.Value,
+                        ["Phone"] = _user?.PhoneNumber ?? "N/A",
+                        ["BlindBoxItems"] = _blindBoxItems
+                    };
                     var options = new DialogOptions 
                     { 
                         CloseButton = true,
@@ -277,7 +296,7 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
                         FullWidth = true
                     };
                     
-                    var dialog = await DialogService.ShowAsync<Components.Dialogs.OrderDetailsDialog>("Chi tiết đơn hàng", parameters, options);
+                    var dialog = await DialogService.ShowAsync<Components.Dialogs.OrderDetailsDialog>("Order Details", parameters, options);
                     var dialogResult = await dialog.Result;
                     
                     // If dialog result is Ok, refresh order history
@@ -288,14 +307,93 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
                 }
                 else
                 {
-                    var errorMsg = result.Errors?.FirstOrDefault()?.Description ?? "Không thể tải thông tin đơn hàng";
+                    var errorMsg = result.Errors?.FirstOrDefault()?.Description ?? "Cannot load order information";
                     Snackbar.Add(errorMsg, Severity.Error);
                 }
             }
             catch (Exception ex)
             {
-                Snackbar.Add($"Lỗi: {ex.Message}", Severity.Error);
+                Snackbar.Add($"Error: {ex.Message}", Severity.Error);
             }
+        }
+
+        // Load BlindBoxItems for an order
+        private async Task LoadBlindBoxItemsForOrder(OrderWithDetailsDto order)
+        {
+            try
+            {
+                if (order?.OrderDetails == null || !order.OrderDetails.Any()) 
+                    return;
+                
+                foreach (var detail in order.OrderDetails)
+                {
+                    _itemsLoading[detail.Id] = true;
+                    
+                    if (detail.BlindBoxItemId.HasValue)
+                    {
+                        await LoadBlindBoxItem(detail.Id, detail.BlindBoxItemId.Value);
+                    }
+                    
+                    _itemsLoading[detail.Id] = false;
+                }
+                
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading BlindBoxItems: {ex.Message}");
+            }
+        }
+        
+        // Load a single BlindBoxItem
+        private async Task LoadBlindBoxItem(Guid orderDetailId, Guid blindBoxItemId)
+        {
+            try
+            {
+                using var blindBoxItemService = ServiceManager.BlindBoxItemService;
+                var result = await blindBoxItemService.GetBlindBoxItemByIdAsync(blindBoxItemId, false);
+                
+                if (result.IsSuccess && result.Value != null)
+                {
+                    _blindBoxItems[orderDetailId] = result.Value;
+                }
+                else
+                {
+                    Console.WriteLine($"Failed to load BlindBoxItem {blindBoxItemId}: {result.Errors?.FirstOrDefault()?.Description}");
+                    _blindBoxItems[orderDetailId] = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading BlindBoxItem: {ex.Message}");
+                _blindBoxItems[orderDetailId] = null;
+            }
+        }
+
+        // Image preview methods
+        private void OpenImagePreview(string imageUrl)
+        {
+            if (string.IsNullOrEmpty(imageUrl) || imageUrl == "/images/box-placeholder.jpg")
+            {
+                return;
+            }
+            
+            _selectedImage = imageUrl;
+            _imagePreviewVisible = true;
+            StateHasChanged();
+        }
+
+        private void CloseImagePreview()
+        {
+            _imagePreviewVisible = false;
+            _isZoomed = false;
+            StateHasChanged();
+        }
+
+        private void ToggleZoom()
+        {
+            _isZoomed = !_isZoomed;
+            StateHasChanged();
         }
 
         private async Task SaveChanges()

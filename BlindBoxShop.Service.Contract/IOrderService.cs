@@ -13,5 +13,6 @@ namespace BlindBoxShop.Service.Contract
         Task<Result<OrderWithDetailsDto>> GetOrderWithDetailsByIdAsync(Guid id, bool trackChanges);
         Task<Result<IEnumerable<OrderDto>>> GetOrdersByUserIdAsync(Guid userId, OrderParameter orderParameter, bool trackChanges);
         Task<Result<bool>> ChangePaymentMethodAsync(Guid orderId, PaymentMethod newPaymentMethod);
+        Task<Result<bool>> UpdateOrderStatusAsync(Guid orderId, string status, string notes = "");
     }
 }

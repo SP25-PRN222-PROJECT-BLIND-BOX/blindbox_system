@@ -203,8 +203,8 @@
                                   Size="Size.Large"
                                   FullWidth="true"
                                   StartIcon="@Icons.Material.Filled.Payment"
-                                  OnClick="ProcessPayment"
-                                  Disabled="_isProcessing">
+                                  OnClick="@ProcessPayment"
+                                  Disabled="@_isProcessing">
                             Proceed to Payment
                         </MudButton>
                     </div>
@@ -212,4 +212,97 @@
             </div>
         </div>
     }
-</div> 
+</div>
+
+@code {
+    private async Task ClearGachaSessionStorage()
+    {
+        // Xóa tất cả sessionStorage liên quan đến blindbox gacha
+        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_order_id");
+        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_blindbox_id");
+        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_payment_success");
+        Console.WriteLine("Cleared gacha session storage before checkout payment");
+    }
+
+    private async Task ProcessPaymentAsync()
+    {
+        try
+        {
+            _isProcessing = true;
+            StateHasChanged();
+
+            // Get user ID from localStorage
+            var userId = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "user_id");
+            
+            if (string.IsNullOrEmpty(userId))
+            {
+                Snackbar.Add("You need to log in to proceed with payment", Severity.Warning);
+                _isProcessing = false;
+                StateHasChanged();
+                return;
+            }
+            
+            // Clear gacha session storage
+            await ClearGachaSessionStorage();
+            
+            // Save current URL to localStorage to indicate payment is from checkout
+            // Use the same key as OrderDetail for consistency
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "payment_referring_url", "order_details");
+            
+            // Create order with Pending status
+            var orderResult = await CreateOrder("Pending");
+            
+            if (orderResult != null)
+            {
+                var orderId = orderResult.Id;
+                
+                // Save order ID to both localStorage and sessionStorage for redundancy
+                await JSRuntime.InvokeVoidAsync("localStorage.setItem", "order_payment_id", orderId.ToString());
+                await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "order_payment_id", orderId.ToString());
+                Console.WriteLine($"Set order_payment_id in both localStorage and sessionStorage: {orderId.ToString()}");
+                
+                // Get base URL
+                var baseUrl = NavigationManager.BaseUri.TrimEnd('/');
+                var accountPageUrl = baseUrl + "/my-account?tab=1";
+                
+                // Use exact same URL pattern as order details
+                var paymentResult = await ServiceManager.VNPayService.GetPaymentUrlAsync(
+                    orderId,
+                    Guid.Parse(userId),
+                    baseUrl + "/payment/order-return?return_url=" + Uri.EscapeDataString(accountPageUrl)
+                );
+                
+                if (paymentResult.IsSuccess && !string.IsNullOrEmpty(paymentResult.Value))
+                {
+                    // Log for debugging
+                    Console.WriteLine($"Redirecting to VNPay URL: {paymentResult.Value}");
+                    
+                    // Clear cart before redirecting
+                    await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "blindbox_cart");
+                    
+                    // Redirect to VNPay payment page
+                    NavigationManager.NavigateTo(paymentResult.Value);
+                }
+                else
+                {
+                    var errorMsg = paymentResult.Errors?.FirstOrDefault()?.Description ?? "Could not create payment URL";
+                    Snackbar.Add(errorMsg, Severity.Error);
+                    _isProcessing = false;
+                    StateHasChanged();
+                }
+            }
+            else
+            {
+                Snackbar.Add("Could not create order", Severity.Error);
+                _isProcessing = false;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            _isProcessing = false;
+            StateHasChanged();
+        }
+    }
+} 

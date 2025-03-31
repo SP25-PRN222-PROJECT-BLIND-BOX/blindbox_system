@@ -31,8 +31,12 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
         private string Phone { get; set; }
         private string Email { get; set; }
         
-        // Dictionary để lưu trữ và truy cập nhanh đường dẫn hình ảnh
+        // Dictionary to store and quickly access image URLs
         private Dictionary<Guid, string> _blindBoxImages = new Dictionary<Guid, string>();
+
+        private bool _imagePreviewVisible = false;
+        private string _selectedImageUrl = string.Empty;
+        private bool _isZoomed = false;
 
         [Inject]
         private UserManager<User> UserManager { get; set; }
@@ -97,7 +101,7 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
                         Phone = "0123456789";
                         Email = "customer@example.com";
                         
-                        // Xử lý hình ảnh cho các OrderDetail
+                        // Process images for OrderDetails
                         await ProcessImagesAsync();
                         
                         // Debug: in ra thông tin ImageUrl của các OrderDetailDto
@@ -154,7 +158,7 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
                 // Đảm bảo đường dẫn hình ảnh được xử lý đúng cho tất cả các OrderItems
                 foreach (var orderItem in OrderItems)
                 {
-                    // Xử lý URL hình ảnh trực tiếp từ OrderDetailDto
+                    // Process image URL directly from OrderDetailDto
                     orderItem.ImageUrl = EnsureCorrectImageUrl(orderItem.ImageUrl);
                     Console.WriteLine($"OrderDetail: {orderItem.BlindBoxName}, ImageUrl: '{orderItem.ImageUrl}'");
                 }
@@ -296,6 +300,30 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
             {
                 IsLoading = false;
             }
+        }
+
+        private void OpenImagePreview(string imageUrl)
+        {
+            if (!string.IsNullOrEmpty(imageUrl))
+            {
+                _selectedImageUrl = imageUrl;
+                _imagePreviewVisible = true;
+                _isZoomed = false;
+                StateHasChanged();
+            }
+        }
+        
+        private void CloseImagePreview()
+        {
+            _imagePreviewVisible = false;
+            _isZoomed = false;
+            StateHasChanged();
+        }
+        
+        private void ToggleZoom()
+        {
+            _isZoomed = !_isZoomed;
+            StateHasChanged();
         }
     }
 

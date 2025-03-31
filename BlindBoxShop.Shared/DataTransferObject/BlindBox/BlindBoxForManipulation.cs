@@ -1,4 +1,5 @@
 using BlindBoxShop.Shared.Enum;
+
 using System.ComponentModel.DataAnnotations;
 
 namespace BlindBoxShop.Shared.DataTransferObject.BlindBox
@@ -17,7 +18,7 @@ namespace BlindBoxShop.Shared.DataTransferObject.BlindBox
         public Guid? BlindBoxCategoryId { get; set; }
 
         [Required(ErrorMessage = "Package is required")]
-        public Guid PackageId { get; set; }
+        public Guid? PackageId { get; set; }
 
         [Required(ErrorMessage = "Rarity is required")]
         [EnumDataType(typeof(BlindBoxRarity), ErrorMessage = "Invalid rarity value")]
@@ -37,4 +38,4 @@ namespace BlindBoxShop.Shared.DataTransferObject.BlindBox
 
         public string? MainImageUrl { get; set; }
     }
-} 
+}

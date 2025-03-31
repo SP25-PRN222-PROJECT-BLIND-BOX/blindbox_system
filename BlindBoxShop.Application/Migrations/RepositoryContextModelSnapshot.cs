@@ -45,6 +45,9 @@ namespace BlindBoxShop.Application.Migrations
                     b.Property<Guid>("PackageId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<float>("Probability")
                         .HasColumnType("real");
 
@@ -68,7 +71,121 @@ namespace BlindBoxShop.Application.Migrations
 
                     b.HasIndex("PackageId");
 
-                    b.ToTable("BlindBoxes", (string)null);
+                    b.ToTable("BlindBoxes");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("7594c261-b8d9-43a0-a2ea-095214afc2a9"),
+                            BlindBoxCategoryId = new Guid("c8c3ec17-0a76-49d0-b274-994d15848f39"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 247, DateTimeKind.Local).AddTicks(8582),
+                            Description = "Mô hình BlindBox Naruto Uzumaki từ series anime/manga Naruto.",
+                            Name = "Naruto Uzumaki",
+                            PackageId = new Guid("d2e1d185-02c9-479c-ae8b-0031a447389f"),
+                            Price = 0m,
+                            Probability = 15f,
+                            Rarity = "Common",
+                            Status = "Available",
+                            TotalRatingStar = 4.5f
+                        },
+                        new
+                        {
+                            Id = new Guid("8109eb24-4086-42a3-9d20-8e07a321b905"),
+                            BlindBoxCategoryId = new Guid("c8c3ec17-0a76-49d0-b274-994d15848f39"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 247, DateTimeKind.Local).AddTicks(8586),
+                            Description = "Mô hình BlindBox Goku trong trạng thái Super Saiyan từ Dragon Ball Z.",
+                            Name = "Goku Super Saiyan",
+                            PackageId = new Guid("9a47fcb2-4910-4589-baea-6f8698c9ceab"),
+                            Price = 0m,
+                            Probability = 5f,
+                            Rarity = "Rare",
+                            Status = "Available",
+                            TotalRatingStar = 5f
+                        },
+                        new
+                        {
+                            Id = new Guid("56792b87-5156-4959-82e3-25a12b66b267"),
+                            BlindBoxCategoryId = new Guid("b2a7a3e8-d1a1-4f80-9c5a-09532cd8be17"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 247, DateTimeKind.Local).AddTicks(8589),
+                            Description = "Mô hình BlindBox Mario từ series game Super Mario Bros của Nintendo.",
+                            Name = "Mario",
+                            PackageId = new Guid("d2e1d185-02c9-479c-ae8b-0031a447389f"),
+                            Price = 0m,
+                            Probability = 20f,
+                            Rarity = "Common",
+                            Status = "Available",
+                            TotalRatingStar = 4.2f
+                        },
+                        new
+                        {
+                            Id = new Guid("5d0d8d83-a8a6-410d-97b0-73bd5fb5d213"),
+                            BlindBoxCategoryId = new Guid("b2a7a3e8-d1a1-4f80-9c5a-09532cd8be17"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 247, DateTimeKind.Local).AddTicks(8604),
+                            Description = "Mô hình BlindBox Kratos từ series game God of War.",
+                            Name = "Kratos",
+                            PackageId = new Guid("bc37c5bb-dc22-4bd1-85b1-9c3fe13f5c40"),
+                            Price = 0m,
+                            Probability = 10f,
+                            Rarity = "Uncommon",
+                            Status = "Available",
+                            TotalRatingStar = 4.8f
+                        },
+                        new
+                        {
+                            Id = new Guid("3db50dc1-b3aa-4088-b083-d8823235120b"),
+                            BlindBoxCategoryId = new Guid("92d3e29f-9f4f-4bd0-b8bf-d9cde105c04a"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 247, DateTimeKind.Local).AddTicks(8607),
+                            Description = "Mô hình BlindBox Iron Man từ Marvel Cinematic Universe.",
+                            Name = "Iron Man",
+                            PackageId = new Guid("9a47fcb2-4910-4589-baea-6f8698c9ceab"),
+                            Price = 0m,
+                            Probability = 8f,
+                            Rarity = "Uncommon",
+                            Status = "Available",
+                            TotalRatingStar = 4.7f
+                        },
+                        new
+                        {
+                            Id = new Guid("6b34d818-8e04-4d63-9c40-2aeb68a60a90"),
+                            BlindBoxCategoryId = new Guid("92d3e29f-9f4f-4bd0-b8bf-d9cde105c04a"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 247, DateTimeKind.Local).AddTicks(8611),
+                            Description = "Mô hình BlindBox Darth Vader từ Star Wars.",
+                            Name = "Darth Vader",
+                            PackageId = new Guid("68f2ac54-5118-4711-9f22-97167b5b5a9a"),
+                            Price = 0m,
+                            Probability = 3f,
+                            Rarity = "Rare",
+                            Status = "Coming_Soon",
+                            TotalRatingStar = 0f
+                        },
+                        new
+                        {
+                            Id = new Guid("1c3f7db4-557f-46c9-8d59-25c557e2cbb2"),
+                            BlindBoxCategoryId = new Guid("6c9aa2b5-8cef-4621-b526-d94b08c17e46"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 247, DateTimeKind.Local).AddTicks(8613),
+                            Description = "Mô hình BlindBox mèo con đáng yêu với nhiều kiểu dáng khác nhau.",
+                            Name = "Mèo con dễ thương",
+                            PackageId = new Guid("d2e1d185-02c9-479c-ae8b-0031a447389f"),
+                            Price = 0m,
+                            Probability = 25f,
+                            Rarity = "Common",
+                            Status = "Available",
+                            TotalRatingStar = 4.9f
+                        },
+                        new
+                        {
+                            Id = new Guid("2ba2b8a7-3fcf-4dd6-a3de-51a897ba7c27"),
+                            BlindBoxCategoryId = new Guid("6c9aa2b5-8cef-4621-b526-d94b08c17e46"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 247, DateTimeKind.Local).AddTicks(8617),
+                            Description = "Mô hình BlindBox chó Shiba Inu nổi tiếng với nhiều tư thế vui nhộn.",
+                            Name = "Chó Shiba Inu",
+                            PackageId = new Guid("bc37c5bb-dc22-4bd1-85b1-9c3fe13f5c40"),
+                            Price = 0m,
+                            Probability = 7f,
+                            Rarity = "Uncommon",
+                            Status = "Sold_Out",
+                            TotalRatingStar = 4.6f
+                        });
                 });
 
             modelBuilder.Entity("BlindBoxShop.Entities.Models.BlindBoxCategory", b =>
@@ -82,15 +199,48 @@ namespace BlindBoxShop.Application.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("BlindBoxCategories", (string)null);
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("BlindBoxCategories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("c8c3ec17-0a76-49d0-b274-994d15848f39"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 247, DateTimeKind.Local).AddTicks(7905),
+                            Description = "Bộ sưu tập BlindBox dựa trên các nhân vật anime nổi tiếng.",
+                            Name = "Anime"
+                        },
+                        new
+                        {
+                            Id = new Guid("b2a7a3e8-d1a1-4f80-9c5a-09532cd8be17"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 247, DateTimeKind.Local).AddTicks(7918),
+                            Description = "Các nhân vật được yêu thích từ thế giới game.",
+                            Name = "Game"
+                        },
+                        new
+                        {
+                            Id = new Guid("92d3e29f-9f4f-4bd0-b8bf-d9cde105c04a"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 247, DateTimeKind.Local).AddTicks(7920),
+                            Description = "Nhân vật từ các bộ phim nổi tiếng của Hollywood và thế giới.",
+                            Name = "Phim"
+                        },
+                        new
+                        {
+                            Id = new Guid("6c9aa2b5-8cef-4621-b526-d94b08c17e46"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 247, DateTimeKind.Local).AddTicks(7922),
+                            Description = "Các mô hình động vật và thú cưng đáng yêu.",
+                            Name = "Thú cưng"
+                        });
                 });
 
             modelBuilder.Entity("BlindBoxShop.Entities.Models.BlindBoxImage", b =>
@@ -113,7 +263,105 @@ namespace BlindBoxShop.Application.Migrations
 
                     b.HasIndex("BlindBoxId");
 
-                    b.ToTable("BlindBoxImages", (string)null);
+                    b.ToTable("BlindBoxImages");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("ba4e485f-6ce5-4c6d-950c-10f3c70a7b3a"),
+                            BlindBoxId = new Guid("7594c261-b8d9-43a0-a2ea-095214afc2a9"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 248, DateTimeKind.Local).AddTicks(2550),
+                            ImageUrl = "https://i.imgur.com/7H4fftM.png"
+                        },
+                        new
+                        {
+                            Id = new Guid("c5e97f5e-c2c7-4c25-8e6e-3887d76be0e9"),
+                            BlindBoxId = new Guid("8109eb24-4086-42a3-9d20-8e07a321b905"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 248, DateTimeKind.Local).AddTicks(2559),
+                            ImageUrl = "https://i.imgur.com/L5xfBcB.png"
+                        },
+                        new
+                        {
+                            Id = new Guid("d8b1e04f-7e07-4253-93d1-3ab8c5cb5a7d"),
+                            BlindBoxId = new Guid("56792b87-5156-4959-82e3-25a12b66b267"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 248, DateTimeKind.Local).AddTicks(2561),
+                            ImageUrl = "https://i.imgur.com/CQJnDLt.png"
+                        },
+                        new
+                        {
+                            Id = new Guid("f3f40eda-3d18-4698-b70a-b9f3d5aa9769"),
+                            BlindBoxId = new Guid("5d0d8d83-a8a6-410d-97b0-73bd5fb5d213"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 248, DateTimeKind.Local).AddTicks(2573),
+                            ImageUrl = "https://i.imgur.com/Mk40l4L.png"
+                        },
+                        new
+                        {
+                            Id = new Guid("1a0eb1ee-dce0-4f32-b5c9-e4066f89e74c"),
+                            BlindBoxId = new Guid("3db50dc1-b3aa-4088-b083-d8823235120b"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 248, DateTimeKind.Local).AddTicks(2575),
+                            ImageUrl = "https://i.imgur.com/X1ekcDk.png"
+                        },
+                        new
+                        {
+                            Id = new Guid("93e49ce5-46a9-457f-be54-8b45e14dc6aa"),
+                            BlindBoxId = new Guid("6b34d818-8e04-4d63-9c40-2aeb68a60a90"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 248, DateTimeKind.Local).AddTicks(2577),
+                            ImageUrl = "https://i.imgur.com/Gr83jxH.png"
+                        },
+                        new
+                        {
+                            Id = new Guid("60a7be19-36e6-47c6-9f13-2d36937ea5e5"),
+                            BlindBoxId = new Guid("1c3f7db4-557f-46c9-8d59-25c557e2cbb2"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 248, DateTimeKind.Local).AddTicks(2580),
+                            ImageUrl = "https://i.imgur.com/4fOQeNR.png"
+                        },
+                        new
+                        {
+                            Id = new Guid("8c5ca06a-831e-4b6c-a4ca-436fd6aa4bee"),
+                            BlindBoxId = new Guid("2ba2b8a7-3fcf-4dd6-a3de-51a897ba7c27"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 248, DateTimeKind.Local).AddTicks(2581),
+                            ImageUrl = "https://i.imgur.com/Dt0vpyi.png"
+                        });
+                });
+
+            modelBuilder.Entity("BlindBoxShop.Entities.Models.BlindBoxItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BlindBoxId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<bool>("IsSecret")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<int>("Rarity")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BlindBoxId");
+
+                    b.ToTable("BlindBoxItems", (string)null);
                 });
 
             modelBuilder.Entity("BlindBoxShop.Entities.Models.BlindBoxPriceHistory", b =>
@@ -138,7 +386,73 @@ namespace BlindBoxShop.Application.Migrations
 
                     b.HasIndex("BlindBoxId");
 
-                    b.ToTable("BlindBoxPriceHistories", (string)null);
+                    b.ToTable("BlindBoxPriceHistories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("f211a1f3-e4c7-4aa5-b319-48b013f92e07"),
+                            BlindBoxId = new Guid("7594c261-b8d9-43a0-a2ea-095214afc2a9"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 248, DateTimeKind.Local).AddTicks(2668),
+                            DefaultPrice = 150000m,
+                            Price = 150000m
+                        },
+                        new
+                        {
+                            Id = new Guid("8f72c4b6-78bf-4967-b5dc-c2a45a9ac8c7"),
+                            BlindBoxId = new Guid("8109eb24-4086-42a3-9d20-8e07a321b905"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 248, DateTimeKind.Local).AddTicks(2671),
+                            DefaultPrice = 350000m,
+                            Price = 350000m
+                        },
+                        new
+                        {
+                            Id = new Guid("6c09ae3a-9156-4de3-9508-4ffb2c5c196e"),
+                            BlindBoxId = new Guid("56792b87-5156-4959-82e3-25a12b66b267"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 248, DateTimeKind.Local).AddTicks(2674),
+                            DefaultPrice = 120000m,
+                            Price = 120000m
+                        },
+                        new
+                        {
+                            Id = new Guid("4b6fd56e-c089-4222-88e8-4cda5e37a853"),
+                            BlindBoxId = new Guid("5d0d8d83-a8a6-410d-97b0-73bd5fb5d213"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 248, DateTimeKind.Local).AddTicks(2678),
+                            DefaultPrice = 280000m,
+                            Price = 280000m
+                        },
+                        new
+                        {
+                            Id = new Guid("9d781c58-cb88-4c03-ad79-ec159f4c91c6"),
+                            BlindBoxId = new Guid("3db50dc1-b3aa-4088-b083-d8823235120b"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 248, DateTimeKind.Local).AddTicks(2680),
+                            DefaultPrice = 320000m,
+                            Price = 320000m
+                        },
+                        new
+                        {
+                            Id = new Guid("5218b0c5-0891-477d-9ae5-d6e35e7c2c13"),
+                            BlindBoxId = new Guid("6b34d818-8e04-4d63-9c40-2aeb68a60a90"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 248, DateTimeKind.Local).AddTicks(2682),
+                            DefaultPrice = 500000m,
+                            Price = 500000m
+                        },
+                        new
+                        {
+                            Id = new Guid("3a0e9a5b-1b1e-4c27-8c59-267a174c7b64"),
+                            BlindBoxId = new Guid("1c3f7db4-557f-46c9-8d59-25c557e2cbb2"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 248, DateTimeKind.Local).AddTicks(2685),
+                            DefaultPrice = 100000m,
+                            Price = 100000m
+                        },
+                        new
+                        {
+                            Id = new Guid("c8c1a4c6-46fb-4058-b9ca-bd5c0302a276"),
+                            BlindBoxId = new Guid("2ba2b8a7-3fcf-4dd6-a3de-51a897ba7c27"),
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 248, DateTimeKind.Local).AddTicks(2687),
+                            DefaultPrice = 250000m,
+                            Price = 250000m
+                        });
                 });
 
             modelBuilder.Entity("BlindBoxShop.Entities.Models.CustomerReviews", b =>
@@ -174,7 +488,7 @@ namespace BlindBoxShop.Application.Migrations
                     b.HasIndex("UserId", "BlindBoxId")
                         .IsUnique();
 
-                    b.ToTable("CustomerReviews", (string)null);
+                    b.ToTable("CustomerReviews");
                 });
 
             modelBuilder.Entity("BlindBoxShop.Entities.Models.Order", b =>
@@ -228,7 +542,7 @@ namespace BlindBoxShop.Application.Migrations
                         .IsUnique()
                         .HasFilter("[VoucherId] IS NOT NULL");
 
-                    b.ToTable("Orders", (string)null);
+                    b.ToTable("Orders");
                 });
 
             modelBuilder.Entity("BlindBoxShop.Entities.Models.OrderDetail", b =>
@@ -258,7 +572,7 @@ namespace BlindBoxShop.Application.Migrations
                     b.HasIndex("OrderId", "BlindBoxPriceHistoryId")
                         .IsUnique();
 
-                    b.ToTable("OrderDetails", (string)null);
+                    b.ToTable("OrderDetails");
                 });
 
             modelBuilder.Entity("BlindBoxShop.Entities.Models.Package", b =>
@@ -296,7 +610,49 @@ namespace BlindBoxShop.Application.Migrations
                     b.HasIndex("Barcode")
                         .IsUnique();
 
-                    b.ToTable("Packages", (string)null);
+                    b.ToTable("Packages");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("d2e1d185-02c9-479c-ae8b-0031a447389f"),
+                            Barcode = "PKG-STD-001",
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 248, DateTimeKind.Local).AddTicks(7386),
+                            CurrentTotalBlindBox = 20,
+                            Name = "Hộp Tiêu Chuẩn",
+                            TotalBlindBox = 20,
+                            Type = "Standard"
+                        },
+                        new
+                        {
+                            Id = new Guid("9a47fcb2-4910-4589-baea-6f8698c9ceab"),
+                            Barcode = "PKG-STD-002",
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 248, DateTimeKind.Local).AddTicks(7391),
+                            CurrentTotalBlindBox = 20,
+                            Name = "Hộp Premium",
+                            TotalBlindBox = 20,
+                            Type = "Standard"
+                        },
+                        new
+                        {
+                            Id = new Guid("bc37c5bb-dc22-4bd1-85b1-9c3fe13f5c40"),
+                            Barcode = "PKG-STD-003",
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 248, DateTimeKind.Local).AddTicks(7392),
+                            CurrentTotalBlindBox = 20,
+                            Name = "Hộp Deluxe",
+                            TotalBlindBox = 20,
+                            Type = "Standard"
+                        },
+                        new
+                        {
+                            Id = new Guid("68f2ac54-5118-4711-9f22-97167b5b5a9a"),
+                            Barcode = "PKG-STD-004",
+                            CreatedAt = new DateTime(2025, 3, 30, 3, 14, 17, 248, DateTimeKind.Local).AddTicks(7403),
+                            CurrentTotalBlindBox = 20,
+                            Name = "Hộp Giới hạn",
+                            TotalBlindBox = 20,
+                            Type = "Standard"
+                        });
                 });
 
             modelBuilder.Entity("BlindBoxShop.Entities.Models.ReplyReviews", b =>
@@ -329,7 +685,7 @@ namespace BlindBoxShop.Application.Migrations
                     b.HasIndex("UserId", "CustomerReviewsId")
                         .IsUnique();
 
-                    b.ToTable("ReplyReviews", (string)null);
+                    b.ToTable("ReplyReviews");
                 });
 
             modelBuilder.Entity("BlindBoxShop.Entities.Models.Roles", b =>
@@ -484,7 +840,7 @@ namespace BlindBoxShop.Application.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Vouchers", (string)null);
+                    b.ToTable("Vouchers");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -619,12 +975,23 @@ namespace BlindBoxShop.Application.Migrations
                     b.Navigation("BlindBox");
                 });
 
+            modelBuilder.Entity("BlindBoxShop.Entities.Models.BlindBoxItem", b =>
+                {
+                    b.HasOne("BlindBoxShop.Entities.Models.BlindBox", "BlindBox")
+                        .WithMany("BlindBoxItems")
+                        .HasForeignKey("BlindBoxId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("BlindBox");
+                });
+
             modelBuilder.Entity("BlindBoxShop.Entities.Models.BlindBoxPriceHistory", b =>
                 {
                     b.HasOne("BlindBoxShop.Entities.Models.BlindBox", "BlindBox")
                         .WithMany("BlindBoxPriceHistories")
                         .HasForeignKey("BlindBoxId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("BlindBox");
                 });
@@ -758,6 +1125,8 @@ namespace BlindBoxShop.Application.Migrations
             modelBuilder.Entity("BlindBoxShop.Entities.Models.BlindBox", b =>
                 {
                     b.Navigation("BlindBoxImages");
+
+                    b.Navigation("BlindBoxItems");
 
                     b.Navigation("BlindBoxPriceHistories");
 

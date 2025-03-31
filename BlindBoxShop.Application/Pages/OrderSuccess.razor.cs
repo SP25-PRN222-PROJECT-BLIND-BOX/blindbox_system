@@ -45,11 +45,31 @@ namespace BlindBoxShop.Application.Pages
         
         protected override async Task OnInitializedAsync()
         {
-            // Redirect if accessed directly without order ID
+            // Xóa dữ liệu session storage liên quan đến BlindBox Gacha
+            await CleanupGachaSessionStorage();
+            
+            // Check if OrderId is missing or null, try to get from sessionStorage
             if (string.IsNullOrEmpty(OrderId) || OrderId == "null")
             {
-                NavigationManager.NavigateTo("/");
-                return;
+                // Try to get order ID from sessionStorage (set by VNPayCallback)
+                var successOrderId = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "success_order_id");
+                Console.WriteLine($"Found success_order_id in sessionStorage: {successOrderId}");
+                
+                if (!string.IsNullOrEmpty(successOrderId))
+                {
+                    // Set OrderId parameter using value from sessionStorage
+                    OrderId = successOrderId;
+                    Console.WriteLine($"Using OrderId from sessionStorage: {OrderId}");
+                    
+                    // Clear sessionStorage after use
+                    await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "success_order_id");
+                }
+                else
+                {
+                    // Show default success page without order details
+                    IsLoading = false;
+                    return;
+                }
             }
             
             IsLoading = true;
@@ -157,7 +177,7 @@ namespace BlindBoxShop.Application.Pages
                         }
                     }
                     
-                    // Xử lý URL hình ảnh trực tiếp từ OrderDetailDto
+                    // Process image URL directly from OrderDetailDto
                     orderItem.ImageUrl = EnsureCorrectImageUrl(orderItem.ImageUrl);
                     _blindBoxImages[orderItem.Id] = orderItem.ImageUrl;
                     
@@ -175,72 +195,134 @@ namespace BlindBoxShop.Application.Pages
             try
             {
                 // Check for order details saved in localStorage during checkout
+                Console.WriteLine($"Attempting to load order details from localStorage for order ID: {OrderId}");
                 var orderDetailsJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "order_details_" + OrderId);
+                
                 if (!string.IsNullOrEmpty(orderDetailsJson))
                 {
-                    var orderDetailData = JsonSerializer.Deserialize<List<OrderDetailData>>(orderDetailsJson);
-                    if (orderDetailData != null && orderDetailData.Any())
+                    Console.WriteLine($"Found order details in localStorage, length: {orderDetailsJson.Length}");
+                    try
                     {
-                        // Convert order detail data to OrderDetailDto
-                        OrderItems = orderDetailData.Select(item => new OrderDetailDto
+                        var orderDetailData = JsonSerializer.Deserialize<List<OrderDetailData>>(orderDetailsJson);
+                        if (orderDetailData != null && orderDetailData.Any())
                         {
-                            Id = Guid.NewGuid(),
-                            Quantity = item.Quantity,
-                            Price = item.Price,
-                            BlindBoxName = item.BlindBoxName,
-                            BlindBoxId = item.BlindBoxId
-                        }).ToList();
+                            Console.WriteLine($"Deserialized {orderDetailData.Count} order items");
+                            
+                            // Convert order detail data to OrderDetailDto
+                            OrderItems = orderDetailData.Select(item => new OrderDetailDto
+                            {
+                                Id = Guid.NewGuid(),
+                                Quantity = item.Quantity,
+                                Price = item.Price,
+                                BlindBoxName = item.BlindBoxName,
+                                BlindBoxId = item.BlindBoxId
+                            }).ToList();
+                            
+                            // Calculate subtotal
+                            Subtotal = OrderItems.Sum(item => item.Price * item.Quantity);
+                            Console.WriteLine($"Calculated subtotal: {Subtotal}");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Deserialized order detail data was null or empty");
+                        }
+                    }
+                    catch (JsonException jex)
+                    {
+                        Console.WriteLine($"JSON deserialization error: {jex.Message}");
+                        Console.WriteLine($"JSON content: {orderDetailsJson.Substring(0, Math.Min(100, orderDetailsJson.Length))}...");
                         
-                        // Calculate subtotal
-                        Subtotal = OrderItems.Sum(item => item.Price * item.Quantity);
+                        // Try alternative deserialization approach
+                        try
+                        {
+                            var orderDetailItems = JsonSerializer.Deserialize<List<OrderDetailDto>>(orderDetailsJson);
+                            if (orderDetailItems != null && orderDetailItems.Any())
+                            {
+                                Console.WriteLine($"Successfully deserialized as OrderDetailDto directly, {orderDetailItems.Count} items");
+                                OrderItems = orderDetailItems;
+                                Subtotal = OrderItems.Sum(item => item.Price * item.Quantity);
+                            }
+                        }
+                        catch (Exception ex2)
+                        {
+                            Console.WriteLine($"Alternative deserialization also failed: {ex2.Message}");
+                        }
                     }
                 }
                 else
                 {
+                    Console.WriteLine("No order details found in localStorage, trying to load from cart");
                     // Fallback to cart items if order details not found
                     var cartJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "blindbox_cart");
                     if (!string.IsNullOrEmpty(cartJson))
                     {
-                        var cartItems = JsonSerializer.Deserialize<List<CartItem>>(cartJson);
-                        if (cartItems != null)
+                        Console.WriteLine($"Found cart data, length: {cartJson.Length}");
+                        try
                         {
-                            // Convert cart items to order items
-                            OrderItems = cartItems.Select(item => new OrderDetailDto
+                            var cartItems = JsonSerializer.Deserialize<List<CartItem>>(cartJson);
+                            if (cartItems != null && cartItems.Any())
                             {
-                                Id = Guid.NewGuid(),
-                                BlindBoxName = item.ProductName,
-                                Price = item.Price,
-                                Quantity = item.Quantity,
-                                ImageUrl = item.ImageUrl,
-                                BlindBoxId = item.BlindBoxId
-                            }).ToList();
-                            
-                            // Process image URLs
-                            await ProcessImagesAsync();
-                        
-                        // Calculate subtotal
-                        Subtotal = OrderItems.Sum(item => item.Price * item.Quantity);
+                                Console.WriteLine($"Loaded {cartItems.Count} items from cart");
+                                // Convert cart items to order items
+                                OrderItems = cartItems.Select(item => new OrderDetailDto
+                                {
+                                    Id = Guid.NewGuid(),
+                                    BlindBoxName = item.ProductName,
+                                    Price = item.Price,
+                                    Quantity = item.Quantity,
+                                    ImageUrl = item.ImageUrl,
+                                    BlindBoxId = item.BlindBoxId
+                                }).ToList();
+                                
+                                // Process image URLs
+                                await ProcessImagesAsync();
+                                
+                                // Calculate subtotal
+                                Subtotal = OrderItems.Sum(item => item.Price * item.Quantity);
+                                Console.WriteLine($"Calculated subtotal from cart: {Subtotal}");
+                            }
+                            else
+                            {
+                                Console.WriteLine("Cart items were null or empty");
+                            }
+                        }
+                        catch (Exception cartEx)
+                        {
+                            Console.WriteLine($"Error deserializing cart data: {cartEx.Message}");
+                        }
                     }
-                }
-                
+                    else
+                    {
+                        Console.WriteLine("No cart data found in localStorage");
+                    }
+                    
                     // Clear cart after showing order success
-                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "blindbox_cart");
+                    await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "blindbox_cart");
                 }
                 
                 // Get payment method from localStorage if available
                 var checkoutInfoJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "blindbox_checkout_info");
                 if (!string.IsNullOrEmpty(checkoutInfoJson))
                 {
+                    Console.WriteLine("Found checkout info in localStorage");
                     var checkoutInfo = JsonSerializer.Deserialize<CheckoutInfo>(checkoutInfoJson);
                     if (checkoutInfo != null && !string.IsNullOrEmpty(checkoutInfo.PaymentMethod))
                     {
                         PaymentMethod = checkoutInfo.PaymentMethod;
+                        Console.WriteLine($"Set payment method to: {PaymentMethod}");
                     }
                 }
+                else
+                {
+                    Console.WriteLine("No checkout info found in localStorage");
+                }
+                
+                StateHasChanged();
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error loading order from localStorage: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 // Fallback to empty order for display
                 OrderItems = new List<OrderDetailDto>();
             }
@@ -258,6 +340,27 @@ namespace BlindBoxShop.Application.Pages
             if (Guid.TryParse(OrderId, out Guid orderId))
             {
                 NavigationManager.NavigateTo($"/my-account?tab=1");
+            }
+        }
+
+        // Thêm phương thức này
+        private async Task CleanupGachaSessionStorage()
+        {
+            try
+            {
+                // Xóa tất cả localStorage và sessionStorage liên quan đến thanh toán và blindbox gacha
+                await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "temp_order_id");
+                await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "blindbox_id");
+                await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "payment_success");
+                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "payment_referring_url");
+                
+                // In thông tin để debug
+                Console.WriteLine("OrderSuccess page: Cleaned up all session storage related to gacha");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error cleaning session storage: {ex.Message}");
+                // Chỉ ghi log, không dừng quá trình xử lý
             }
         }
     }

@@ -321,6 +321,7 @@ namespace BlindBoxShop.Application.Pages.Checkout
                 {
                     OrderId = order.Id,
                     BlindBoxId = item.BlindBoxId,
+                    BlindBoxItemId = null, // For physical products, BlindBoxItemId is null
                     Quantity = item.Quantity,
                     Price = item.Price,
                     BlindBoxName = item.ProductName
@@ -537,6 +538,7 @@ namespace BlindBoxShop.Application.Pages.Checkout
                             {
                                 OrderId = orderId,
                                 BlindBoxId = item.BlindBoxId,
+                                BlindBoxItemId = null, // For regular products, BlindBoxItemId is null
                                 Quantity = item.Quantity,
                                 Price = item.Price
                             };
@@ -590,6 +592,7 @@ namespace BlindBoxShop.Application.Pages.Checkout
         public decimal Price { get; set; }
         public int Quantity { get; set; }
         public Guid BlindBoxId { get; set; }
+        public Guid? BlindBoxItemId { get; set; }
     }
 
     public class CheckoutInfo
@@ -610,6 +613,7 @@ namespace BlindBoxShop.Application.Pages.Checkout
     {
         public Guid OrderId { get; set; }
         public Guid BlindBoxId { get; set; }
+        public Guid? BlindBoxItemId { get; set; }
         public int Quantity { get; set; }
         public decimal Price { get; set; }
         public string BlindBoxName { get; set; }

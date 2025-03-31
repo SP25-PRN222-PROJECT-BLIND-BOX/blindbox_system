@@ -140,8 +140,9 @@
                                             <div class="w-16 h-16 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
                                                 @if (!string.IsNullOrEmpty(context.ImageUrl))
                                                 {
-                                                    <img src="@context.ImageUrl" alt="@context.BlindBoxName" 
-                                                         class="h-full w-full object-cover object-center" />
+                                                    <img src="@EnsureCorrectImageUrl(context.ImageUrl)" alt="@context.BlindBoxName" 
+                                                         class="h-full w-full object-cover object-center"
+                                                         @onclick="() => OpenImagePreview(EnsureCorrectImageUrl(context.ImageUrl))" />
                                                 }
                                                 else
                                                 {
@@ -291,4 +292,59 @@
             <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="ConfirmCancelOrder">Confirm Cancel</MudButton>
         </DialogActions>
     </MudDialog>
-} 
+}
+
+<!-- Image Preview Overlay -->
+<MudOverlay @bind-Visible="_imagePreviewVisible" DarkBackground="true" ZIndex="999" OnClick="CloseImagePreview">
+    <div class="d-flex justify-center align-items-center" style="height: 100vh;" @onclick:preventDefault>
+        <div class="position-relative" style="width: 90%; max-width: 800px; max-height: 90vh; overflow: auto;">
+            <MudCard Class="pa-4 position-relative" Style="background-color: rgba(0,0,0,0.8);">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6" Color="Color.Surface">Image Preview</MudText>
+                    </CardHeaderContent>
+                    <CardHeaderActions>
+                        <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Surface" OnClick="CloseImagePreview" />
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent Class="d-flex flex-column align-center justify-center">
+                    <div class="result-image-container @($"{(_isZoomed ? "zoomed" : "")}")">
+                        <MudImage Src="@_selectedImageUrl" 
+                               Alt="Image Preview"
+                               Class="result-image rounded-lg" 
+                               ObjectFit="ObjectFit.Contain"
+                               @onclick="ToggleZoom" />
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </div>
+    </div>
+</MudOverlay>
+
+<style>
+    .result-image-container {
+        width: 280px;
+        height: 280px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: transparent;
+        border-radius: 8px;
+        transition: transform 0.3s ease;
+        cursor: zoom-in;
+    }
+    
+    .result-image-container.zoomed {
+        transform: scale(1.5);
+        cursor: zoom-out;
+    }
+    
+    .result-image {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        width: 100%;
+        height: 100%;
+    }
+</style> 

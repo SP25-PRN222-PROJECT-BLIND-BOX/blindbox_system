@@ -210,6 +210,7 @@ namespace BlindBoxShop.Service
                 {
                     Id = detail.Id,
                     Quantity = detail.Quantity,
+                    BlindBoxItemId = detail.BlindBoxItemId,
                     BlindBoxName = detail.BlindBoxPriceHistory?.BlindBox?.Name ?? "Unknown",
                     Price = detail.BlindBoxPriceHistory?.Price ?? 0,
                     ImageUrl = GetFirstImageUrl(detail.BlindBoxPriceHistory?.BlindBox),
@@ -400,6 +401,47 @@ namespace BlindBoxShop.Service
                 { 
                     Code = "ChangePaymentMethodError",
                     Description = $"Failed to change payment method: {ex.Message}"
+                });
+            }
+        }
+
+        public async Task<Result<bool>> UpdateOrderStatusAsync(Guid orderId, string status, string notes = "")
+        {
+            try
+            {
+                var checkIfExistResult = await GetAndCheckIfOrderExistByIdAsync(orderId, trackChanges: true);
+                if (!checkIfExistResult.IsSuccess)
+                    return Result<bool>.Failure(checkIfExistResult.Errors);
+
+                var orderEntity = checkIfExistResult.GetValue<Order>();
+                
+                // Parse the status string to OrderStatus enum
+                if (!Enum.TryParse<OrderStatus>(status, out var orderStatus))
+                {
+                    return Result<bool>.Failure(new ErrorResult 
+                    { 
+                        Code = "InvalidOrderStatus",
+                        Description = $"Invalid order status: {status}"
+                    });
+                }
+                
+                // Update the status
+                orderEntity.Status = orderStatus;
+                orderEntity.UpdatedAt = DateTime.UtcNow;
+                
+                // Save changes
+                _orderRepository.Update(orderEntity);
+                await _orderRepository.SaveAsync();
+                
+                return Result<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating status for order {orderId}: {ex.Message}");
+                return Result<bool>.Failure(new ErrorResult 
+                { 
+                    Code = "UpdateOrderStatusError",
+                    Description = $"Failed to update order status: {ex.Message}"
                 });
             }
         }

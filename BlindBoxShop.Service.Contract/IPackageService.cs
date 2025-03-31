@@ -11,5 +11,7 @@ namespace BlindBoxShop.Service.Contract
     {
         Task<Result<IEnumerable<PackageDto>>> GetAllPackagesAsync(bool trackChanges);
         Task<Result<PackageDto>> GetPackageByIdAsync(Guid packageId, bool trackChanges);
+        
+        
     }
 }

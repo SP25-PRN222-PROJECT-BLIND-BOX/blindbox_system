@@ -10,5 +10,11 @@ namespace BlindBoxShop.Shared.DataTransferObject.Package
         public BlindBoxShop.Shared.Enum.PackageType Type { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+
+        public int TotalBlindBox { get; set; }
+        
+        
+
+
     }
 } 

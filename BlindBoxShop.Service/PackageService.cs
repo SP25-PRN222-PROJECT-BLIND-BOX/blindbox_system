@@ -65,6 +65,24 @@ namespace BlindBoxShop.Service
             }
         }
 
+        public async Task<Result<PackageDto>> UpdatePackageAsync(Guid id, PackageDto packageDto)
+        {
+            var package = await _packageRepository.FindById(id, true);
+            if (package == null)
+            {
+                return Result<PackageDto>.Failure(new ErrorResult()
+                {
+                    Code = "PackageNotFound", 
+                    Description = "Package not found"
+                });
+            }
+
+            package.Name = packageDto.Name;
+            package.TotalBlindBox = packageDto.TotalBlindBox;
+            return null; 
+        }
+        
+
         public void Dispose()
         {
             _packageRepository.Dispose();

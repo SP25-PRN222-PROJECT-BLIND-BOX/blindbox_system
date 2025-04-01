@@ -190,13 +190,13 @@ namespace BlindBoxShop.Service
                 // Apply status filter if specified
                 if (blindBoxParameter.Status.HasValue)
                 {
-                    blindBoxes = blindBoxes.Where(bb => (int)bb.Status == blindBoxParameter.Status.Value);
+                    blindBoxes = blindBoxes.Where(bb => (int)bb.Status == (int)blindBoxParameter.Status.Value);
                 }
 
                 // Apply rarity filter if specified
                 if (blindBoxParameter.Rarity.HasValue)
                 {
-                    blindBoxes = blindBoxes.Where(bb => (int)bb.Rarity == blindBoxParameter.Rarity.Value);
+                    blindBoxes = blindBoxes.Where(bb => (int)bb.Rarity == (int)blindBoxParameter.Rarity.Value);
                 }
 
                 // Apply sorting

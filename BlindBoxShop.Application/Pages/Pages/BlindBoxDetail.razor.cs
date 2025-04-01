@@ -411,7 +411,7 @@ namespace BlindBoxShop.Application.Pages.Pages
                         var rarityParameter = new BlindBoxParameter
                         {
                             PageSize = 8,
-                            Rarity = (int)BlindBox.Rarity
+                            Rarity = BlindBox.Rarity
                         };
                         
                         var rarityResult = await blindBoxService.GetBlindBoxesAsync(rarityParameter, false);

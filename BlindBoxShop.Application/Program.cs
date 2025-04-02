@@ -9,6 +9,8 @@ using BlindBoxShop.Application.Components;
 using Microsoft.AspNetCore.Components.Web;
 using BlindBoxShop.Application.Models;
 using Blazored.LocalStorage;
+using BlindBoxShop.Service.Contract;
+using BlindBoxShop.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,6 +46,7 @@ builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuth
 builder.Services.ConfigureAuthentication();
 builder.Services.ConfigureIdentityCore();
 builder.Services.AddSingleton<IEmailSender<User>, IdentityNoOpEmailSender>();
+builder.Services.AddScoped<IReviewServiceManager, ReviewServiceManager>();
 builder.Services.ConfigureRepositoryManager();
 builder.Services.ConfigureServiceManager();
 builder.Services.AddAutoMapper(typeof(Program));

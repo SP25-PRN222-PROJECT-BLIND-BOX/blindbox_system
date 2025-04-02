@@ -42,5 +42,17 @@ namespace BlindBoxShop.Service
             _dbContext.ReplyReviews.Add(replyReview);
             await _dbContext.SaveChangesAsync();
         }
+
+        public async Task DeleteReplyReviewAsync(Guid customerReviewId)
+        {
+            var replyReview = await _dbContext.ReplyReviews
+                .FirstOrDefaultAsync(rr => rr.CustomerReviewsId == customerReviewId);
+
+            if (replyReview != null)
+            {
+                _dbContext.ReplyReviews.Remove(replyReview);
+                await _dbContext.SaveChangesAsync();
+            }
+        }
     }
 }

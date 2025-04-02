@@ -49,9 +49,12 @@
 
                             @if (review.ReplyReviews != null)
                             {
-                                <div class="mt-3 p-3 bg-light rounded">
+                                <div class="mt-3 p-3 bg-light rounded position-relative">
                                     <p class="text-muted small mb-1">Admin Reply:</p>
                                     <p class="text-muted small mb-0">@review.ReplyReviews.Reply</p>
+                                    <button class="btn btn-sm btn-delete-reply position-absolute top-0 end-0 m-2" @onclick="() => DeleteReply(review.Id)">
+                                        <i class="bi bi-trash-fill"></i> Delete Reply
+                                    </button>
                                 </div>
                             }
                             else
@@ -118,6 +121,18 @@
             font-size: 1.2rem;
         }
 
+    .btn-delete-reply {
+        background-color: #dc3545; /* Màu đỏ mặc định */
+        color: white; /* Chữ màu trắng */
+        padding: 5px 10px;
+        transition: all 0.3s ease;
+    }
+
+        .btn-delete-reply:hover {
+            background-color: #c82333; /* Màu đỏ đậm hơn khi hover */
+            transform: scale(1.1);
+        }
+
     .badge {
         font-size: 0.9rem;
         padding: 5px 10px;
@@ -132,12 +147,12 @@
     private List<CustomerReviews> customerReviews;
     private Dictionary<Guid, string> replyInputs = new Dictionary<Guid, string>();
     private string message;
-	private string? managerId;
+    private string? managerId;
 
     protected override async Task OnInitializedAsync()
     {
         //managerId = await LocalStorage.GetItemAsync<string>("ManagerId");
-        
+
         customerReviews = await ReviewService.GetAllCustomerReviewsAsync();
         foreach (var review in customerReviews)
         {
@@ -155,8 +170,7 @@
 
         try
         {
-            
-            var userId = new Guid("CA537960-7EAC-4D49-8AB8-DA3A2EF27FC1"); // Thay bằng trong trang trc đó: await LocalStorage.SetItemAsync("BlindBoxId", "51920514-75FB-4BF9-A9D7-6FDA40AFA442");
+            var userId = new Guid("CA537960-7EAC-4D49-8AB8-DA3A2EF27FC1"); // Thay bằng cái nì trong trang trước đó: await LocalStorage.SetItemAsync("ManagerId", "51920514-75FB-4BF9-A9D7-6FDA40AFA442");
 
             await ReviewService.AddReplyReviewAsync(customerReviewId, userId, replyInputs[customerReviewId]);
             message = "Reply submitted successfully!";
@@ -164,6 +178,22 @@
             // Refresh danh sách reviews
             customerReviews = await ReviewService.GetAllCustomerReviewsAsync();
             replyInputs[customerReviewId] = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            message = $"Error: {ex.Message}";
+        }
+    }
+
+    private async Task DeleteReply(Guid customerReviewId)
+    {
+        try
+        {
+            await ReviewService.DeleteReplyReviewAsync(customerReviewId);
+            message = "Reply deleted successfully!";
+
+            // Refresh danh sách reviews
+            customerReviews = await ReviewService.GetAllCustomerReviewsAsync();
         }
         catch (Exception ex)
         {

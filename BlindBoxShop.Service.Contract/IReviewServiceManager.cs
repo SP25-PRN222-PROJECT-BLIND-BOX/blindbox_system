@@ -11,5 +11,6 @@ namespace BlindBoxShop.Service.Contract
     {
         Task<List<CustomerReviews>> GetAllCustomerReviewsAsync();
         Task AddReplyReviewAsync(Guid customerReviewId, Guid userId, string reply);
+        Task DeleteReplyReviewAsync(Guid customerReviewId);
     }
 }

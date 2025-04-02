@@ -1,0 +1,103 @@
+﻿@using BlindBoxShop.Shared.DataTransferObject.Package
+@using BlindBoxShop.Shared.Enum
+<h3>Package Table</h3>
+
+<MudTable ServerData="ServerReload" Dense="false" Hover="true" @ref="table" FixedHeader="true" FixedFooter="true"
+          Height="600px" T="PackageManageDto"
+          CanCancelEdit="true"
+          SortLabel="Sort By"
+          RowEditPreview="BackupItem"
+          RowEditCancel="ResetItemToOriginalValues"
+          RowEditCommit="ItemHasBeenCommitted"
+          IsEditRowSwitchingBlocked="false"
+          AllowUnsorted="false"
+          ApplyButtonPosition="TableApplyButtonPosition.End"
+          EditButtonPosition="TableEditButtonPosition.End"
+          EditTrigger="TableEditTrigger.RowClick">
+    <ToolBarContent>
+        <MudFab StartIcon="@Icons.Material.Filled.Add" DropShadow="true" Size="Size.Small" Label="Add Package"
+                @onclick="OpenCreateDialogAsync" Class="mr-3" />
+
+        <MudSelect T="int?" Label="Type" AnchorOrigin="Origin.BottomCenter" Class="mx-2" Style="min-width: 150px;"
+                   Value="_packageParameters.Type"
+                   ValueChanged="@OnTypeChanged"
+                   HelperText="Filter by type">
+            <MudSelectItem T="int?" Value="@((int?)null)">All Types</MudSelectItem>
+            <MudSelectItem T="int?" Value="@((int)PackageType.Standard)">
+                <MudText Color="Color.Warning">Standard</MudText>
+            </MudSelectItem>
+            <MudSelectItem T="int?" Value="@((int)PackageType.Opened)">
+                <MudText Color="Color.Success">Opened</MudText>
+            </MudSelectItem>
+            <MudSelectItem T="int?" Value="@((int)PackageType.Remove)">
+                <MudText Color="Color.Error">Removed</MudText>
+            </MudSelectItem>
+        </MudSelect>
+
+        <MudSpacer />
+        <MudTextField T="string"
+                     Value="@searchString"
+                     ValueChanged="@(s => OnSearch(s))"
+                     Placeholder="Search by package name..."
+                     Adornment="Adornment.Start"
+                     AdornmentIcon="@Icons.Material.Filled.Search"
+                     IconSize="Size.Medium"
+                     Class="mt-0 ml-2"
+                     Variant="Variant.Outlined"
+                     Immediate="true"
+                     DebounceInterval="500" />
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh><MudTableSortLabel SortLabel="Name" T="PackageManageDto">Name</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="Type" T="PackageManageDto">Type</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="CurrentTotalBlindBox" T="PackageManageDto">Current BlindBox</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="TotalBlindBox" T="PackageManageDto">Total BlindBox</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="Barcode" T="PackageManageDto">Barcode</MudTableSortLabel></MudTh>
+        <MudTh>Action</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Name">@context.Name</MudTd>
+        <MudTd DataLabel="Type">
+            <MudChip T="string" Color="@GetTypeColor(context.Type)" Size="Size.Small">
+                @context.Type.ToString()
+            </MudChip>
+        </MudTd>
+        <MudTd DataLabel="CurrentTotalBlindBox">@context.CurrentTotalBlindBox</MudTd> 
+        <MudTd DataLabel="TotalBlindBox">@context.TotalBlindBox</MudTd>
+        <MudTd DataLabel="Barcode">@context.Barcode</MudTd>
+        <MudTd DataLabel="Action">
+            @if (context.Type == PackageType.Standard)
+            {
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                             Size="Size.Small"
+                             Color="Color.Error"
+                             OnClick="@(() => OpenRemoveDialogAsync(context))" />
+            }
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>No packages found</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudText>Loading...</MudText>
+    </LoadingContent>
+    <PagerContent>
+        <MudTablePager PageSizeOptions="new int[] { 10, 25, 50 }" Class="mud-table-pager-custom" />
+    </PagerContent>
+    <EditButtonContent Context="button">
+        <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" Class="pa-0"
+                      OnClick="@button.ButtonAction" Disabled="@button.ButtonDisabled" />
+    </EditButtonContent>
+</MudTable>
+
+<style>
+    .mud-table-pager-custom ::deep .mud-select {
+        color: black;
+    }
+    .mud-table-pager-custom ::deep .mud-typography {
+        color: black;
+    }
+    .mud-table-pager-custom ::deep .mud-input {
+        color: black;
+    }
+</style> 

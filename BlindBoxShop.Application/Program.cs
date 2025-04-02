@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Identity;
 using MudBlazor.Services;
 using BlindBoxShop.Application.Components;
 using Microsoft.AspNetCore.Components.Web;
+using BlindBoxShop.Application.Models;
+using Blazored.LocalStorage;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,6 +47,8 @@ builder.Services.AddSingleton<IEmailSender<User>, IdentityNoOpEmailSender>();
 builder.Services.ConfigureRepositoryManager();
 builder.Services.ConfigureServiceManager();
 builder.Services.AddAutoMapper(typeof(Program));
+builder.Services.Configure<FirebaseConfig>(builder.Configuration.GetSection("Firebase"));
+builder.Services.AddBlazoredLocalStorage();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

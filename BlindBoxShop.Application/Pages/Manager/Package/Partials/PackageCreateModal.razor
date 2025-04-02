@@ -1,0 +1,122 @@
+﻿@using BlindBoxShop.Shared.Enum
+@using System.ComponentModel
+
+<style>
+    .mud-typography {
+        color: black !important;
+    }
+    .mud-typography-body1 {
+        color: black !important;
+    }
+    .mud-input {
+        color: black !important;
+    }
+    .mud-select-text {
+        color: black !important;
+    }
+    .mud-list-item-text {
+        color: black !important;
+    }
+    ::deep .mud-list-item:hover {
+        background-color: rgba(0, 0, 0, 0.1) !important;
+    }
+    ::deep .mud-list-item.mud-selected-item {
+        background-color: rgba(0, 0, 0, 0.1) !important;
+    }
+    ::deep .mud-menu {
+        background-color: white !important;
+    }
+    ::deep .mud-menu-item {
+        color: black !important;
+    }
+    ::deep .mud-menu .mud-list-item {
+        background-color: white !important;
+        color: black !important;
+    }
+</style>
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">Create Package</MudText>
+    </TitleContent>
+    <DialogContent>
+        <EditForm Model="@_packageForCreate" OnValidSubmit="CreatPackageAsync">
+            <DataAnnotationsValidator />
+            <MudCard Elevation="0">
+                <MudCardContent>
+                    <MudTextField @bind-Value="_packageForCreate.Name"
+                                Label="Name"
+                                Required="true"
+                                For="@(() => _packageForCreate.Name)"
+                                Variant="Variant.Outlined"
+                                Margin="Margin.Dense"
+                                Clearable="true" />
+
+
+                    <MudTextField @bind-Value="_packageForCreate.Barcode"
+                                Label="Barcode"
+                                Required="true"
+                                For="@(() => _packageForCreate.Barcode)"
+                                Variant="Variant.Outlined"
+                                Margin="Margin.Dense"
+                                Class="mt-3"
+                                Clearable="true" />
+
+                    <MudSelect T="PackageType"
+                             @bind-Value="_packageForCreate.Type"
+                             Label="Type"
+                             Required="true"
+                             For="@(() => _packageForCreate.Type)"
+                             Variant="Variant.Outlined"
+                             Margin="Margin.Dense"
+                             Class="mt-3">
+                        @foreach (var type in Enum.GetValues<PackageType>())
+                        {
+                            if (type != PackageType.Remove)
+                            {
+                                <MudSelectItem T="PackageType" Value="@type">@type.ToString()</MudSelectItem>
+                            }
+                        }
+                    </MudSelect>
+
+                    <MudTextField @bind-Value="_packageForCreate.TotalBlindBox"
+                                Label="Total BlindBox"
+                                Required="true"
+                                For="@(() => _packageForCreate.TotalBlindBox)"
+                                Variant="Variant.Outlined"
+                                Margin="Margin.Dense"
+                                Class="mt-3"
+                                Clearable="true" />
+
+                    <MudTextField @bind-Value="_packageForCreate.CurrentTotalBlindBox"
+                                Label="Current Total BlindBox"
+                                Required="true"
+                                For="@(() => _packageForCreate.CurrentTotalBlindBox)"
+                                Variant="Variant.Outlined"
+                                Margin="Margin.Dense"
+                                Class="mt-3"
+                                Clearable="true" />
+
+                    <MudAlert Class="mt-3" Severity="Severity.Info">All fields marked with an asterisk (*) are required.</MudAlert>
+                    <MudText Color="@Color.Error" Class="mt-2">
+                        <ValidationSummary />
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close" Variant="Variant.Outlined" Color="Color.Default">Cancel</MudButton>
+        <MudButton OnClick="CreatPackageAsync" Variant="Variant.Filled" Color="Color.Primary" Disabled="@_isProcessing">
+            @if (_isProcessing)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                <MudText Class="ms-2">Processing</MudText>
+            }
+            else
+            {
+                <MudText>Create</MudText>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>

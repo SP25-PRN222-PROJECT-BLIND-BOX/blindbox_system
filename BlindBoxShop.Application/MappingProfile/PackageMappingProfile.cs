@@ -17,6 +17,17 @@ namespace BlindBoxShop.Application.MappingProfile
                 .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom(src => string.Empty))
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt))
                 .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => src.UpdatedAt));
+
+            //map form entity to DtoManage
+            CreateMap<Package, PackageManageDto>();
+
+            //map for create
+            CreateMap<PackageForCreate, Package>();
+
+            //map for update 
+            CreateMap<PackageForUpdate, Package>();
+            CreateMap<PackageManageDto, PackageForUpdate>();
+
         }
     }
-} 
+}

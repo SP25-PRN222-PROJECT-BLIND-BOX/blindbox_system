@@ -1,0 +1,10 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudText>Are you sure you want to delete package <strong>"@_packageManageDto?.Name"</strong>?</MudText>
+        <MudText Class="pt-3" Typo="Typo.body2">The package will be set to Remove status and cannot be recovered.</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Outlined" Color="Color.Default">Cancel</MudButton>
+        <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="DeleteAsync">Delete</MudButton>
+    </DialogActions>
+</MudDialog> 

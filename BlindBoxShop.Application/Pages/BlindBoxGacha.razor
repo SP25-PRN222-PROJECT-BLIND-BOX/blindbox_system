@@ -475,6 +475,35 @@
                     }
                     else
                     {
+                        // Payment failed or was cancelled - delete the pending order
+                        var tempOrderId = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "gacha_order_id");
+                        
+                        if (!string.IsNullOrEmpty(tempOrderId) && Guid.TryParse(tempOrderId, out Guid orderId))
+                        {
+                            try
+                            {
+                                // Delete the pending order
+                                var deleteResult = await ServiceManager.OrderService.DeleteOrderAsync(orderId);
+                                
+                                if (deleteResult.IsSuccess)
+                                {
+                                    Console.WriteLine($"Successfully deleted pending order {orderId} after payment failure");
+                                }
+                                else
+                                {
+                                    var errorMsg = deleteResult.Errors?.FirstOrDefault()?.Description ?? "Unknown error";
+                                    Console.WriteLine($"Failed to delete pending order {orderId}: {errorMsg}");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"Error deleting pending order: {ex.Message}");
+                            }
+                            
+                            // Clear the order ID from session to prevent further references
+                            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_order_id");
+                        }
+                        
                         Snackbar.Add("Payment was unsuccessful or canceled.", Severity.Warning);
                         _showGachaAnimation = false;
                         _isProcessing = false;

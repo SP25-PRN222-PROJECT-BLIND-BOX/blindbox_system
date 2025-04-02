@@ -1,0 +1,138 @@
+@using BlindBoxShop.Service.Contract
+@using BlindBoxShop.Shared.DataTransferObject.Review
+@using System.ComponentModel.DataAnnotations
+@using MudBlazor
+@inject ISnackbar Snackbar
+@inject IServiceManager ServiceManager
+@inject IJSRuntime JSRuntime
+
+<EditForm Model="@_reviewForCreate" OnValidSubmit="SubmitReview">
+    <MudDialog Class="rounded-lg">
+        <TitleContent>
+            <div class="flex items-center">
+                <MudIcon Icon="@Icons.Material.Filled.RateReview" Class="mr-2" />
+                <MudText Typo="Typo.h6">Review BlindBox</MudText>
+            </div>
+        </TitleContent>
+        <DialogContent>
+            <DataAnnotationsValidator />
+            <MudCardContent>
+                <div class="flex items-center mb-4">
+                    <MudIcon Icon="@Icons.Material.Filled.Spa" Size="Size.Large" Color="Color.Primary" Class="mr-3" />
+                    <MudText Typo="Typo.h6">@BlindBoxName</MudText>
+                </div>
+                
+                <MudDivider Class="my-4" />
+                
+                <div class="mb-6">
+                    <MudText Typo="Typo.subtitle1" Class="mb-2">Your Rating</MudText>
+                    <div class="flex items-center">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            int ratingValue = i;
+                            <MudIconButton Icon="@(GetRatingIcon(ratingValue))" 
+                                        Color="@(_reviewForCreate.RatingStar >= ratingValue ? Color.Warning : Color.Default)" 
+                                        OnClick="() => SetRating(ratingValue)" 
+                                        Size="Size.Large" />
+                        }
+                        <MudText Typo="Typo.body1" Class="ml-2">
+                            @(_reviewForCreate.RatingStar > 0 ? $"{_reviewForCreate.RatingStar}/5" : "Select Rating")
+                        </MudText>
+                    </div>
+                </div>
+                
+                <MudTextField Label="Your Feedback" 
+                           @bind-Value="_reviewForCreate.FeedBack"
+                           For="@(() => _reviewForCreate.FeedBack)"
+                           Variant="Variant.Outlined"
+                           Lines="3"
+                           Class="mt-4" />
+                
+                <div class="mt-4 text-sm text-gray-500">
+                    <MudText Typo="Typo.caption">
+                        Your review helps other customers and improves our products. Thank you!
+                    </MudText>
+                </div>
+            </MudCardContent>
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancel" Variant="Variant.Text" Color="Color.Default">Cancel</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" 
+                     Variant="Variant.Filled" 
+                     Color="Color.Primary"
+                     Disabled="@(_reviewForCreate.RatingStar < 1)">
+                Submit Review
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
+</EditForm>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    
+    [Parameter] public Guid BlindBoxId { get; set; }
+    [Parameter] public Guid UserId { get; set; }
+    [Parameter] public string BlindBoxName { get; set; } = string.Empty;
+    
+    private ReviewForCreationDto _reviewForCreate = new();
+    private bool _isSubmitting = false;
+    
+    protected override void OnInitialized()
+    {
+        _reviewForCreate = new ReviewForCreationDto
+        {
+            BlindBoxId = BlindBoxId,
+            UserId = UserId,
+            RatingStar = 0
+        };
+    }
+    
+    private void SetRating(float rating)
+    {
+        _reviewForCreate.RatingStar = rating;
+    }
+    
+    private string GetRatingIcon(float value)
+    {
+        return _reviewForCreate.RatingStar >= value ? Icons.Material.Filled.Star : Icons.Material.Filled.StarOutline;
+    }
+    
+    private async Task SubmitReview()
+    {
+        if (_reviewForCreate.RatingStar < 1 || _reviewForCreate.RatingStar > 5)
+        {
+            Snackbar.Add("Please select a rating between 1 and 5", Severity.Warning);
+            return;
+        }
+        
+        try
+        {
+            _isSubmitting = true;
+            
+            using var reviewService = ServiceManager.CustomerReviewsService;
+            var result = await reviewService.CreateReviewAsync(_reviewForCreate);
+            
+            if (result.IsSuccess)
+            {
+                Snackbar.Add("Your review has been submitted successfully", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                var errorMessage = result.Errors?.FirstOrDefault()?.Description ?? "Failed to submit review";
+                Snackbar.Add(errorMessage, Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            await JSRuntime.InvokeVoidAsync("console.error", ex.Message);
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+    
+    private void Cancel() => MudDialog.Cancel();
+} 

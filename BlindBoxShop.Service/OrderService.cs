@@ -445,5 +445,50 @@ namespace BlindBoxShop.Service
                 });
             }
         }
+
+        public async Task<Result<bool>> DeleteOrderAsync(Guid orderId)
+        {
+            try
+            {
+                Console.WriteLine($"Attempting to delete order with ID: {orderId}");
+                
+                // Check if the order exists
+                var orderResult = await GetAndCheckIfOrderExistByIdAsync(orderId, trackChanges: false);
+                if (!orderResult.IsSuccess)
+                {
+                    return Result<bool>.Failure(orderResult.Errors);
+                }
+                
+                var order = orderResult.Value;
+
+                // Delete any associated order details first to avoid foreign key constraint violations
+                var orderDetails = await _orderDetailRepository.GetOrderDetailsByOrderIdAsync(orderId, trackChanges: true);
+                foreach (var detail in orderDetails)
+                {
+                    _orderDetailRepository.Delete(detail);
+                }
+                
+                // Delete the order
+                _orderRepository.Delete(order);
+                await _orderRepository.SaveAsync();
+                
+                Console.WriteLine($"Successfully deleted order with ID: {orderId}");
+                return Result<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in DeleteOrderAsync: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Inner Exception: {ex.InnerException.Message}");
+                }
+                
+                return Result<bool>.Failure(new ErrorResult
+                {
+                    Code = "DeleteOrderError",
+                    Description = $"Error deleting order: {ex.Message}"
+                });
+            }
+        }
     }
 }

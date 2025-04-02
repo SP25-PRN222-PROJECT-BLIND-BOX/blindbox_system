@@ -1,6 +1,8 @@
 using BlindBoxShop.Service.Contract;
 using BlindBoxShop.Shared.DataTransferObject.BlindBox;
+using BlindBoxShop.Shared.DataTransferObject.Review;
 using BlindBoxShop.Shared.Enum;
+using BlindBoxShop.Shared.Features;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
@@ -108,20 +110,48 @@ namespace BlindBoxShop.Application.Pages.Pages
         private string _selectedImage;
         private bool _isZoomed;
 
+        // Review variables
+        private List<ReviewDto> _reviews = new();
+        private bool _isLoadingReviews = false;
+        private bool _isLoadingMoreReviews = false;
+        private bool _hasMoreReviews = false;
+        private int _currentReviewPage = 1;
+        private readonly int _reviewPageSize = 5;
+        private ReviewParameter _reviewParameters;
+
         protected override async Task OnInitializedAsync()
         {
-            await LoadBlindBoxAsync();
-            
-            // Load user info if available
-            await LoadUserInfoAsync();
+            // Initialize review parameters
+            _reviewParameters = new ReviewParameter
+            {
+                PageNumber = 1,
+                PageSize = _reviewPageSize,
+                OrderBy = "CreatedAt desc"
+            };
+
+            await base.OnInitializedAsync();
         }
 
         protected override async Task OnParametersSetAsync()
         {
-            if (!string.IsNullOrEmpty(id))
+            _isLoading = true;
+            StateHasChanged();
+            
+            await LoadBlindBoxAsync();
+            
+            if (BlindBox != null)
             {
-                await LoadBlindBoxAsync();
+                // Load all required data in parallel for better performance
+                await Task.WhenAll(
+                    LoadItemImagesAsync(),
+                    LoadUserInfoAsync(),
+                    LoadRelatedProductsAsync(),
+                    LoadReviewsAsync()
+                );
             }
+            
+            _isLoading = false;
+            StateHasChanged();
         }
 
         private async Task LoadBlindBoxAsync()
@@ -983,6 +1013,94 @@ namespace BlindBoxShop.Application.Pages.Pages
                 case "Escape":
                     CloseImagePreview();
                     break;
+            }
+        }
+
+        private async Task LoadReviewsAsync()
+        {
+            try
+            {
+                _isLoadingReviews = true;
+                _currentReviewPage = 1;
+                StateHasChanged();
+
+                _reviewParameters = new ReviewParameter
+                {
+                    PageNumber = _currentReviewPage,
+                    PageSize = _reviewPageSize,
+                    OrderBy = "CreatedAt desc"
+                };
+
+                using var reviewService = ServiceManager.CustomerReviewsService;
+                var result = await reviewService.GetReviewsByBlindBoxIdAsync(BlindBox.Id, _reviewParameters, false);
+
+                if (result.IsSuccess)
+                {
+                    _reviews = result.Value.ToList();
+                    
+                    // Determine if there are more reviews to load
+                    _hasMoreReviews = _reviews.Count == _reviewPageSize;
+                }
+                else
+                {
+                    _reviews = new List<ReviewDto>();
+                    _hasMoreReviews = false;
+                    Snackbar.Add("Failed to load reviews: " + 
+                        (result.Errors?.FirstOrDefault()?.Description ?? "Unknown error"), Severity.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                _reviews = new List<ReviewDto>();
+                _hasMoreReviews = false;
+                Snackbar.Add("Error loading reviews: " + ex.Message, Severity.Error);
+                Console.WriteLine($"Error loading reviews: {ex.Message}");
+            }
+            finally
+            {
+                _isLoadingReviews = false;
+                StateHasChanged();
+            }
+        }
+        
+        private async Task LoadMoreReviews()
+        {
+            try
+            {
+                _isLoadingMoreReviews = true;
+                StateHasChanged();
+
+                _currentReviewPage++;
+                _reviewParameters.PageNumber = _currentReviewPage;
+
+                using var reviewService = ServiceManager.CustomerReviewsService;
+                var result = await reviewService.GetReviewsByBlindBoxIdAsync(BlindBox.Id, _reviewParameters, false);
+
+                if (result.IsSuccess)
+                {
+                    var newReviews = result.Value.ToList();
+                    
+                    // Add new reviews to the existing list
+                    _reviews.AddRange(newReviews);
+                    
+                    // Check if there are potentially more reviews to load
+                    _hasMoreReviews = newReviews.Count == _reviewPageSize;
+                }
+                else
+                {
+                    Snackbar.Add("Failed to load more reviews: " + 
+                        (result.Errors?.FirstOrDefault()?.Description ?? "Unknown error"), Severity.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add("Error loading more reviews: " + ex.Message, Severity.Error);
+                Console.WriteLine($"Error loading more reviews: {ex.Message}");
+            }
+            finally
+            {
+                _isLoadingMoreReviews = false;
+                StateHasChanged();
             }
         }
     }

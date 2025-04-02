@@ -156,8 +156,8 @@
                     <MudText Typo="Typo.h4" Class="mb-2 font-weight-bold">@BlindBox.Name</MudText>
                     
                     <div class="d-flex align-center mb-4">
-                        <MudRating ReadOnly="true" SelectedValue="@((int)BlindBox.TotalRatingStar)" Size="Size.Medium" />
-                        <MudText Typo="Typo.body2" Class="ml-2">(@BlindBox.TotalRatingStar)</MudText>
+                        <MudRating ReadOnly="true" SelectedValue="@((int)(BlindBox.Probability > 0 ? 5 : BlindBox.TotalRatingStar))" Size="Size.Medium" />
+                        <MudText Typo="Typo.body2" Class="ml-2">@(BlindBox.Probability > 0 ? 5 : (int)BlindBox.TotalRatingStar) (@(_reviews.Count == 1 ? "1 review" : $"{_reviews.Count} reviews"))</MudText>
                     </div>
                     
                     <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4 font-weight-bold">
@@ -177,7 +177,7 @@
                         var probabilityValue = (float)BlindBox.Probability;
                         <MudText Typo="Typo.subtitle1" Class="mb-1 d-flex align-center">
                             <span class="font-weight-medium mr-2">Secret item chance:</span> 
-                            <MudProgressLinear Value="@probabilityValue" Color="Color.Secondary" Class="mx-4" 
+                            <MudProgressLinear Value="@((double)BlindBox.Probability)" Color="Color.Secondary" Class="mx-4" 
                                               Style="width: 150px; height: 10px;" />
                             <span>@(BlindBox.Probability.ToString("0.0"))%</span>
                         </MudText>
@@ -260,10 +260,79 @@
                     </MudTabPanel>
                     
                     <MudTabPanel Text="Đánh giá">
-                        <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Dense="true" Class="mb-4">
-                            Số lượng đánh giá: @BlindBox.TotalRatingStar ⭐
-                        </MudAlert>
-                        <MudText Typo="Typo.body1">Mua hàng và đăng nhập để đánh giá sản phẩm này.</MudText>
+                        <div class="reviews-container">
+                            @if (_isLoadingReviews)
+                            {
+                                <div class="d-flex justify-center my-4">
+                                    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                                </div>
+                            }
+                            else if (!_reviews.Any())
+                            {
+                                <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Dense="true" Class="mb-4">
+                                    <div class="d-flex align-center">
+                                        <MudIcon Icon="@Icons.Material.Filled.RateReview" Class="mr-2" />
+                                        <MudText>Chưa có đánh giá nào cho sản phẩm này</MudText>
+                                    </div>
+                                </MudAlert>
+                                <MudText Typo="Typo.body1">Mua hàng và đăng nhập để đánh giá sản phẩm này.</MudText>
+                            }
+                            else
+                            {
+                                <div class="d-flex align-center mb-4">
+                                    <MudRating ReadOnly="true" SelectedValue="@((int)(BlindBox.Probability > 0 ? 5 : BlindBox.TotalRatingStar))" Size="Size.Large" />
+                                    <MudText Typo="Typo.h5" Class="ml-2">@(BlindBox.Probability > 0 ? 5 : (int)BlindBox.TotalRatingStar)</MudText>
+                                    <MudText Typo="Typo.body2" Class="ml-2 text-disabled">(@_reviews.Count @(_reviews.Count == 1 ? "review" : "reviews"))</MudText>
+                                </div>
+                                
+                                <MudDivider Class="my-4" />
+                                
+                                @foreach (var review in _reviews)
+                                {
+                                    <MudPaper Elevation="0" Class="mb-4 pa-4 rounded-lg" Style="background-color: rgba(0,0,0,0.02);">
+                                        <div class="d-flex justify-space-between align-center mb-2">
+                                            <div class="d-flex align-center">
+                                                <MudAvatar Color="Color.Primary" Size="Size.Medium" Class="mr-3">
+                                                    @(review.Username.Length > 0 ? review.Username[0].ToString().ToUpper() : "U")
+                                                </MudAvatar>
+                                                <div>
+                                                    <MudText Typo="Typo.subtitle1">@review.Username</MudText>
+                                                    <MudText Typo="Typo.caption" Class="text-disabled">
+                                                        @review.CreatedAt.ToString("dd MMMM yyyy, HH:mm")
+                                                    </MudText>
+                                                </div>
+                                            </div>
+                                            <MudRating ReadOnly="true" SelectedValue="@((int)review.RatingStar)" Size="Size.Small" />
+                                        </div>
+                                        
+                                        @if (!string.IsNullOrEmpty(review.FeedBack))
+                                        {
+                                            <MudText Typo="Typo.body1" Class="mt-2 pl-9">@review.FeedBack</MudText>
+                                        }
+                                    </MudPaper>
+                                }
+                                
+                                @if (_hasMoreReviews)
+                                {
+                                    <div class="d-flex justify-center mt-4">
+                                        <MudButton Variant="Variant.Text" 
+                                                 Color="Color.Primary" 
+                                                 OnClick="LoadMoreReviews"
+                                                 Disabled="_isLoadingMoreReviews">
+                                            @if (_isLoadingMoreReviews)
+                                            {
+                                                <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
+                                                <span>Loading...</span>
+                                            }
+                                            else
+                                            {
+                                                <span>Load More Reviews</span>
+                                            }
+                                        </MudButton>
+                                    </div>
+                                }
+                            }
+                        </div>
                     </MudTabPanel>
                 </MudTabs>
             </div>

@@ -8,6 +8,8 @@
 @using BlindBoxShop.Service.Contract
 @using BlindBoxShop.Application.Components.Dialogs
 @using BlindBoxShop.Shared.DataTransferObject.BlindBox
+@using BlindBoxShop.Shared.DataTransferObject.Review
+@using BlindBoxShop.Shared.Features
 
 @inject ISnackbar Snackbar
 @inject IServiceManager ServiceManager
@@ -88,7 +90,32 @@
                                     }
                                 </div>
                             </div>
-                            <MudText Typo="Typo.body2">@FormatPrice(item.Price)</MudText>
+                            <div class="flex flex-col items-end">
+                                <MudText Typo="Typo.body2">@FormatPrice(item.Price)</MudText>
+                                @if (OrderWithDetails.Order.Status == OrderStatus.Delivered && 
+                                     !_reviewedBlindBoxes.Contains(item.BlindBoxId))
+                                {
+                                    <MudButton Variant="Variant.Text" 
+                                             Color="Color.Primary" 
+                                             Size="Size.Small"
+                                             StartIcon="@Icons.Material.Filled.RateReview"
+                                             Class="mt-1"
+                                             OnClick="() => OpenReviewDialog(item.BlindBoxId, item.BlindBoxName)">
+                                        Review
+                                    </MudButton>
+                                }
+                                @if (OrderWithDetails.Order.Status == OrderStatus.Delivered && 
+                                     _reviewedBlindBoxes.Contains(item.BlindBoxId))
+                                {
+                                    <MudChip Size="Size.Small" 
+                                           Color="Color.Success" 
+                                           Icon="@Icons.Material.Filled.Check"
+                                           T="string"
+                                           Class="mt-1 px-2">
+                                        Reviewed
+                                    </MudChip>
+                                }
+                            </div>
                         </div>
                     }
                 </div>
@@ -309,6 +336,9 @@
     // Copy local reference to service-loaded BlindBoxItems
     private Dictionary<Guid, BlindBoxItemDto> _blindBoxItems = new Dictionary<Guid, BlindBoxItemDto>();
     
+    // Dictionary to track which BlindBoxes the user has already reviewed
+    private HashSet<Guid> _reviewedBlindBoxes = new HashSet<Guid>();
+    
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
@@ -357,6 +387,12 @@
                         await LoadBlindBoxItem(detail.Id, detail.BlindBoxItemId.Value);
                     }
                 }
+            }
+            
+            // Check if the order is delivered, then load existing reviews
+            if (OrderWithDetails.Order.Status == OrderStatus.Delivered)
+            {
+                await LoadUserReviews();
             }
         }
     }
@@ -700,5 +736,94 @@
     private bool HasBlindBoxItems()
     {
         return OrderWithDetails.OrderDetails.Any(od => od.BlindBoxItemId.HasValue);
+    }
+    
+    // Add this method to load existing user reviews for this order's BlindBoxes
+    private async Task LoadUserReviews()
+    {
+        try
+        {
+            // Get user ID from localStorage
+            var userId = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "user_id");
+            
+            if (!string.IsNullOrEmpty(userId) && Guid.TryParse(userId, out Guid userGuid))
+            {
+                // Get all BlindBox IDs from the order
+                var blindBoxIds = OrderWithDetails.OrderDetails
+                    .Select(od => od.BlindBoxId)
+                    .Distinct()
+                    .ToList();
+                
+                if (blindBoxIds.Any())
+                {
+                    using var reviewService = ServiceManager.CustomerReviewsService;
+                    
+                    // Check each BlindBox if the user has already reviewed it
+                    foreach (var blindBoxId in blindBoxIds)
+                    {
+                        var parameter = new ReviewParameter { PageSize = 1 };
+                        var reviews = await reviewService.GetReviewsByBlindBoxIdAsync(blindBoxId, parameter, false);
+                        
+                        if (reviews.IsSuccess)
+                        {
+                            // Check if any review is from this user
+                            if (reviews.Value.Any(r => r.UserId == userGuid))
+                            {
+                                _reviewedBlindBoxes.Add(blindBoxId);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading user reviews: {ex.Message}");
+        }
+    }
+    
+    private async Task OpenReviewDialog(Guid blindBoxId, string blindBoxName)
+    {
+        try
+        {
+            // Get user ID from localStorage
+            var userId = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "user_id");
+            
+            if (string.IsNullOrEmpty(userId))
+            {
+                Snackbar.Add("You need to log in to submit a review", Severity.Warning);
+                return;
+            }
+            
+            var parameters = new DialogParameters
+            {
+                ["BlindBoxId"] = blindBoxId,
+                ["UserId"] = Guid.Parse(userId),
+                ["BlindBoxName"] = blindBoxName
+            };
+            
+            var options = new DialogOptions
+            {
+                CloseOnEscapeKey = true,
+                MaxWidth = MaxWidth.Small,
+                FullWidth = true,
+                CloseButton = true
+            };
+            
+            var dialog = await DialogService.ShowAsync<ReviewBlindBoxDialog>("Review BlindBox", parameters, options);
+            var result = await dialog.Result;
+            
+            if (!result.Canceled && result.Data is bool success && success)
+            {
+                // Mark this BlindBox as reviewed
+                _reviewedBlindBoxes.Add(blindBoxId);
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error opening review dialog: {ex.Message}");
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
     }
 } 

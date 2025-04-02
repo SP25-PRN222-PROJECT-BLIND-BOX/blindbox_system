@@ -59,10 +59,10 @@
         {
 
 			
-            // Khởi tạo Firebase Storage
+            
             var storage = new FirebaseStorage(FirebaseConfig.Value.StorageBucket);
 
-            // Tạo tên file duy nhất
+            
             var fileName = $"{Guid.NewGuid()}_{selectedFile.Name}";
 
             // Upload file lên Firebase Storage
@@ -72,7 +72,7 @@
                 .Child(fileName)
                 .PutAsync(stream);
 
-            // Lưu URL vào cơ sở dữ liệu
+            // Lưu URL vào db
             var image = new BlindBoxImage
             {
 					Id = Guid.NewGuid(),

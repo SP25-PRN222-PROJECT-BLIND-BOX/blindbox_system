@@ -24,11 +24,19 @@
     <p>@message</p>
 }
 
+@if (!string.IsNullOrEmpty(imageUrl))
+{
+    <div>
+        <h4>Uploaded Image:</h4>
+        <img src="@imageUrl" alt="Uploaded Image" class="img-thumbnail" width="300" />
+    </div>
+}
+
 @code {
     private IBrowserFile selectedFile;
     private string message;
     private string? blindBoxIdString;
-    
+    private string? imageUrl;
     protected override async Task OnInitializedAsync()
     {
         //blindBoxIdString = await LocalStorage.GetItemAsync<string>("BlindBoxId");
@@ -77,6 +85,7 @@
             await DbContext.SaveChangesAsync();
 
             message = "Image uploaded successfully! URL: " + downloadUrl;
+            imageUrl = downloadUrl;
 			
         }
         catch (Exception ex)

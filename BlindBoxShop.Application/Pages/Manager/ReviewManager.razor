@@ -137,7 +137,7 @@
     protected override async Task OnInitializedAsync()
     {
         //managerId = await LocalStorage.GetItemAsync<string>("ManagerId");
-        //thêm dòng này vào trang trước đó: await LocalStorage.SetItemAsync("BlindBoxId", "51920514-75FB-4BF9-A9D7-6FDA40AFA442");
+        
         customerReviews = await ReviewService.GetAllCustomerReviewsAsync();
         foreach (var review in customerReviews)
         {
@@ -155,8 +155,8 @@
 
         try
         {
-            // Giả định userId của người trả lời (có thể lấy từ authentication)
-            var userId = new Guid("CA537960-7EAC-4D49-8AB8-DA3A2EF27FC1"); // Thay bằng userId thực tế từ hệ thống xác thực
+            
+            var userId = new Guid("CA537960-7EAC-4D49-8AB8-DA3A2EF27FC1"); // Thay bằng trong trang trc đó: await LocalStorage.SetItemAsync("BlindBoxId", "51920514-75FB-4BF9-A9D7-6FDA40AFA442");
 
             await ReviewService.AddReplyReviewAsync(customerReviewId, userId, replyInputs[customerReviewId]);
             message = "Reply submitted successfully!";

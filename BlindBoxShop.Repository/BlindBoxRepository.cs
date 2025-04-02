@@ -4,6 +4,9 @@ using BlindBoxShop.Repository.Extensions;
 using BlindBoxShop.Shared.DataTransferObject.BlindBox;
 using BlindBoxShop.Shared.Features;
 
+using Microsoft.EntityFrameworkCore;
+
+
 namespace BlindBoxShop.Repository
 {
     public class BlindBoxRepository : RepositoryBase<BlindBox>, IBlindBoxRepository
@@ -20,7 +23,8 @@ namespace BlindBoxShop.Repository
                 .FilterByCategory(blindBoxParameter.CategoryId)
                 .FilterByRarity(blindBoxParameter.Rarity)
                 .FilterByStatus(blindBoxParameter.Status)
-                .Sort(blindBoxParameter.OrderBy);
+                .Sort(blindBoxParameter.OrderBy)
+                .Include(b => b.BlindBoxPriceHistories);
 
             return await blindBoxes.ToPagedListAsync(blindBoxParameter);
         }

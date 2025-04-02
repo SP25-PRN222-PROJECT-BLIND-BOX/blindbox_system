@@ -146,7 +146,6 @@ namespace BlindBoxShop.Service
             {
                 var blindBoxes = await _blindBoxRepository.GetBlindBoxesAsync(blindBoxParameter, trackChanges);
 
-
                 var blindBoxDtos = _mapper.Map<IEnumerable<BlindBoxDto>>(blindBoxes);
 
                 return (blindBoxDtos, blindBoxes.MetaData);

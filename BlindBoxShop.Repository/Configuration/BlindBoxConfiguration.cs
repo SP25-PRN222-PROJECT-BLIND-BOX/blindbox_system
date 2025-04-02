@@ -19,7 +19,7 @@ namespace BlindBoxShop.Repository.Configuration
 
             entity.Property(e => e.Description).HasColumnType("text");
 
-            entity.Property(e => e.Price).HasColumnType("decimal(18,2)");
+            //entity.Property(e => e.Price).HasColumnType("decimal(18,2)");
 
             entity.HasOne(e => e.BlindBoxCategory)
                 .WithMany(e => e.BlindBoxes)

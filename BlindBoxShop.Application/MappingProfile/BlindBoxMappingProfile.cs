@@ -11,7 +11,13 @@ namespace BlindBoxShop.Application.MappingProfile
         {
             // Map từ Entity sang DTO
             CreateMap<BlindBox, BlindBoxDto>()
-                .ForMember(dest => dest.CurrentPrice, opt => opt.MapFrom(src => src.Price))
+                .ForMember(dest => dest.CurrentPrice, opt => opt.MapFrom(src =>
+                src.BlindBoxPriceHistories != null && src.BlindBoxPriceHistories.Any()
+                        ? src.BlindBoxPriceHistories
+                            .OrderByDescending(i => i.CreatedAt)
+                            .First()
+                            .Price
+                        : 0))
                 .ForMember(dest => dest.MainImageUrl, opt => opt.MapFrom(src =>
                     src.BlindBoxImages != null && src.BlindBoxImages.Any()
                     ? src.BlindBoxImages.OrderBy(i => i.CreatedAt).First().ImageUrl
@@ -38,7 +44,7 @@ namespace BlindBoxShop.Application.MappingProfile
             // Map from Entity to DTO
             CreateMap<BlindBoxImage, BlindBoxImageDto>();
             CreateMap<BlindBoxPriceHistory, BlindBoxPriceHistoryDto>();
-            
+
         }
     }
 }

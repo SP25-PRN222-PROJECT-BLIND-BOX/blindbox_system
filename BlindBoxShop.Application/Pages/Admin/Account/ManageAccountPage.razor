@@ -1,0 +1,19 @@
+﻿@page "/manage-account"
+@using BlindBoxShop.Application.Pages.Admin.Account.Partials
+<PageTitle>Manage account</PageTitle>
+
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-0 px-0">
+    <MudPaper Elevation="0" Class="page-header" Style="background-color: var(--mud-palette-primary-darken);">
+        <MudText Typo="Typo.h3" Class="font-weight-bold mb-2 text-white">Account Management</MudText>
+        <MudText Typo="Typo.body1" Class="text-white">Manage Account</MudText>
+    </MudPaper>
+</MudContainer>
+
+<MudContainer Class="mt-8 px-8 min-vh-100" MaxWidth="MaxWidth.ExtraExtraLarge">
+    <MudStack>
+        <MudPaper Class="pa-3">
+            <ManageAccountTable />
+        </MudPaper>
+    </MudStack>
+</MudContainer>

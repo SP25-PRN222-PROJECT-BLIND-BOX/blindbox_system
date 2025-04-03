@@ -156,8 +156,15 @@
                     <MudText Typo="Typo.h4" Class="mb-2 font-weight-bold">@BlindBox.Name</MudText>
                     
                     <div class="d-flex align-center mb-4">
-                        <MudRating ReadOnly="true" SelectedValue="@((int)(BlindBox.Probability > 0 ? 5 : BlindBox.TotalRatingStar))" Size="Size.Medium" />
-                        <MudText Typo="Typo.body2" Class="ml-2">@(BlindBox.Probability > 0 ? 5 : (int)BlindBox.TotalRatingStar) (@(_reviews.Count == 1 ? "1 review" : $"{_reviews.Count} reviews"))</MudText>
+                        @if (_reviews.Count > 0 && BlindBox.TotalRatingStar > 0.1)
+                        {
+                            <MudRating ReadOnly="true" SelectedValue="@((int)BlindBox.TotalRatingStar)" Size="Size.Medium" />
+                            <MudText Typo="Typo.body2" Class="ml-2">@Math.Round(BlindBox.TotalRatingStar, 1) (@(_reviews.Count == 1 ? "1 review" : $"{_reviews.Count} reviews"))</MudText>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.body2">No reviews yet</MudText>
+                        }
                     </div>
                     
                     <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4 font-weight-bold">
@@ -280,8 +287,8 @@
                             else
                             {
                                 <div class="d-flex align-center mb-4">
-                                    <MudRating ReadOnly="true" SelectedValue="@((int)(BlindBox.Probability > 0 ? 5 : BlindBox.TotalRatingStar))" Size="Size.Large" />
-                                    <MudText Typo="Typo.h5" Class="ml-2">@(BlindBox.Probability > 0 ? 5 : (int)BlindBox.TotalRatingStar)</MudText>
+                                    <MudRating ReadOnly="true" SelectedValue="@((int)BlindBox.TotalRatingStar)" Size="Size.Large" />
+                                    <MudText Typo="Typo.h5" Class="ml-2">@Math.Round(BlindBox.TotalRatingStar, 1)</MudText>
                                     <MudText Typo="Typo.body2" Class="ml-2 text-disabled">(@_reviews.Count @(_reviews.Count == 1 ? "review" : "reviews"))</MudText>
                                 </div>
                                 

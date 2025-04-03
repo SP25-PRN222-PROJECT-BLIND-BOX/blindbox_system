@@ -300,6 +300,13 @@
             {
                 Console.WriteLine("Loading user info immediately after first render");
                 await LoadUserInfoAsync();
+                
+                // Clear all payment-related storage if we're not processing a payment
+                if (!_hasPaymentParams)
+                {
+                    await ClearGachaSessionStorage();
+                    Console.WriteLine("Cleared all payment storage on BlindBoxGacha page load");
+                }
             }
             catch (Exception ex)
             {
@@ -749,21 +756,33 @@
     
     private async Task ClearGachaSessionStorage()
     {
-        // Xóa các session storage liên quan đến blindbox gacha
+        // Xóa tất cả storage liên quan đến payment và gacha
         try 
         {
-            // Only attempt to clear session storage if we're not in prerendering
+            // Only attempt to clear storage if we're not in prerendering
             if (_firstRender == false)
             {
+                // Clear all sessionStorage items
                 await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_order_id");
                 await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_blindbox_id");
                 await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_payment_success");
-                Console.WriteLine("Cleared gacha session storage");
+                await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_selected_item_id");
+                await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_current_display_item_id");
+                await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_payment_processed");
+                await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "order_payment_id");
+                await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "checkout_order_id");
+                
+                // Clear localStorage items related to payments
+                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "order_payment_id");
+                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "payment_referring_url");
+                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "vnpay_payment_id");
+                
+                Console.WriteLine("Cleared all payment and gacha related storage");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error clearing gacha session storage: {ex.Message}");
+            Console.WriteLine($"Error clearing payment and gacha storage: {ex.Message}");
         }
     }
     

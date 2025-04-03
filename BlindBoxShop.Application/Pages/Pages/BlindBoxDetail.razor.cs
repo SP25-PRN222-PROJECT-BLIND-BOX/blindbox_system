@@ -1045,8 +1045,6 @@ namespace BlindBoxShop.Application.Pages.Pages
                 {
                     _reviews = new List<ReviewDto>();
                     _hasMoreReviews = false;
-                    Snackbar.Add("Failed to load reviews: " + 
-                        (result.Errors?.FirstOrDefault()?.Description ?? "Unknown error"), Severity.Error);
                 }
             }
             catch (Exception ex)

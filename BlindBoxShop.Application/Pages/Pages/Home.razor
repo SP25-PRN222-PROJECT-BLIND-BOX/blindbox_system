@@ -86,10 +86,17 @@
                                     Style="cursor: pointer;" @onclick="@(() => NavigateToProductDetail(box.Id))">
                                 @box.Name
                             </MudText>
-                            <div class="d-flex align-center mb-2">
-                                <MudRating ReadOnly="true" SelectedValue="@((int)box.TotalRatingStar)" />
-                                <MudText Typo="Typo.caption" Class="ml-1">(@box.TotalRatingStar)</MudText>
-                            </div>
+                            @* <div class="d-flex align-center mb-2">
+                                @if (box.TotalRatingStar > 0.1)
+                                {
+                                    <MudRating ReadOnly="true" SelectedValue="@((int)box.TotalRatingStar)" />
+                                    <MudText Typo="Typo.caption" Class="ml-1">(@Math.Round(box.TotalRatingStar, 1))</MudText>
+                                }
+                                else
+                                {
+                                    <MudText Typo="Typo.caption">No reviews yet</MudText>
+                                }
+                            </div> *@
                             <MudText Typo="Typo.body2" Class="mb-3 flex-grow-1" 
                                     Style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
                                 @box.Description

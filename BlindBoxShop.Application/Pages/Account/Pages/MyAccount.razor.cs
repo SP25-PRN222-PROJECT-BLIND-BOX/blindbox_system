@@ -91,7 +91,7 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
             }
             catch (Exception ex)
             {
-                Snackbar.Add($"Error loading account data: {ex.Message}", Severity.Error);
+                // Snackbar.Add($"Error loading account data: {ex.Message}", Severity.Error);
                 _loading = false;
             }
         }
@@ -153,7 +153,7 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
                 }
                 catch (Exception ex)
                 {
-                    Snackbar.Add($"Error retrieving user information: {ex.Message}", Severity.Error);
+                    // Snackbar.Add($"Error retrieving user information: {ex.Message}", Severity.Error);
                     Console.WriteLine($"Error fetching user data: {ex}");
                     NavigationManager.NavigateTo("/account/login");
                     return;
@@ -164,7 +164,7 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
             catch (Exception ex)
             {
                 _loading = false;
-                Snackbar.Add($"Error loading information: {ex.Message}", Severity.Error);
+                // Snackbar.Add($"Error loading information: {ex.Message}", Severity.Error);
                 Console.WriteLine($"General error in LoadUserData: {ex}");
             }
         }
@@ -211,14 +211,14 @@ namespace BlindBoxShop.Application.Pages.Account.Pages
                 }
                 else
                 {
-                    Snackbar.Add($"Error loading order history: {result.Errors?.FirstOrDefault()?.Description}", Severity.Error);
+                    // Snackbar.Add($"Error loading order history: {result.Errors?.FirstOrDefault()?.Description}", Severity.Error);
                     _orders = new List<OrderDto>();
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error loading order history: {ex}");
-                Snackbar.Add($"Error loading order history: {ex.Message}", Severity.Error);
+                // Snackbar.Add($"Error loading order history: {ex.Message}", Severity.Error);
                 _orders = new List<OrderDto>();
             }
             finally

@@ -215,13 +215,21 @@
 </div>
 
 @code {
-    private async Task ClearGachaSessionStorage()
+    private async Task ClearPaymentStorage()
     {
-        // Xóa tất cả sessionStorage liên quan đến blindbox gacha
+        // Xóa tất cả storage liên quan đến payment và gacha
+        // SessionStorage items
         await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_order_id");
         await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_blindbox_id");
         await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_payment_success");
-        Console.WriteLine("Cleared gacha session storage before checkout payment");
+        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "order_payment_id");
+        
+        // LocalStorage items
+        await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "order_payment_id");
+        await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "payment_referring_url");
+        await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "vnpay_payment_id");
+        
+        Console.WriteLine("Cleared all payment-related storage when entering checkout page");
     }
 
     private async Task ProcessPaymentAsync()
@@ -242,8 +250,9 @@
                 return;
             }
             
-            // Clear gacha session storage
-            await ClearGachaSessionStorage();
+            // Clear payment storage once more before creating a new order
+            // to ensure no stale data interferes with the new payment flow
+            await ClearPaymentStorage();
             
             // Save current URL to localStorage to indicate payment is from checkout
             // Use the same key as OrderDetail for consistency

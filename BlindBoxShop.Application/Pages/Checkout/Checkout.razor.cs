@@ -38,6 +38,9 @@ namespace BlindBoxShop.Application.Pages.Checkout
         {
             _isLoading = true;
             
+            // Clear all payment-related storage first
+            await ClearPaymentStorage();
+            
             // Check if this is a direct purchase
             _isDirectPurchase = !string.IsNullOrEmpty(BlindBoxId);
             
@@ -268,10 +271,13 @@ namespace BlindBoxShop.Application.Pages.Checkout
                 _isProcessing = true;
                 StateHasChanged();
                 
-                // Check for valid form
+                // Clear payment storage before proceeding
+                await ClearPaymentStorage();
+                
+                // Check if the form is valid
                 if (!IsFormValid())
                 {
-                    Snackbar.Add("Vui lòng điền đầy đủ thông tin giao hàng", Severity.Warning);
+                    Snackbar.Add("Please fill in all required fields", Severity.Warning);
                     _isProcessing = false;
                     StateHasChanged();
                     return;

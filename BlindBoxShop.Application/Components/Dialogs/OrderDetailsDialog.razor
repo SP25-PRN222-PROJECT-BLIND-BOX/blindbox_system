@@ -602,6 +602,24 @@
         }
     }
     
+    // Add a new method to clear all payment-related storage
+    private async Task ClearPaymentStorage()
+    {
+        // Clear all sessionStorage items related to payments
+        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_order_id");
+        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_blindbox_id");
+        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_payment_success");
+        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "order_payment_id");
+        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "checkout_order_id");
+        
+        // Clear all localStorage items related to payments
+        await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "order_payment_id");
+        await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "payment_referring_url");
+        await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "vnpay_payment_id");
+        
+        Console.WriteLine("Cleared all payment-related storage in OrderDetailsDialog");
+    }
+    
     private async Task ProceedPayment()
     {
         try
@@ -620,11 +638,8 @@
                 return;
             }
             
-            // Clear any gacha and checkout session storage to avoid conflicts
-            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_order_id");
-            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_blindbox_id");
-            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "gacha_payment_success");
-            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "checkout_order_id");
+            // Clear all payment-related storage to avoid conflicts
+            await ClearPaymentStorage();
             
             // Save order information with order-specific prefix
             await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "order_payment_id", OrderWithDetails.Order.Id.ToString());
